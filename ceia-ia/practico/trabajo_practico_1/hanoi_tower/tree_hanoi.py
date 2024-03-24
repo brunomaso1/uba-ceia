@@ -1,6 +1,6 @@
 import json
-import aima
-import hanoi_states
+from hanoi_tower import aima
+from hanoi_tower import hanoi_states
 
 
 class NodeHanoi(aima.Node):

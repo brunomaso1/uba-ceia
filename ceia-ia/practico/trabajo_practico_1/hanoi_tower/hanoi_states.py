@@ -1,7 +1,7 @@
 import copy
 from typing import Optional
 
-import aima
+from hanoi_tower import aima
 
 
 def is_sorted(test_list: list) -> bool:

@@ -1,8 +1,8 @@
 import tracemalloc
 import time
-from hanoi_states import StatesHanoi, ProblemHanoi
-from tree_hanoi import NodeHanoi
-from search import (  # Importa las funciones de búsqueda del módulo search
+from hanoi_tower.hanoi_states import StatesHanoi, ProblemHanoi
+from hanoi_tower.tree_hanoi import NodeHanoi
+from hanoi_tower.search import (  # Importa las funciones de búsqueda del módulo search
     breadth_first_tree_search,
     breadth_first_graph_search,
     depth_first_graph_search
