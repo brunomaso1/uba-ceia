@@ -1,0 +1,401 @@
+use finanzas
+/* 1. Realizar una consulta que devuelva la siguiente información: Región y cantidad 
+total de productos vendidos a clientes de esa Región.  */
+db.facturas.aggregate([
+  {
+    $unwind: "$item"
+  },
+  {
+    $group: {
+      _id: {
+        region: "$cliente.region",
+        cuit: "$cliente.cuit"
+      },
+      sum_cantidad: {
+        $sum: "$item.cantidad"
+      }
+    }
+  },
+  {
+    $project: {
+      region: "$_id.region",
+      sum_cantidad: 1,
+      _id: 0
+    }
+  }
+])
+
+// 2. Basado en la consulta del punto 1, mostrar sólo la región que tenga el menor ingreso.
+db.facturas.aggregate([
+  {
+    $unwind: "$item"
+  },
+  {
+    $group: {
+      _id: {
+        region: "$cliente.region",
+        cuit: "$cliente.cuit"
+      },
+      sum_cantidad: {
+        $sum: "$item.cantidad"
+      }
+    }
+  },
+  {
+    $project: {
+      region: "$_id.region",
+      sum_cantidad: 1,
+      _id: 0
+    }
+  },
+  {
+    $sort: {
+      sum_cantidad: 1
+    }
+  },
+  {
+    $limit: 1
+  }
+])
+
+/* 3. Basado en la consulta del punto 1, mostrar sólo las regiones que tengan una 
+cantidad de productos vendidos superior a 10000. */
+db.facturas.aggregate([
+  {
+    $unwind: "$item"
+  },
+  {
+    $group: {
+      _id: {
+        region: "$cliente.region",
+        cuit: "$cliente.cuit"
+      },
+      sum_cantidad: {
+        $sum: "$item.cantidad"
+      }
+    }
+  },
+  {
+    $project: {
+      region: "$_id.region",
+      sum_cantidad: 1,
+      _id: 0
+    }
+  },
+  {
+    $match: {
+      sum_cantidad: { $gt: 1000 }
+    }
+  }
+])
+
+/* 4. Se requiere obtener un reporte que contenga la siguiente información, nro. cuit, 
+apellido y nombre y región y cantidad de facturas, ordenado por apellido.  */
+db.facturas.aggregate([
+  {
+    $group: {
+      _id: {
+        cuit: "$cliente.cuit"
+      },
+      doc: { $first: "$$ROOT" },
+      cant_facturas: {
+        $count: {}
+      }
+    }
+  },
+  {
+    $project: {
+      cuit: "$_id.cuit",
+      apellido: "$doc.cliente.apellido",
+      nombre: "$doc.cliente.nombre",
+      cant_facturas: 1,
+    }
+  },
+  {
+    $sort: {
+      apellido: 1
+    }
+  }
+])
+
+/* 5. Basados en la consulta del punto 4 informar sólo los clientes con número de 
+CUIT mayor a 27000000000.  */
+db.facturas.aggregate([
+  {
+    $group: {
+      _id: {
+        cuit: "$cliente.cuit"
+      },
+      doc: {
+        $first: "$$ROOT"
+      },
+      cant_facturas: {
+        $count: {}
+      }
+    }
+  },
+  {
+    $project: {
+      cuit: "$_id.cuit",
+      apellido: "$doc.cliente.apellido",
+      nombre: "$doc.cliente.nombre",
+      cant_facturas: 1
+    }
+  },
+  {
+    $match: {
+      cuit: { $gt: 2700000000 }
+    }
+  }
+])
+
+/* 6. Basados en la consulta del punto 5 informar solamente la cantidad de clientes 
+que cumplen con esta condición. */
+db.facturas.aggregate([
+  {
+    $group: {
+      _id: {
+        cuit: "$cliente.cuit"
+      },
+      doc: {
+        $first: "$$ROOT"
+      },
+      cant_facturas: {
+        $count: {}
+      }
+    }
+  },
+  {
+    $project: {
+      cuit: "$_id.cuit",
+      apellido: "$doc.cliente.apellido",
+      nombre: "$doc.cliente.nombre",
+      cant_facturas: 1
+    }
+  },
+  {
+    $match: {
+      cuit: { $gt: 2700000000 }
+    }
+  },
+  {
+    $count: 'Cantidad clientes'
+  }
+])
+
+/* 7. Se requiere realizar una consulta que devuelva la siguiente información: producto 
+y cantidad de facturas en las que lo compraron, ordenado por cantidad de facturas 
+descendente. */
+db.facturas.aggregate([
+  { $unwind: "$item" },
+  {
+    $group: {
+      _id: "$item.producto",
+      cantidadFacturas: {
+        $count: {}
+      }
+    }
+  },
+  {
+    $sort: {
+      cantidadFacturas: -1
+    }
+  }
+])
+
+/* 8. Obtener la cantidad total comprada así como también los ingresos totales para cada 
+producto.  */
+db.facturas.aggregate([
+  {
+    $unwind: "$item"
+  },
+  {
+    $group: {
+      _id: "$item.producto",
+      cantidadTotal: {
+        $sum: "$item.cantidad"
+      },
+      ingresos: {
+        $sum: { $multiply: ["$item.precio", "$item.cantidad"] }
+      }
+    }
+  }
+])
+
+/* 9. Idem el punto anterior, ordenar por ingresos en forma ascendente, saltear el 1ro 
+y mostrar 2do y 3ro. */
+db.facturas.aggregate([
+  {
+    $unwind: "$item"
+  },
+  {
+    $group: {
+      _id: "$item.producto",
+      cantidadTotal: {
+        $sum: "$item.cantidad"
+      },
+      ingresos: {
+        $sum: { $multiply: ["$item.precio", "$item.cantidad"] }
+      }
+    }
+  },
+  { $sort: { ingresos: 1 } },
+  { $skip: 1 },
+  { $limit: 2 }
+])
+
+/* 10. Obtener todos productos junto con un array de las personas que lo compraron. En 
+este array deberá haber solo strings con el nombre completo de la persona. Los 
+documentos entregados como resultado deberán tener la siguiente forma: {producto: “<nombre>”, personas:[“...”, ...]} */
+db.facturas.aggregate([
+  {
+    $unwind: "$item"
+  },
+  {
+    $group: {
+      _id: "$item.producto",
+      personas: {
+        $addToSet: {
+          $concat: ["$cliente.nombre", " ", "$cliente.apellido"]
+        }
+      }
+    }
+  }
+])
+
+/* 11. Obtener los productos ordenados en forma descendente por la cantidad de 
+diferentes personas que los compraron. */
+db.facturas.aggregate([
+  {
+    $unwind: "$item"
+  },
+  {
+    $group: {
+      _id: "$item.producto",
+      personas: {
+        $addToSet: {
+          $concat: ["$cliente.nombre", " ", "$cliente.apellido"]
+        }
+      }
+    }
+  },
+  {
+    $project: {
+      cantidadPersonas: { $size: "$personas" }
+    }
+  },
+  { $sort: { cantidadPersonas: -1 } }
+])
+
+/* 12. Obtener el total gastado por persona y mostrar solo los que gastaron más de 
+3100000. Los documentos devueltos deben tener el nombre completo del cliente y el 
+total gastado: {cliente:”<nombreCompleto>”,total:<num>} */
+db.finanzas.aggregate([
+  { $unwind: "$item" },
+  {
+    $group: {
+      _id: "$cliente.cuit",
+      cliente: { $first: "$cliente" },
+      total: {
+        $sum: { $multiply: ["$item.cantidad", "$item.precio"] }
+      }
+    }
+  },
+  {
+    $project: {
+      cliente: { $concat: ["$cliente.nombre", " ", "$cliente.apellido"] },
+      total: 1
+    }
+  },
+  {
+    $match: {
+      total: { $gt: 31000 }
+    }
+  }
+])
+
+// 13. Obtener el promedio de gasto por factura por cada región. 
+db.finanzas.aggregate([
+  { $unwind: "$item" },
+  {
+    $group: {
+      _id: "$cliente.region",
+      total: {
+        $avg: { $multiply: ["$item.cantidad", "$item.precio"] }
+      }
+    }
+  },
+])
+
+/* 14. Obtener la factura en la que se haya gastado más. En caso de que sean varias 
+obtener la que tenga el número de factura menor. */
+db.finanzas.aggregate([
+  { $unwind: "$item" },
+  {
+    $set: {
+      "item.importe": { $multiply: ["$item.cantidad", "$item.precio"] }
+    }
+  },
+  {
+    $sort: {
+      "item.importe": -1,
+      "nroFactura": 1
+    }
+  },
+  {
+    $limit: 1
+  }
+])
+
+// 15. Obtener a los clientes indicando cuánto fue lo que más gastó en una única factura.
+db.facturas.aggregate([
+  { $unwind: "$item" },
+  {
+    $set: {
+      "item.importe": { $multiply: ["$item.cantidad", "$item.precio"] }
+    }
+  },
+  {
+    $group: {
+      _id: "$cliente.cuit",
+      doc: { $first: "$$ROOT" },
+      maxImporteFactura: {
+        $max: "$item.importe"
+      }
+    }
+  },
+  {
+    $project: {
+      cliente: { $concat: ["$doc.cliente.nombre", " ", "$doc.cliente.apellido"] },
+      nroFactura: "$doc.nroFactura",
+      maxImporteFactura: 1
+    }
+  }
+])
+
+/* 16. Utilizando MapReduce, indicar la cantidad total comprada de cada ítem. Comparar 
+el resultado con el ejercicio 8. */
+db.facturas.aggregate([
+  { $unwind: "$item" },
+  {
+    $project: {
+      emits: {
+        key: "$item.producto",
+        value: {
+          $multiply: [
+            "$item.cantidad",
+            "$item.precio"
+          ]
+        }
+      }
+    }
+  },
+  {
+    $group: {
+      _id: "$emits.key",
+      total: {
+        $sum: "$emits.value"
+      }
+    }
+  }
+])
