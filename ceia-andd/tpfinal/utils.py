@@ -1,21 +1,8 @@
-# Importación de librerias
-import sys # Interactuar con el sistema
-import numpy as np # Albegra lineal
-import pandas as pd # Procesamiento de datos
-import matplotlib.pyplot as plt # Visualización de datos
-import seaborn as sns # Visualización de datos estadísticos
-from ydata_profiling import ProfileReport # Reporte (profiling)
-from scipy.stats import chi2_contingency # Test de chi-cuadrado
-from sklearn.metrics import (accuracy_score, confusion_matrix, f1_score,
-                             precision_score, recall_score) # Metricas para evaluación
-import geopandas as gpd # Georeferenciacion
-from geopandas.datasets import get_path # Ruta de los datos geográficos
-from shapely.geometry import Point # Geometría espacial
-import re # Expresiones regulares
-from itertools import chain, combinations # Iteradores
-import osmnx as ox # OpenStreetMap
-import statsmodels.api as sm # Regresión lineal
-import json
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns  # Visualización de datos estadísticos
+import statsmodels.api as sm  # Regresión lineal
 
 def outliers_iqr(df, columns):
     outliers = []
@@ -157,10 +144,10 @@ def plot_locations_over_time(df, color="blue"):
             linewidth=0.05,
         )
 
-    # Plot null values in target column
-    null_indices = df_location.loc[df_location["RainTomorrow"].isnull()].index
-    for idx in null_indices:
-        ax.plot(df_location.loc[idx, "Date"], location, "ko", markersize=0.15)
+        # Plot null values in target column
+        null_indices = df_location.loc[df_location["RainTomorrow"].isnull()].index
+        for idx in null_indices:
+            ax.plot(df_location.loc[idx, "Date"], location, "ko", markersize=0.15)
 
     # Customize the plot
     ax.set_yticks(np.arange(len(locations)))
@@ -247,10 +234,14 @@ def plot_boxplot(df, column, ax):
     sns.boxplot(df[column], ax=ax)
     ax.set_title(column)
 
-def plot_heatmap(correlation_matrix):
-    plt.figure(figsize=(10, 8))
-    sns.heatmap(correlation_matrix, annot=True, fmt=".2f", cmap="coolwarm", vmin=-1, vmax=1)
+def plot_heatmap(correlation_matrix, figsize=(8, 8)):
+    plt.figure(figsize=figsize)
+    sns.heatmap(correlation_matrix, annot=True, fmt=".2f", cmap="coolwarm", vmin=-1, vmax=1, annot_kws={"size": 8}, cbar=False)
     plt.title("Heatmap de Correlación")
+
+    plt.xticks(fontsize=8)  # Adjust x-axis font size
+    plt.yticks(fontsize=8)  # Adjust y-axis font size
+
     plt.show()
 
 def plot_graph_on_grid(df, columns, graph_type, num_cols=3, figsize=(10, 5)):
