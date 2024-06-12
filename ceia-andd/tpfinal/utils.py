@@ -3,6 +3,110 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns  # Visualización de datos estadísticos
 import statsmodels.api as sm  # Regresión lineal
+from scipy.stats import chi2_contingency  # Test de chi-cuadrado
+from sklearn.impute import SimpleImputer, KNNImputer
+from sklearn.metrics import (accuracy_score, confusion_matrix, f1_score, precision_score, recall_score)
+
+def plot_day_of_year_in_unit_circle():
+    # Create a DataFrame to hold the values
+    days = np.arange(1, 366, 2)
+    days_in_year = 366
+
+    angles = 2 * np.pi * (days - 1) / days_in_year
+    cos_vals = np.cos(angles)
+    sin_vals = np.sin(angles)
+
+    df_days = pd.DataFrame({
+        'Day': days,
+        'Angle': angles,
+        'DayCos': cos_vals,
+        'DaySin': sin_vals
+    })
+
+    # Randomly select a day
+    random_day = 37
+    random_day_row = df_days[df_days['Day'] == random_day]
+
+    # Plot the circle with 365 dots
+    plt.figure(figsize=(5, 5))
+    plt.plot(df_days['DayCos'], df_days['DaySin'], 'bo', markersize=1)  # Circle with 365 dots
+
+    # Highlight the random day
+    plt.plot(random_day_row['DayCos'], random_day_row['DaySin'], 'ro', markersize=2)
+    plt.text(random_day_row['DayCos'].values[0] + 0.02, random_day_row['DaySin'].values[0],
+            f"Day {random_day}\n({random_day_row['DayCos'].values[0]:.2f},{random_day_row['DaySin'].values[0]:.2f})",
+            fontsize=6, ha='left', va='bottom')
+
+    # Draw x and y axes
+    plt.axhline(0, color='grey', linestyle='--', linewidth=0.5)
+    plt.axvline(0, color='grey', linestyle='--', linewidth=0.5)
+
+    # Draw the angle
+    plt.plot([0, 1], [0, 0], 'k-', linewidth=1)
+    plt.plot([0, random_day_row['DayCos'].values[0]], [0, random_day_row['DaySin'].values[0]], 'k-', linewidth=1)
+
+    angle_text = f"{np.degrees(random_day_row['Angle'].values[0]):.2f}°"
+    label_angle = random_day_row['Angle'].values[0] / 4
+    plt.text(0.3 * np.cos(label_angle) + 0.05, 0.3 * np.sin(label_angle) + 0.05, angle_text, color='k', fontsize=8, ha='center', va='center')
+
+    # Mark and label the cosine value on the axes
+    plt.plot([random_day_row['DayCos'].values[0], random_day_row['DayCos'].values[0]], [0, random_day_row['DaySin'].values[0]], 'k--', linewidth=0.4)
+    plt.text(random_day_row['DayCos'].values[0], -0.05,
+            f"{random_day_row['DayCos'].values[0]:.2f}",
+            fontsize=7,
+            ha='center',
+            va='top')
+
+    plt.plot([0, random_day_row['DayCos'].values[0]], [random_day_row['DaySin'].values[0], random_day_row['DaySin'].values[0]], 'k--', linewidth=0.4)
+    plt.text(-0.05, random_day_row['DaySin'].values[0],
+            f"{random_day_row['DaySin'].values[0]:.2f}",
+            fontsize=7,
+            ha='right',
+            va='center')
+
+    # Set equal aspect ratio
+    plt.gca().set_aspect('equal', adjustable='box')
+
+    # Labels and title
+    plt.xlabel('DayCos')
+    plt.ylabel('DaySin')
+    plt.title('Representación del día del año en coordenadas polares', fontsize=10)
+
+    plt.tick_params(axis='both', labelsize=6)
+
+    plt.show()
+
+def plot_distributions(original, mean_imputed, knn_imputed, variable, figsize=(15, 3)):
+    plt.figure(figsize=figsize)
+
+    # Original data
+    plt.subplot(1, 3, 1)
+    sns.histplot(original[variable].dropna(), kde=True)
+    plt.title(f'Original: "{variable}"')
+
+    # Mean imputed data
+    plt.subplot(1, 3, 2)
+    sns.histplot(mean_imputed[variable], kde=True)
+    plt.title(f'Imputación (mediana): "{variable}"')
+
+    # KNN imputed data
+    plt.subplot(1, 3, 3)
+    sns.histplot(knn_imputed[variable], kde=True)
+    plt.title(f'Imputación (KNN): "{variable}"')
+
+    plt.show()
+
+# SimpleImputer (mediana)
+def simple_imputer_mean(df, numerical_vars):
+    imputer = SimpleImputer(strategy='mean')
+    df[numerical_vars] = imputer.fit_transform(df[numerical_vars])
+    return df
+
+# KNN Imputer
+def knn_imputer(df, numerical_vars, n_neighbors=5):
+    imputer = KNNImputer(n_neighbors=n_neighbors)
+    df[numerical_vars] = imputer.fit_transform(df[numerical_vars])
+    return df
 
 def outliers_iqr(df, columns):
     outliers = []
