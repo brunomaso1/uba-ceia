@@ -1,0 +1,244 @@
+use sample_mflix
+
+/* 1. Número de películas lanzadas cada año
+Haz una consulta que muestre cuántas películas se lanzaron en cada año. */
+db.movies.aggregate([
+    {
+        $group: {
+            _id: "$year",
+            cantidad: {
+                $sum: 1
+            }
+        }
+    },
+    {
+        $sort: {
+            _id: -1
+        }
+    },
+    {
+        $project: {
+            _id: 0,
+            año: "$_id",
+            cantidad: 1
+        }
+    }
+])
+
+/* 2. Calificación promedio de IMDb por género
+Encuentra la calificación promedio de IMDb para películas en cada género. */
+db.movies.aggregate([
+    {
+        $unwind: "$genres"
+    },
+    {
+        $group: {
+            _id: "$genres",
+            ratingIMDBpromedio: { $avg: "$imdb.rating" }
+        }
+    },
+    {
+        $sort: { _id: 1 }
+    }
+])
+
+/* 3. Top 5 películas con más alta calificación en IMDb
+Lista las 5 películas con la calificación IMDb más alta. */
+// Eliminar registro duplicado?
+db.movies.aggregate([
+    {
+        $match: {
+            "imdb.rating": { $ne: "" }
+        }
+    },
+    {
+        $sort: {
+            "imdb.rating": -1
+        }
+    },
+    {
+        $limit: 5
+    }
+])
+
+/* 4. Número total de películas y duración promedio por director
+Determina el número total de películas y la duración promedio para cada director. */
+// Hay runtimes nulos, hay que eliminarlos?
+db.movies.aggregate([
+    {
+        $unwind: "$directors"
+    },
+    {
+        $group: {
+            _id: "$directors",
+            peliculasTotales: { $sum: 1 },
+            tiempoPromedio: { $avg: "$runtime" }
+        }
+    },
+    {
+        $sort: { _id: 1 }
+    }
+])
+
+
+/* 5. Distribución de películas por clasificación MPAA
+Encuentra la distribución de películas basadas en su clasificación MPAA. */
+// Hay rates que son null
+db.movies.aggregate([
+    {
+        $group: {
+            _id: "$rated",
+            count: { $sum: 1 }
+        }
+    },
+    {
+        $sort: { count: -1 }
+    }
+])
+
+/* 6. Top 3 países productores de películas
+Encuentra los 3 países que producen el mayor número de películas. */
+db.movies.aggregate([
+    {
+        $unwind: "$countries"
+    },
+    {
+        $group: {
+            _id: "$countries",
+            count: { $sum: 1 }
+        }
+    },
+    {
+        $sort: { count: -1 }
+    },
+    {
+        $limit: 3
+    }
+])
+
+/* 7. Número promedio de miembros del reparto para películas después del 2000
+Para películas lanzadas después del 2000, calcula el número promedio de miembros del
+reparto. */
+db.movies.aggregate([
+    {
+        $match: {
+            year: { $gt: 2000 }
+        }
+    },
+    {
+        $project: {
+            numMiembros: { $size: { $ifNull: ["$cast", []] } }
+        }
+    },
+    {
+        $group: {
+            _id: null,
+            promedioMiembros: { $avg: "$numMiembros" }
+        }
+    },
+    {
+        $project: {
+            _id: 0
+        }
+    }
+])
+
+/* 8. Calificación promedio de IMDb y número de comentarios
+Determina la calificación promedio de IMDb para las películas y su respectivo número de
+comentarios. */
+db.movies.aggregate([
+    {
+        $match: {
+            "imdb.rating": { $ne: null }
+        }
+    },
+    {
+        $group: {
+            _id: {},
+            ratingIMDBpromedio: { $avg: "$imdb.rating" },
+            comentariosTotales: { $sum: "$num_mflix_comments" }
+        }
+    },
+    {
+        $project: {
+            _id: 0,
+            ratingIMDBpromedio: 1,
+            comentariosTotales: 1
+        }
+    }
+])
+
+/* 9. Número total de películas comentadas por usuario
+Encuentra el número total de películas en las que cada usuario ha comentado. */
+db.comments.aggregate([
+    {
+        $group: {
+            _id: "$email",
+            totalMoviesCommented: { $addToSet: "$movie_id" }
+        },
+    },
+    {
+        $project: {
+            _id: 1,
+            totalMoviesCommented: { $size: "$totalMoviesCommented" }
+        }
+    },
+    {
+        $sort: { totalMoviesCommented: -1 }
+    }
+])
+
+/* 10. Películas del género "Western" con comentarios previos a 2020
+Encuentra películas del género "Western" y sus respectivos comentarios antes del "2020-
+01-01". */
+db.movies.aggregate([
+    {
+        $match: {
+            genres: "Western"
+        }
+    },
+    {
+        $lookup: {
+            from: "comments",
+            localField: "_id",
+            foreignField: "movie_id",
+            as: "comments"
+        }
+    },
+    // Hasta acá tengo las pelis y sus comentarios (join)
+    {
+        $unwind: "$comments"
+    },
+    {
+        $match: {
+            "comments.date": { $lt: new ISODate("2020-01-01T00:00:00Z") }
+        }
+    },
+    // Filtré aquellas que los comentarios son menores a dicha fecha
+    {
+        $group: {
+            _id: {
+                movie_id: "$_id",
+                title: "$title"
+            },
+            comments: {
+                $push: {
+                    comment_id: "$comments._id",
+                    name: "$comments.name",
+                    email: "$comments.email",
+                    text: "$comments.text",
+                    date: "$comments.date"
+                }
+            }
+        }
+    },
+    // Agrupé por peli y agruege los comentarios (push) al arreglo de comentarios.
+    {
+        $project: {
+            _id: 0,
+            movie_id: "$_id.movie_id",
+            title: "$_id.title",
+            comments: 1
+        }
+    }
+])
