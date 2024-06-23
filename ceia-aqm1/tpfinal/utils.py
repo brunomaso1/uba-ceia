@@ -9,6 +9,32 @@ from sklearn.metrics import (accuracy_score, balanced_accuracy_score,
                              confusion_matrix, f1_score, precision_score, recall_score)
 from matplotlib.lines import Line2D
 
+from sklearn.metrics import auc, roc_curve
+
+
+def plot_roc(y_test, X_test_proba):
+    fpr, tpr, _ = roc_curve(y_test, X_test_proba)
+
+    plt.plot(fpr, tpr, label="Modelo")
+    plt.xlim([-0.01, 1.01])
+    plt.ylim([-0.01, 1.01])
+    plt.xlabel("Tasa de falsos positivos")
+    plt.ylabel("Tasa de verdaderos positivos")
+    plt.title("Grafico curva ROC")
+    plt.legend()
+    plt.tight_layout()
+
+    print(f"Area bajo la curva: {auc(fpr, tpr)}")
+
+
+def fix_location(df):
+    mapping_dict = {"Dartmoor": "DartmoorVillage",
+                    "Richmond": "RichmondSydney"}
+    df_out = df.copy()
+    df_out['Location'] = df_out["Location"].map(
+        mapping_dict).fillna(df["Location"])
+    return df_out
+
 
 def to_category(x):
     return x.astype('category')
