@@ -8,8 +8,52 @@ from sklearn.impute import SimpleImputer, KNNImputer
 from sklearn.metrics import (accuracy_score, balanced_accuracy_score,
                              confusion_matrix, f1_score, precision_score, recall_score)
 from matplotlib.lines import Line2D
-
+from sklearn.base import BaseEstimator, TransformerMixin  # Transformaciones
 from sklearn.metrics import auc, roc_curve
+
+
+class ClapOutliersTransformerIRQ(BaseEstimator, TransformerMixin):
+    def __init__(self, columns):
+        self.IRQ_saved = {}
+        self.columns = columns
+        self.fitted = False
+
+    def fit(self, X, y=None):
+        for col in self.columns:
+            # Rango itercuartílico
+            Q1 = X[col].quantile(0.25)
+            Q3 = X[col].quantile(0.75)
+            IRQ = Q3 - Q1
+            irq_lower_bound = Q1 - 3 * IRQ
+            irq_upper_bound = Q3 + 3 * IRQ
+
+            # Ajusto los valores al mínimo o máximo según corresponda.
+            # Esto es para no pasarse de los valores mínimos o máximos con el IRQ.
+            min_value = X[col].min()
+            max_value = X[col].max()
+            irq_lower_bound = max(irq_lower_bound, min_value)
+            irq_upper_bound = min(irq_upper_bound, max_value)
+
+            self.IRQ_saved[col + "irq_lower_bound"] = irq_lower_bound
+            self.IRQ_saved[col + "irq_upper_bound"] = irq_upper_bound
+
+        self.fitted = True
+
+        return self
+
+    def transform(self, X):
+        if not self.fitted:
+            raise ValueError("Fit the transformer first using fit().")
+
+        X_transf = X.copy()
+
+        for col in self.columns:
+            irq_lower_bound = self.IRQ_saved[col + "irq_lower_bound"]
+            irq_upper_bound = self.IRQ_saved[col + "irq_upper_bound"]
+            X_transf[col] = X_transf[col].clip(
+                upper=irq_upper_bound, lower=irq_lower_bound)
+
+        return X_transf
 
 
 def plot_roc(y_test, X_test_proba):
@@ -213,15 +257,11 @@ def plot_distributions(original, mean_imputed, knn_imputed, variable, figsize=(1
 
     plt.show()
 
-# SimpleImputer (mediana)
-
 
 def simple_imputer_mean(df, numerical_vars):
     imputer = SimpleImputer(strategy='mean')
     df[numerical_vars] = imputer.fit_transform(df[numerical_vars])
     return df
-
-# KNN Imputer
 
 
 def knn_imputer(df, numerical_vars, n_neighbors=5):
@@ -237,8 +277,8 @@ def outliers_iqr(df, columns):
         Q1 = df[col].quantile(0.25)
         Q3 = df[col].quantile(0.75)
         IQR = Q3 - Q1
-        irq_lower_bound = Q1 - 1.5 * IQR
-        irq_upper_bound = Q3 + 1.5 * IQR
+        irq_lower_bound = Q1 - 3 * IQR
+        irq_upper_bound = Q3 + 3 * IQR
 
         # Desviación estándar
         mean = df[col].mean()
@@ -524,7 +564,6 @@ def evaluate_predictions(y_true, y_pred, algorithm, figsize=(4, 4)):
         "Accuracy": round(accuracy_score(y_true, y_pred), 3),
         "Balanced-Accuracy": round(balanced_accuracy_score(y_true, y_pred), 3),
         "Precision": round(precision_score(y_true, y_pred), 3),  # type: ignore
-        "Recall": round(recall_score(y_true, y_pred), 3),  # type: ignore
         "F1 Score": round(f1_score(y_true, y_pred), 3)  # type: ignore
     }
 
