@@ -1,0 +1,23 @@
+<center>
+<p>✨Datos del proyecto:✨<p>
+
+| Subtitulo       | TP3 - Visión por computadora - FIUBA                                                                                                   |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Descrpción**  | Template matching                                                                                                                      |
+| **Integrantes** | Bruno Masoller (brunomaso1@gmail.com)                                                                                                |
+
+</center>
+
+🔮 <em><font color='violet'><strong>Función auxiliar:</strong> Cargar imágenes de un directorio.</font></em>
+
+🔧 <em><font color='tomato'><strong>Configuraciones:</strong></font></em>
+
+⭐**Conclusión**⭐
+
+*Como conclusión final, podemos ver que el super algoritmo función muy bien en comparación con el anterior, y además no es necesario pre-calcular un umbral. Para el caso de **NMS=0.7**, devuelve 13 objetos, si le aumentamos un punto, ya empieza a dar falsos positivos en algunas otras imágenes, por lo que parecería que el valor ideal anda por ese número. También el espacio de búsqueda **linspace=(0.15, 2.1, 200)** parecería ser ideal también, ya que la escala mínima es de 0.16 y la máxima es de 2.05 (justamente la imágen con muchos objetos); sin embargo, este valor no es mucho problema, ya que se puede aumentar pero también aumenta la complejidad en tiempo y espacio acorde. Es más, para 300 ya se murió la máquina unas dos veces...*
+
+<font color='orange'>⚠</font> *Problemas detectados:* <font color='orange'>⚠</font>
+
+<font color='MediumSeaGreen'>✔</font> *Mejoras posibles:* <font color='MediumSeaGreen'>✔</font>
+
+🔧 <em><font color='tomato'><strong>Configuraciones:</strong></font></em>
