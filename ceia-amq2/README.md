@@ -204,6 +204,11 @@ Reconstruir un contenedor y su imagen (cuando se agrega una dependencia global):
 # --build: Construye la imagen antes de levantar el contenedor
 docker compose up -d --no-deps --build <service_name>
 ```
+Ejemplo, cuando se agrega un modulo en el requirements:
+Nota: Le podes dar en otra terminal si no arrancaste docker compose de forma detachada.
+```sh
+docker compose up -d --no-deps --build airflow-webserver
+```
 
 
 #### Airflow
