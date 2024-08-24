@@ -2,7 +2,7 @@ import datetime
 from airflow import DAG
 
 from utils.rain_dataset.rain_dataset_tasks.tasks import RainTasks
-from utils.rain_dataset.dags_docs.rain_dataset_doc import (
+from utils.rain_dataset.ran_dataset_dags_docs.rain_dataset_doc import (
     DESCRIPTION,
     FULL_DESCRIPTION_MD,
 )

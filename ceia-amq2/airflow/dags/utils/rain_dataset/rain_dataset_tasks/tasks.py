@@ -1,19 +1,18 @@
+from utils.rain_dataset.rain_dataset_tasks.tasks_utils import (
+    aux_functions,
+    custom_transformers,
+)
 
 import re
 from airflow.decorators import task
 import pickle
-
 from dotenv import load_dotenv
-import numpy as np
 import pandas as pd
 import logging
 import awswrangler as wr
 from airflow.models import Variable
 import boto3
 import json
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.compose import ColumnTransformer
-from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import FunctionTransformer, Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -21,7 +20,6 @@ import geopandas as gpd
 import osmnx as ox
 from shapely.geometry import Point
 
-logger = logging.getLogger(__name__)
 load_dotenv()
 
 DATASET_NAME = "rain.csv"
@@ -46,155 +44,6 @@ INFO_DATA_FOLDER = Variable.get("INFO_DATA_FOLDER")
 PIPES_DATA_FOLDER = Variable.get("PIPES_DATA_FOLDER")
 TEST_SIZE = Variable.get("TEST_SIZE")
 
-def map_bool(x):
-    if isinstance(x, pd.DataFrame):
-        return x.applymap(lambda y: {"Yes": 1, "No": 0}.get(y, y))
-    else:
-        return x.map({"Yes": 1, "No": 0})
-
-
-def to_category(x):
-    return x.astype("category")
-
-
-def to_datetime(x):
-    return x.astype("datetime64[ns]")
-
-
-def save_to_csv(df, path):
-    wr.s3.to_csv(df=df, path=path, index=False)
-
-
-def encode_location(df: pd.DataFrame, gdf_locations) -> pd.DataFrame:
-    return pd.merge(df, gdf_locations.drop(columns="geometry"), on="Location")
-
-def eliminar_columnas(df, columnas_a_eliminar):
-    return df.drop(columns=columnas_a_eliminar)
-
-
-class ClapOutliersTransformerIRQ(BaseEstimator, TransformerMixin):
-    def __init__(self, columns):
-        self.IRQ_saved = {}
-        self.columns = columns
-        self.fitted = False
-
-    def fit(self, X, y=None):
-        for col in self.columns:
-            # Rango itercuartílico
-            Q1 = X[col].quantile(0.25)
-            Q3 = X[col].quantile(0.75)
-            IRQ = Q3 - Q1
-            irq_lower_bound = Q1 - 3 * IRQ
-            irq_upper_bound = Q3 + 3 * IRQ
-
-            # Ajusto los valores al mínimo o máximo según corresponda.
-            # Esto es para no pasarse de los valores mínimos o máximos con el IRQ.
-            min_value = X[col].min()
-            max_value = X[col].max()
-            irq_lower_bound = max(irq_lower_bound, min_value)
-            irq_upper_bound = min(irq_upper_bound, max_value)
-
-            self.IRQ_saved[col + "irq_lower_bound"] = irq_lower_bound
-            self.IRQ_saved[col + "irq_upper_bound"] = irq_upper_bound
-
-        self.fitted = True
-
-        return self
-
-    def transform(self, X):
-        if not self.fitted:
-            raise ValueError("Fit the transformer first using fit().")
-
-        X_transf = X.copy()
-
-        for col in self.columns:
-            irq_lower_bound = self.IRQ_saved[col + "irq_lower_bound"]
-            irq_upper_bound = self.IRQ_saved[col + "irq_upper_bound"]
-            X_transf[col] = X_transf[col].clip(
-                upper=irq_upper_bound, lower=irq_lower_bound
-            )
-
-        return X_transf
-
-
-def encode_cyclical_date(df, date_column="Date"):
-    """
-    Encodes a date column into cyclical features using sine and cosine transformations.
-
-    Parameters:
-    df (pandas.DataFrame): The dataframe containing the date column.
-    date_column (str): The name of the date column. Default is 'Date'.
-
-    Returns:
-    pandas.DataFrame: The dataframe with new 'DayCos' and 'DaySin' columns added,
-                      and intermediate columns removed.
-    """
-    # Make a copy to avoid modifying the original dataframe
-    df = df.copy()
-
-    # Ensure the date column is in datetime format
-    df[date_column] = pd.to_datetime(df[date_column])
-
-    # Calculate day of year
-    df["DayOfYear"] = df[date_column].dt.dayofyear
-
-    # Determine the number of days in the year for each date (taking leap years into account)
-    df["DaysInYear"] = df[date_column].dt.is_leap_year.apply(
-        lambda leap: 366 if leap else 365
-    )
-
-    # Convert day of the year to angle in radians, dividing by DaysInYear + 1
-    df["Angle"] = 2 * np.pi * (df["DayOfYear"] - 1) / df["DaysInYear"]
-
-    # Calculate sine and cosine features
-    df["DayCos"] = np.cos(df["Angle"])
-    df["DaySin"] = np.sin(df["Angle"])
-
-    # Remove intermediate columns
-    df = df.drop(columns=["DayOfYear", "DaysInYear", "Angle"])
-
-    return df
-
-
-def fix_location(df):
-    mapping_dict = {"Dartmoor": "DartmoorVillage", "Richmond": "RichmondSydney"}
-    df_out = df.copy()
-    df_out["Location"] = df_out["Location"].map(mapping_dict).fillna(df["Location"])
-    return df_out
-
-
-def encode_wind_dir(df):
-    dirs = [
-        "E",
-        "ENE",
-        "NE",
-        "NNE",
-        "N",
-        "NNW",
-        "NW",
-        "WNW",
-        "W",
-        "WSW",
-        "SW",
-        "SSW",
-        "S",
-        "SSE",
-        "SE",
-        "ESE",
-    ]
-    angles = np.radians(np.arange(0, 360, 22.5))
-    mapping_dict = {d: a for (d, a) in zip(dirs, angles)}
-
-    wind_dir_columns = ["WindGustDir", "WindDir9am", "WindDir3pm"]
-    for column in wind_dir_columns:
-        df[f"{column}Angle"] = df[column].map(mapping_dict)
-
-        df[f"{column}Cos"] = np.cos(df[f"{column}Angle"].astype(float))
-        df[f"{column}Sin"] = np.sin(df[f"{column}Angle"].astype(float))
-
-        df = df.drop(columns=f"{column}Angle")
-
-    return df
 
 class RainTasks:
     @task.virtualenv(requirements=["kagglehub"], system_site_packages=True)
@@ -203,8 +52,6 @@ class RainTasks:
         import logging
         import kagglehub
         from airflow.models import Variable
-
-        logger = logging.getLogger("airflow.task")
 
         kagglehub_repo_location = Variable.get("KAGGLEHUB_REPO_LOCATION")
         kagglehub_data_name = Variable.get("KAGGLEHUB_DATA_NAME")
@@ -217,7 +64,10 @@ class RainTasks:
 
     @task
     def search_upload_locations(
-        s3_raw_data_path, s3_gdf_locations_path=INFO_DATA_FOLDER + GDF_LOCATIONS_NAME, boto3_client=BOTO3_CLIENT, bucket_data=BUCKET_DATA
+        s3_raw_data_path,
+        s3_gdf_locations_path=INFO_DATA_FOLDER + GDF_LOCATIONS_NAME,
+        boto3_client=BOTO3_CLIENT,
+        bucket_data=BUCKET_DATA,
     ):
         logger = logging.getLogger(__name__)
 
@@ -306,9 +156,6 @@ class RainTasks:
 
     @task
     def upload_raw_data_to_S3(local_path):
-        # TODO: Add a bash operator for un-compressing the file.
-        logger = logging.getLogger("airflow.task")
-
         df = pd.read_csv(local_path, compression="zip")
 
         s3_raw_data_path = S3_RAW_DATA_FOLDER + DATASET_NAME
@@ -332,7 +179,9 @@ class RainTasks:
     @task
     def create_target_pipe():
         target_pipeline = Pipeline(steps=[])
-        target_pipeline.steps.append(("mapping", FunctionTransformer(map_bool)))
+        target_pipeline.steps.append(
+            ("mapping", FunctionTransformer(aux_functions.map_bool))
+        )
 
         s3_target_pipeline_path = PIPES_DATA_FOLDER + TARGET_PIPELINE_NAME
         client = boto3.client(BOTO3_CLIENT)
@@ -355,78 +204,63 @@ class RainTasks:
         bool_columns = columns_types["bool_columns"]
         date_columns = columns_types["date_columns"]
         cont_columns = columns_types["cont_columns"]
-        target_columns = columns_types["target_columns"]
 
         # Limpieza de datos
         # Transformar tipos de datos
-        col_types_transf = ColumnTransformer(
-            [
-                ("categories", FunctionTransformer(to_category), cat_columns),
-                ("date", FunctionTransformer(to_datetime), date_columns),
-                ("bool", FunctionTransformer(map_bool), bool_columns),
-            ],
-            remainder="passthrough",
-            verbose_feature_names_out=False,
-        ).set_output(transform="pandas")
-
-        inputs_pipeline.steps.append(("feature_transf", col_types_transf))
+        inputs_pipeline.steps.append(
+            (
+                "feature_transf",
+                custom_transformers.convertDataTypeTransformer(
+                    cat_columns, date_columns, bool_columns
+                ),
+            )
+        )
 
         # Eliminar outliers
         columns = ["Rainfall", "Evaporation", "WindGustSpeed", "WindSpeed9am"]
-        clap_outliers_irq_transf = ClapOutliersTransformerIRQ(columns=columns)
-
         inputs_pipeline.steps.append(
-            ("clap_outliers_irq_transf", clap_outliers_irq_transf)
+            (
+                "clap_outliers_irq_transf",
+                custom_transformers.ClapOutliersIRQTransformer(columns=columns),
+            )
         )
 
         # Valores faltantes
-        cat_imputer = (
-            "cat_missing_values_imputer",
-            SimpleImputer(strategy="most_frequent"),
+        inputs_pipeline.steps.append(
+            (
+                "missing_values_transf",
+                custom_transformers.missingValuesTransformer(
+                    cat_columns, bool_columns, cont_columns
+                ),
+            )
         )
-        cont_imputer = ("cont_missing_values_imptuer", SimpleImputer(strategy="mean"))
-        missing_values_transf = ColumnTransformer(
-            [
-                ("cat_imputer", Pipeline([cat_imputer]), cat_columns + bool_columns),
-                ("cont_imputer", Pipeline([cont_imputer]), cont_columns),
-            ],
-            remainder="passthrough",
-            verbose_feature_names_out=False,
-        ).set_output(transform="pandas")
-        inputs_pipeline.steps.append(("missing_values_transf", missing_values_transf))
 
         # Codificar variables categóricas
         # Date
-        cyclical_date_transformer = FunctionTransformer(
-            func=encode_cyclical_date, kw_args={"date_column": "Date"}, validate=False
-        )
         inputs_pipeline.steps.append(
-            ("cyclical_date_transformer", cyclical_date_transformer)
+            ("cyclical_date_transformer", custom_transformers.cyclicalDateTransformer())
         )
 
         # Location
         obj = client.get_object(Bucket=BUCKET_DATA, Key=s3_gdf_locations_path)
         gdf_locations = gpd.read_file(obj["Body"])
-        encode_location_transformer = FunctionTransformer(
-            func=encode_location,
-            kw_args={"gdf_locations": gdf_locations},
-            validate=False,
-        )
-
         location_pieline = Pipeline(
             [
-                ("fix_location", FunctionTransformer(fix_location)),
-                ("encode_location_transformer", encode_location_transformer),
+                ("fix_location", custom_transformers.fixLocationsTransformer()),
+                (
+                    "encode_location_transformer",
+                    custom_transformers.encodeLocationTransformer(gdf_locations),
+                ),
             ]
         )
         inputs_pipeline.steps.append(("location_pieline", location_pieline))
 
         # WindDir
-        encode_wind_dir_transformer = FunctionTransformer(
-            encode_wind_dir, validate=False
-        )
         inputs_pipeline.steps.append(
-            ("encode_wind_dir_transformer", encode_wind_dir_transformer)
+            (
+                "encode_wind_dir_transformer",
+                custom_transformers.encodeWindDirTransformer(),
+            )
         )
 
         # Eliminar columnas
@@ -438,13 +272,22 @@ class RainTasks:
             "Location",
             "id",
         ]
-        eliminar_columnas_transformer = FunctionTransformer(
-            eliminar_columnas, kw_args={"columnas_a_eliminar": columnas_codificadas}
+        inputs_pipeline.steps.append(
+            (
+                "eliminar_columnas_transformer",
+                custom_transformers.removeColumnsTransformer(columnas_codificadas),
+            )
         )
-        inputs_pipeline.steps.append(('eliminar_columnas_transformer', eliminar_columnas_transformer))
 
         # Scaler
-        inputs_pipeline.steps.append(('StandardScaler', StandardScaler(with_mean=True, with_std=True).set_output(transform='pandas')))
+        inputs_pipeline.steps.append(
+            (
+                "StandardScaler",
+                StandardScaler(with_mean=True, with_std=True).set_output(
+                    transform="pandas"
+                ),
+            )
+        )
 
         # Subimos el pipeline
         s3_input_pipeline_path = PIPES_DATA_FOLDER + INPUTS_PIPELINE_NAME
@@ -473,10 +316,7 @@ class RainTasks:
             "y_test": S3_PREPROCESED_DATA_FOLDER + Y_TEST_NAME,
         }
 
-        save_to_csv(X_train, train_test_split_preprocesed_path["X_train"])
-        save_to_csv(X_test, train_test_split_preprocesed_path["X_test"])
-        save_to_csv(y_train, train_test_split_preprocesed_path["y_train"])
-        save_to_csv(y_test, train_test_split_preprocesed_path["y_test"])
+        aux_functions.upload_split_to_s3(X_train, X_test, y_train, y_test, train_test_split_preprocesed_path)
 
         return train_test_split_preprocesed_path
 
@@ -486,11 +326,8 @@ class RainTasks:
         s3_input_pipeline_path,
         s3_target_pipeline_path,
     ):
-        #TODO: Register to MLFlow?
-        X_train = wr.s3.read_csv(train_test_split_preprocesed_path["X_train"])
-        X_test = wr.s3.read_csv(train_test_split_preprocesed_path["X_test"])
-        y_train = wr.s3.read_csv(train_test_split_preprocesed_path["y_train"])
-        y_test = wr.s3.read_csv(train_test_split_preprocesed_path["y_test"])
+        # TODO: Register to MLFlow?
+        X_train, X_test, y_train, y_test = aux_functions.download_split_from_s3(train_test_split_preprocesed_path)
 
         client = boto3.client(BOTO3_CLIENT)
         obj = client.get_object(Bucket=BUCKET_DATA, Key=s3_input_pipeline_path)
@@ -510,7 +347,4 @@ class RainTasks:
             "y_test": S3_FINAL_DATA_FOLDER + Y_TEST_NAME,
         }
 
-        save_to_csv(X_train, train_test_split_final_path["X_train"])
-        save_to_csv(X_test, train_test_split_final_path["X_test"])
-        save_to_csv(y_train, train_test_split_final_path["y_train"])
-        save_to_csv(y_test, train_test_split_final_path["y_test"])
+        aux_functions.upload_split_to_s3(X_train, X_test, y_train, y_test, train_test_split_final_path)
