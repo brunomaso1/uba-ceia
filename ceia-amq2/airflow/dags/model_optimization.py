@@ -63,6 +63,9 @@ def optimization_dag():
     @task
     def find_best_model(X_train, y_train, X_test, y_test, experiment_id):
 
+        from mlflow import MlflowClient
+        client = MlflowClient()
+
         run_name_parent = "best_hyperparam_"  + datetime.datetime.today().strftime('%Y/%m/%d-%H:%M:%S"')
 
         with mlflow.start_run(experiment_id=experiment_id, run_name=run_name_parent):
@@ -129,8 +132,12 @@ def optimization_dag():
                 metadata={"task": "Classification", "dataset": "Rain dataset"}
                 )
             
+            
             # Se obtiene la ubicación del modelo guardado en MLflow
             model_uri = mlflow.get_artifact_uri(artifact_path)
+
+            # TODO: Agregar un alias
+            # client.set_registered_model_alias(name="Rain_dataset_model_dev", alias="dev_best", version=1)
 
             return model_uri
 
@@ -168,6 +175,37 @@ def optimization_dag():
             # Se registran la matriz de confusión en MLflow
             #TODO: Log confusion matrix
 
+    @task
+    def register_model(model_uri):
+
+        from mlflow import MlflowClient
+        
+        client = mlflow.MlflowClient()
+        name = "Rain_dataset_model_prod"
+        desc = "Modelo de predicción de lluvia"
+
+        # Se carga el modelo guardado en MLflow
+        model = mlflow.sklearn.load_model(model_uri)
+
+        # Creamos el modelo en productivo
+        client.create_registered_model(name=name, description=desc)
+
+        # Guardamos como tag los hiperparámetros del modelo
+        tags = model.get_params()
+        tags["model"] = type(model).__name__
+        
+        # Guardamos la versión del modelo
+        result = client.create_model_version(
+            name=name,
+            source=model_uri,
+            run_id=model_uri.split("/")[-3],
+            tags=tags
+        )
+
+        # Y creamos como la version con el alias de prod_best para poder levantarlo en nuestro
+        # proceso de servicio del modelo on-line.
+        client.set_registered_model_alias(name, "prod_best", result.version)
+
     # Cargar el conjunto de datos de entrenamiento
     load_train_test = load_train_test_dataset()
     X_train = load_train_test["X_train"]
@@ -182,5 +220,7 @@ def optimization_dag():
     model_uri_path = find_best_model(X_train, y_train, X_test, y_test, experiment_id)
     
     test_model(model_uri_path, experiment_id)
+
+    register_model(model_uri_path)
 
 dag = optimization_dag()
