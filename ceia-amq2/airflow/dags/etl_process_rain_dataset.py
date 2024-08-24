@@ -4,15 +4,19 @@ import pickle
 from airflow.decorators import dag, task
 from airflow import DAG
 from dotenv import load_dotenv
+import numpy as np
 import pandas as pd
 import logging
 import awswrangler as wr
 from airflow.models import Variable
 import boto3
 import json
+from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import FunctionTransformer, Pipeline
+import geopandas as gpd
 
 logger = logging.getLogger(__name__)
 load_dotenv()
@@ -23,6 +27,7 @@ DATASET_NAME = 'rain.csv'
 COLUMNS_TYPE_FILE_NAME = 'columnsTypes.json'
 TARGET_PIPELINE_NAME = 'target_pipeline.pkl'
 INPUTS_PIPELINE_NAME = 'inputs_pipeline.pkl'
+GDF_LOCATIONS_NAME = 'gdf_locations.json'
 BUCKET_DATA = 'data'
 BOTO3_CLIENT = 's3'
 X_TRAIN_NAME = 'X_train.csv'
@@ -49,9 +54,7 @@ TODO: Escribir un resumen
 
 default_args = {
     'owner': "AMQ2",
-    'depends_on_past': False,
     'schedule_interval': None,
-    'schedule': None,
     'retries': 1,
     'retry_delay': datetime.timedelta(minutes=5),
     'dagrun_timeout': datetime.timedelta(minutes=15)
@@ -75,6 +78,89 @@ def to_datetime(x):
 
 def save_to_csv(df, path):
     wr.s3.to_csv(df=df, path=path, index=False)
+
+def encode_location(df: pd.DataFrame, gdf_locations) -> pd.DataFrame:
+    return pd.merge(df, gdf_locations.drop(columns="geometry"), on="Location")
+
+class ClapOutliersTransformerIRQ(BaseEstimator, TransformerMixin):
+    def __init__(self, columns):
+        self.IRQ_saved = {}
+        self.columns = columns
+        self.fitted = False
+
+    def fit(self, X, y=None):
+        for col in self.columns:
+            # Rango itercuartílico
+            Q1 = X[col].quantile(0.25)
+            Q3 = X[col].quantile(0.75)
+            IRQ = Q3 - Q1
+            irq_lower_bound = Q1 - 3 * IRQ
+            irq_upper_bound = Q3 + 3 * IRQ
+
+            # Ajusto los valores al mínimo o máximo según corresponda.
+            # Esto es para no pasarse de los valores mínimos o máximos con el IRQ.
+            min_value = X[col].min()
+            max_value = X[col].max()
+            irq_lower_bound = max(irq_lower_bound, min_value)
+            irq_upper_bound = min(irq_upper_bound, max_value)
+
+            self.IRQ_saved[col + "irq_lower_bound"] = irq_lower_bound
+            self.IRQ_saved[col + "irq_upper_bound"] = irq_upper_bound
+
+        self.fitted = True
+
+        return self
+
+    def transform(self, X):
+        if not self.fitted:
+            raise ValueError("Fit the transformer first using fit().")
+
+        X_transf = X.copy()
+
+        for col in self.columns:
+            irq_lower_bound = self.IRQ_saved[col + "irq_lower_bound"]
+            irq_upper_bound = self.IRQ_saved[col + "irq_upper_bound"]
+            X_transf[col] = X_transf[col].clip(
+                upper=irq_upper_bound, lower=irq_lower_bound)
+
+        return X_transf
+    
+def encode_cyclical_date(df, date_column='Date'):
+    """
+    Encodes a date column into cyclical features using sine and cosine transformations.
+
+    Parameters:
+    df (pandas.DataFrame): The dataframe containing the date column.
+    date_column (str): The name of the date column. Default is 'Date'.
+
+    Returns:
+    pandas.DataFrame: The dataframe with new 'DayCos' and 'DaySin' columns added,
+                      and intermediate columns removed.
+    """
+    # Make a copy to avoid modifying the original dataframe
+    df = df.copy()
+
+    # Ensure the date column is in datetime format
+    df[date_column] = pd.to_datetime(df[date_column])
+
+    # Calculate day of year
+    df['DayOfYear'] = df[date_column].dt.dayofyear
+
+    # Determine the number of days in the year for each date (taking leap years into account)
+    df['DaysInYear'] = df[date_column].dt.is_leap_year.apply(
+        lambda leap: 366 if leap else 365)
+
+    # Convert day of the year to angle in radians, dividing by DaysInYear + 1
+    df['Angle'] = 2 * np.pi * (df['DayOfYear'] - 1) / df['DaysInYear']
+
+    # Calculate sine and cosine features
+    df['DayCos'] = np.cos(df['Angle'])
+    df['DaySin'] = np.sin(df['Angle'])
+
+    # Remove intermediate columns
+    df = df.drop(columns=["DayOfYear", "DaysInYear", "Angle"])
+
+    return df
 
 
 with DAG(
@@ -105,6 +191,68 @@ with DAG(
             kagglehub_repo_location, path=kagglehub_data_name, force_download=True)
 
         return path
+    
+    @task.virtualenv(
+        requirements=["awswrangler", "boto3", "osmnx", "geopandas"],
+        system_site_packages=True
+    )
+    def search_upload_locations(s3_raw_data_path, s3_gdf_locations_path, boto3_client, bucket_data):
+        import awswrangler as wr
+        import boto3
+        import re
+        import osmnx as ox
+        from shapely.geometry import Point
+        import geopandas as gpd
+        import pandas as pd
+        import logging
+        import json
+
+        logger = logging.getLogger(__name__)
+
+        client = boto3.client(boto3_client)
+        df = wr.s3.read_csv(s3_raw_data_path)
+
+        country = "Australia"
+        mapping_dict = {"Dartmoor": "DartmoorVillage", "Richmond": "RichmondSydney"}
+        df["Location"] = df["Location"].map(mapping_dict).fillna(df["Location"])
+
+        locations = df["Location"].unique()
+
+        locations = [re.sub(r'([a-z])([A-Z])', r'\1 \2', l) for l in locations]
+
+        locs = []
+        lats = []
+        lons = []
+        logger.info(f'len(locations)={len(locations)}')
+        for location in locations:
+            try:
+                logger.info(f'location={location}')
+                lat, lon = ox.geocode(location + f", {country}")
+
+                locs.append(location.replace(" ", ""))
+                lats.append(lat)
+                lons.append(lon)
+            except Exception as e:
+                print(f"Error retrieving coordinates for {location}: {e}")
+
+        df_locations = pd.DataFrame({
+            'Location': locs,
+            'Lat': lats,
+            'Lon': lons
+        })
+        logger.info('df_locations=')
+        logger.info(df_locations.head())
+        geometry = [Point(lon, lat) for lon, lat in zip(
+            df_locations['Lon'], df_locations['Lat'])]
+        gdf_locations = gpd.GeoDataFrame(
+            df_locations, geometry=geometry, crs="EPSG:4326")
+
+        gdf_locations_json = json.loads(gdf_locations.to_json())
+
+        client.put_object(Bucket=bucket_data, Key=s3_gdf_locations_path,
+                            Body=json.dumps(gdf_locations_json))
+        
+        return s3_gdf_locations_path
 
     @task
     def process_column_types():
@@ -166,7 +314,7 @@ with DAG(
         return s3_target_pipeline_path
 
     @task
-    def create_inputs_pipe(s3_columns_path):
+    def create_inputs_pipe(s3_columns_path, s3_gdf_locations_path):
         inputs_pipeline = Pipeline(steps=[])
 
         client = boto3.client(BOTO3_CLIENT)
@@ -178,6 +326,8 @@ with DAG(
         cont_columns = columns_types['cont_columns']
         target_columns = columns_types['target_columns']
 
+        # Limpieza de datos
+        # Transformar tipos de datos
         col_types_transf = ColumnTransformer(
             [('categories', FunctionTransformer(to_category), cat_columns),
              ('date', FunctionTransformer(to_datetime), date_columns),
@@ -186,6 +336,40 @@ with DAG(
             verbose_feature_names_out=False).set_output(transform='pandas')
 
         inputs_pipeline.steps.append(('feature_transf', col_types_transf))
+
+        # Eliminar outliers
+        columns = ['Rainfall', 'Evaporation', 'WindGustSpeed', 'WindSpeed9am']
+        clap_outliers_irq_transf = ClapOutliersTransformerIRQ(columns=columns)
+
+        inputs_pipeline.steps.append(('clap_outliers_irq_transf', clap_outliers_irq_transf))
+
+        # Valores faltantes
+        cat_imputer = ('cat_missing_values_imputer', SimpleImputer(strategy='most_frequent'))
+        cont_imputer = ('cont_missing_values_imptuer', SimpleImputer(strategy='mean'))
+        missing_values_transf = ColumnTransformer(
+            [('cat_imputer', Pipeline([cat_imputer]), cat_columns + bool_columns),
+            ('cont_imputer', Pipeline([cont_imputer]), cont_columns)],
+            remainder='passthrough',
+            verbose_feature_names_out=False).set_output(transform='pandas')
+        inputs_pipeline.steps.append(('missing_values_transf', missing_values_transf))
+
+        # Codificar variables categóricas
+        # Date
+        cyclical_date_transformer = FunctionTransformer(
+            func=encode_cyclical_date,
+            kw_args={'date_column': 'Date'},
+            validate=False
+        ).set_output(transform='pandas')
+        inputs_pipeline.steps.append(('cyclical_date_transformer', cyclical_date_transformer))
+
+        # Location
+        obj = client.get_object(Bucket=BUCKET_DATA, Key=s3_gdf_locations_path)
+        gdf_locations = gpd.read_file(obj['Body'])
+        encode_location_transformer = FunctionTransformer(
+            func=encode_location,
+            kw_args={'gdf_locations': gdf_locations},
+            validate=False
+        ).set_output(transform='pandas')
 
         # TODO: Agregar todas las tranformaciones faltantes.
 
@@ -254,9 +438,10 @@ with DAG(
     local_path = download_raw_data_from_internet()
     s3_raw_data_path = upload_raw_data_to_S3(local_path)
     s3_df_path = process_target_drop_na(s3_raw_data_path)
+    s3_gdf_locations_path = search_upload_locations(s3_raw_data_path, INFO_DATA_FOLDER + GDF_LOCATIONS_NAME, BOTO3_CLIENT, BUCKET_DATA)
 
     s3_columns_path = process_column_types()
-    s3_input_pipeline_path = create_inputs_pipe(s3_columns_path)
+    s3_input_pipeline_path = create_inputs_pipe(s3_columns_path, s3_gdf_locations_path)
 
     s3_target_pipeline_path = create_target_pipe()
 

@@ -12,6 +12,7 @@ import pandas as pd
 
 DATASET_NAME = 'rain.csv'
 COLUMNS_TYPE_FILE_NAME = 'columnsTypes.json'
+GDF_LOCATIONS_NAME = 'gdf_locations.json'
 TARGET_PIPELINE_NAME = 'target_pipeline.pkl'
 INPUTS_PIPELINE_NAME = 'inputs_pipeline.pkl'
 BUCKET_DATA = 'data'
@@ -20,6 +21,7 @@ X_TRAIN_NAME = 'X_train.csv'
 X_TEST_NAME = 'X_test.csv'
 X_TEST_NAME = 'y_train.csv'
 Y_TEST_NAME = 'y_test.csv'
+
 
 S3_RAW_DATA_FOLDER = 's3://data/raw/'
 S3_PREPROCESED_DATA_FOLDER = 's3://data/preprocesed/'
@@ -31,6 +33,9 @@ INFO_DATA_FOLDER = 'info/'
 PIPES_DATA_FOLDER = 'pipes/'
 
 TEST_SIZE = 0.2
+
+def encode_location(df: pd.DataFrame, gdf_locations) -> pd.DataFrame:
+    return pd.merge(df, gdf_locations.drop(columns="geometry"), on="Location")
 
 s3_columns_path = INFO_DATA_FOLDER + COLUMNS_TYPE_FILE_NAME
 
@@ -116,56 +121,115 @@ def download_dataset_from_minio():
         print("No se pudo descargar el dataset.")
 
 
-def process_geolocations():
+def upload_gdf_locations():
     import boto3
-    # import geopandas as gpd
-    # from geopandas.datasets import get_path
+    import geopandas as gpd
+    from geopandas.datasets import get_path
     import pandas as pd
-    # import osmnx as ox
-    # import re
-    # from shapely.geometry import Point
+    import osmnx as ox
+    import re
+    from shapely.geometry import Point
 
-    # country = "Australia"
+    # Configuración de la conexión a Minio
+    endpoint_url = "http://localhost:9000"
+    access_key = "minio"
+    secret_key = "minio123"
 
-    # world = gpd.read_file(get_path('naturalearth_lowres'))
-    # gdf_australia = world[world.name == country]
+    # Crear una sesión de boto3
+    session = boto3.Session(
+        aws_access_key_id=access_key,
+        aws_secret_access_key=secret_key
+    )
 
-    # # Solve manually some mistaken names
-    # mapping_dict = {"Dartmoor": "DartmoorVillage", "Richmond": "RichmondSydney"}
+    # Cargar la configuración de Minio
+    client = session.client(BOTO3_CLIENT,
+                            endpoint_url=endpoint_url,
+                            aws_access_key_id=access_key,
+                            aws_secret_access_key=secret_key)
 
-    # # Una vez aplicado map, quedan valores NaN, por lo que se completa con los valores que ya tenía,
-    # # o sea para cualquier valor que sea NaN después de aplicar map(),
-    # # usa el valor original que estaba en esa posición en la columna 'Location
-    # df["Location"] = df["Location"].map(mapping_dict).fillna(df["Location"])
+    # Configurar awswrangler para usar Minio
+    wr.config.s3_endpoint_url = endpoint_url
 
-    # locations = df["Location"].unique()
+    df = wr.s3.read_csv(path=S3_RAW_DATA_FOLDER +
+                        DATASET_NAME, boto3_session=session)
 
-    # # Separa las ubicaciones en camelCase con un espacio. Ej: NorthRyde -> North Ryde
-    # locations = [re.sub(r'([a-z])([A-Z])', r'\1 \2', l) for l in locations]
+    country = "Australia"
 
-    # locs = []
-    # lats = []
-    # lons = []
-    # for location in locations:
-    #     try:
-    #         lat, lon = ox.geocode(location + f", {country}")
+    # Solve manually some mistaken names
+    mapping_dict = {"Dartmoor": "DartmoorVillage", "Richmond": "RichmondSydney"}
 
-    #         locs.append(location.replace(" ", ""))
-    #         lats.append(lat)
-    #         lons.append(lon)
-    #     except Exception as e:
-    #         print(f"Error retrieving coordinates for {location}: {e}")
+    # Una vez aplicado map, quedan valores NaN, por lo que se completa con los valores que ya tenía,
+    # o sea para cualquier valor que sea NaN después de aplicar map(),
+    # usa el valor original que estaba en esa posición en la columna 'Location
+    df["Location"] = df["Location"].map(mapping_dict).fillna(df["Location"])
 
-    # df_locations = pd.DataFrame({
-    #     'Location': locs,
-    #     'Lat': lats,
-    #     'Lon': lons
-    # })
-    # geometry = [Point(lon, lat) for lon, lat in zip(
-    #     df_locations['Lon'], df_locations['Lat'])]
-    # gdf_locations = gpd.GeoDataFrame(
-    #     df_locations, geometry=geometry, crs="EPSG:4326")
-    # gdf_locations.to_file('./data/gdf_locations.geojson', driver='GeoJSON')
+    locations = df["Location"].unique()
+
+    # Separa las ubicaciones en camelCase con un espacio. Ej: NorthRyde -> North Ryde
+    locations = [re.sub(r'([a-z])([A-Z])', r'\1 \2', l) for l in locations]
+
+    locs = []
+    lats = []
+    lons = []
+    for location in locations:
+        try:
+            lat, lon = ox.geocode(location + f", {country}")
+
+            locs.append(location.replace(" ", ""))
+            lats.append(lat)
+            lons.append(lon)
+        except Exception as e:
+            print(f"Error retrieving coordinates for {location}: {e}")
+
+    df_locations = pd.DataFrame({
+        'Location': locs,
+        'Lat': lats,
+        'Lon': lons
+    })
+    geometry = [Point(lon, lat) for lon, lat in zip(
+        df_locations['Lon'], df_locations['Lat'])]
+    gdf_locations = gpd.GeoDataFrame(
+        df_locations, geometry=geometry, crs="EPSG:4326")
+    
+    s3_gdf_locations_path = INFO_DATA_FOLDER + GDF_LOCATIONS_NAME
+
+    gdf_locations_json = json.loads(gdf_locations.to_json())
+
+    client.put_object(Bucket=BUCKET_DATA, Key=s3_gdf_locations_path,
+                        Body=json.dumps(gdf_locations_json))
+    
+    return s3_gdf_locations_path
+
+def read_gdf_locations(s3_gdf_locations_path):
+    import geopandas as gpd
+    # Configuración de la conexión a Minio
+    endpoint_url = "http://localhost:9000"
+    access_key = "minio"
+    secret_key = "minio123"
+
+    # Crear una sesión de boto3
+    session = boto3.Session(
+        aws_access_key_id=access_key,
+        aws_secret_access_key=secret_key
+    )
+
+    # Cargar la configuración de Minio
+    client = session.client(BOTO3_CLIENT,
+                            endpoint_url=endpoint_url,
+                            aws_access_key_id=access_key,
+                            aws_secret_access_key=secret_key)
+
+    # Configurar awswrangler para usar Minio
+    wr.config.s3_endpoint_url = endpoint_url
+
+    obj = client.get_object(Bucket=BUCKET_DATA, Key=s3_gdf_locations_path)
+    gdf_locations = gpd.read_file(obj['Body'])
+
+    df = wr.s3.read_csv(path=S3_RAW_DATA_FOLDER +
+                        DATASET_NAME, boto3_session=session)
+    
+    df = encode_location(df, gdf_locations)
+    print(df.sample(10))    
 
 def create_target_pipe():
     # Configuración de la conexión a Minio
@@ -312,7 +376,8 @@ def test_pipelines():
 
 # process_column_types()
 # download_dataset_from_minio()
-# process_geolocations()
-create_inputs_pipe(s3_columns_path)
-create_target_pipe()
-test_pipelines()
+# create_inputs_pipe(s3_columns_path)
+# create_target_pipe()
+# test_pipelines()
+# upload_gdf_locations()
+read_gdf_locations(INFO_DATA_FOLDER + GDF_LOCATIONS_NAME)
