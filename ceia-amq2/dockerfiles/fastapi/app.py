@@ -1,10 +1,11 @@
 import json
 import pickle
-import boto3
 import mlflow
 
 import numpy as np
 import pandas as pd
+
+import boto3
 
 from typing import Literal
 from fastapi import FastAPI, Body, BackgroundTasks
@@ -14,62 +15,271 @@ from pydantic import BaseModel, Field
 from typing_extensions import Annotated
 
 
-def load_model(model_name: str, alias: str):
+class ModelInput(BaseModel):
     """
-    Load a trained model and associated data dictionary.
+    Esta clase define la estructura de datos de entrada para el modelo de predicción de lluvia.
+    """
 
-    This function attempts to load a trained model specified by its name and alias. If the model is not found in the
-    MLflow registry, it loads the default model from a file. Additionally, it loads information about the ETL pipeline
-    from an S3 bucket. If the data dictionary is not found in the S3 bucket, it loads it from a local file.
+    date: str = Field(
+        description="Fecha de los datos.",
+    )
+    location: Literal[
+        "Adelaide", 
+        "Albany", 
+        "Albury", 
+        "AliceSprings", 
+        "BadgerysCreek", 
+        "Ballarat", 
+        "Bendigo", 
+        "Brisbane", 
+        "Cairns", 
+        "Canberra", 
+        "Cobar", 
+        "CoffsHarbour", 
+        "Dartmoor", 
+        "Darwin", 
+        "GoldCoast", 
+        "Hobart", 
+        "Katherine", 
+        "Launceston", 
+        "Melbourne", 
+        "MelbourneAirport", 
+        "Mildura", 
+        "Moree", 
+        "MountGambier", 
+        "MountGinini", 
+        "Newcastle", 
+        "Nhil", 
+        "NorahHead", 
+        "NorfolkIsland", 
+        "Nuriootpa", 
+        "PearceRAAF", 
+        "Penrith", 
+        "Perth", 
+        "PerthAirport", 
+        "Portland", 
+        "Richmond", 
+        "Sale", 
+        "SalmonGums", 
+        "Sydney", 
+        "SydneyAirport", 
+        "Townsville", 
+        "Tuggeranong", 
+        "Uluru", 
+        "WaggaWagga", 
+        "Walpole", 
+        "Watsonia", 
+        "Williamtown", 
+        "Witchcliffe", 
+        "Wollongong", 
+        "Woomera"] = Field(
+            description="Ubicación de la estación meteorológica.",
+        )
+    mintemp: float = Field(
+        description="Temperatura mínima de hoy.",
+        ge=-10,
+        le=50,
+    )
+    maxtemp: float = Field(
+        description="Temperatura máxima de hoy.",
+        ge=-20,
+        le=70,
+    )
+    rainfall: float = Field(
+        description="Cantidad de lluvia caída hoy.",
+    )
+    evaporation: float = Field(
+        description="Evaporación hoy.",
+    )
+    sunshine: float = Field(
+        description="Horas de sol hoy.",
+        ge=0,
+        le=24,
+    )
+    windgustdir: Literal[
+        "E",
+        "ENE",
+        "ESE",
+        "N",
+        "NE",
+        "NNE",
+        "NNW",
+        "NW",
+        "S",
+        "SE",
+        "SSE",
+        "SSW",
+        "SW",
+        "W",
+        "WNW",
+        "WSW",
+    ] = Field(
+        description="Dirección de las ráfagas.",
+    )
+    windgustspeed: float = Field(
+        description="Velocidad máxima de las ráfagas hoy.",
+    )
+    winddir9am: Literal[
+        "E",
+        "ENE",
+        "ESE",
+        "N",
+        "NE",
+        "NNE",
+        "NNW",
+        "NW",
+        "S",
+        "SE",
+        "SSE",
+        "SSW",
+        "SW",
+        "W",
+        "WNW",
+        "WSW",
+    ] = Field(
+        description="Dirección del viento a las 9am.",
+    )
+    winddir3pm: Literal[
+        "E",
+        "ENE",
+        "ESE",
+        "N",
+        "NE",
+        "NNE",
+        "NNW",
+        "NW",
+        "S",
+        "SE",
+        "SSE",
+        "SSW",
+        "SW",
+        "W",
+        "WNW",
+        "WSW",
+    ] = Field(
+        description="Dirección del viento a las 3pm.",
+    )
+    windspeed9am: float = Field(
+        description="Velocidad del viento a las 9am.",
+    )
+    windspeed3pm: float = Field(
+        description="Velocidad del viento a las 3pm.",
+    )
+    humidity9am: float = Field(
+        description="Humedad a las 9am.",
+    )
+    humidity3pm: float = Field(
+        description="Humedad a las 3pm.",
+    )
+    pressure9am: float = Field(
+        description="Presión a las 9am.",
+    )
+    pressure3pm: float = Field(
+        description="Presión a las 3pm.",
+    )
+    cloud9am: float = Field(
+        description="Cobertura de nubes a las 9am.",
+    )
+    cloud3pm: float = Field(
+        description="Cobertura de nubes a las 3pm.",
+    )
+    temp9am: float = Field(
+        description="Temperatura a las 9am.",
+    )
+    temp3pm: float = Field(
+        description="Temperatura a las 3pm.",
+    )
+    raintoday: float = Field(
+        description="Llovio hoy? 1: si llovió, 0: no llovió.",
+        ge=0,
+    )
 
-    :param model_name: The name of the model.
-    :param alias: The alias of the model version.
-    :return: A tuple containing the loaded model, its version, and the data dictionary.
+
+    #TODO: Change inputs to Sin + Cos for winddir9am, winddir3pm, location, date
+
+    model_config = {
+        "json_schema_extra": {
+            "ejemplos": [
+                {
+                    "date": "2021-01-01",
+                    "location": "Sydney",
+                    "mintemp": 15.0,
+                    "maxtemp": 25.0,
+                    "rainfall": 0.0,
+                    "evaporation": 5.0,
+                    "sunshine": 10.0,
+                    "windgustdir": "N",
+                    "windgustspeed": 30.0,
+                    "winddir9am": "N",
+                    "winddir3pm": "N",
+                    "windspeed9am": 10.0,
+                    "windspeed3pm": 15.0,
+                    "humidity9am": 50.0,
+                    "humidity3pm": 60.0,
+                    "pressure9am": 1010.0,
+                    "pressure3pm": 1005.0,
+                    "cloud9am": 5.0,
+                    "cloud3pm": 5.0,
+                    "temp9am": 20.0,
+                    "temp3pm": 23.0,
+                    "raintoday": 0
+                }
+            ]
+        }
+    }
+
+
+class ModelOutput(BaseModel):
+    """
+    Modelo de salida de la API.
+
+    Esta clase define el modelo de salida de la API incluyendo una descripción.
+    """
+    prediction_bool: bool = Field(..., description="Predicción de lluvia para el día próximo.")
+    prediction_str: Literal["Toma un paraguas. Mañana puede que llueva.", "Más seco que el Sahara. Mañana posiblemente no llueva..."]
+
+    model_config = {
+        "json_schema_extra": {
+            "ejemplos": [
+                {
+                    "prediction_bool": True,
+                    "prediction_str": "Toma un paraguas. Mañana puede que llueva...",
+                }
+            ]
+        }
+    }
+
+def load_model(model_name: str, alias: str = "prod_best"):
+    """
+    Función para cargar el modelo de predicción de lluvia.
     """
 
     try:
-        # Load the trained model from MLflow
+        # Se obtiene la ubicación del modelo guardado en MLflow
         mlflow.set_tracking_uri('http://mlflow:5000')
         client_mlflow = mlflow.MlflowClient()
 
+        # Se carga el modelo guardado en MLflow
         model_data_mlflow = client_mlflow.get_model_version_by_alias(model_name, alias)
         model_ml = mlflow.sklearn.load_model(model_data_mlflow.source)
         version_model_ml = int(model_data_mlflow.version)
     except:
-        # If there is no registry in MLflow, open the default model
-        file_ml = open('/app/files/model.pkl', 'rb')
-        model_ml = pickle.load(file_ml)
-        file_ml.close()
-        version_model_ml = 0
+        # # If there is no registry in MLflow, open the default model
+        # file_ml = open('/app/files/model.pkl', 'rb')
+        # model_ml = pickle.load(file_ml)
+        # file_ml.close()
+        # version_model_ml = 0
 
-    try:
-        # Load information of the ETL pipeline from S3
-        s3 = boto3.client('s3')
+        # If an error occurs during the process, pass silently
+        model_ml = None
+        version_model_ml = None
+        pass
 
-        s3.head_object(Bucket='data', Key='data_info/data.json')
-        result_s3 = s3.get_object(Bucket='data', Key='data_info/data.json')
-        text_s3 = result_s3["Body"].read().decode()
-        data_dictionary = json.loads(text_s3)
-
-        data_dictionary["standard_scaler_mean"] = np.array(data_dictionary["standard_scaler_mean"])
-        data_dictionary["standard_scaler_std"] = np.array(data_dictionary["standard_scaler_std"])
-    except:
-        # If data dictionary is not found in S3, load it from local file
-        file_s3 = open('/app/files/data.json', 'r')
-        data_dictionary = json.load(file_s3)
-        file_s3.close()
-
-    return model_ml, version_model_ml, data_dictionary
-
+    return model_ml, version_model_ml
 
 def check_model():
     """
-    Check for updates in the model and update if necessary.
-
-    The function checks the model registry to see if the version of the champion model has changed. If the version
-    has changed, it updates the model and the data dictionary accordingly.
-
-    :return: None
+    Función para verificar si el modelo ha cambiado en el registro de modelos de MLflow
     """
 
     global model
@@ -77,8 +287,8 @@ def check_model():
     global version_model
 
     try:
-        model_name = "heart_disease_model_prod"
-        alias = "champion"
+        model_name = "rain_dataset_model_prod"
+        alias = "prod_best"
 
         mlflow.set_tracking_uri('http://mlflow:5000')
         client = mlflow.MlflowClient()
@@ -90,170 +300,26 @@ def check_model():
         # If the versions are not the same
         if new_version_model != version_model:
             # Load the new model and update version and data dictionary
-            model, version_model, data_dict = load_model(model_name, alias)
+            model, version_model = load_model(model_name, alias)
 
     except:
         # If an error occurs during the process, pass silently
         pass
 
 
-class ModelInput(BaseModel):
-    """
-    Input schema for the heart disease prediction model.
-
-    This class defines the input fields required by the heart disease prediction model along with their descriptions
-    and validation constraints.
-
-    :param age: Age of the patient (0 to 150).
-    :param sex: Sex of the patient. 1: male; 0: female.
-    :param cp: Chest pain type. 1: typical angina; 2: atypical angina; 3: non-anginal pain; 4: asymptomatic.
-    :param trestbps: Resting blood pressure in mm Hg on admission to the hospital (90 to 220).
-    :param chol: Serum cholestoral in mg/dl (110 to 600).
-    :param fbs: Fasting blood sugar. 1: >120 mg/dl; 0: <120 mg/dl.
-    :param restecg: Resting electrocardiographic results. 0: normal; 1: having ST-T wave abnormality; 2: showing
-                    probable or definite left ventricular hypertrophy.
-    :param thalach: Maximum heart rate achieved (beats per minute) (50 to 210).
-    :param exang: Exercise induced angina. 1: yes; 0: no.
-    :param oldpeak: ST depression induced by exercise relative to rest (0.0 to 7.0).
-    :param slope: The slope of the peak exercise ST segment. 1: upsloping; 2: flat; 3: downsloping.
-    :param ca: Number of major vessels colored by flourosopy (0 to 3).
-    :param thal: Thalassemia disease. 3: normal; 6: fixed defect; 7: reversable defect.
-    """
-
-    age: int = Field(
-        description="Age of the patient",
-        ge=0,
-        le=150,
-    )
-    sex: int = Field(
-        description="Sex of the patient. 1: male; 0: female",
-        ge=0,
-        le=1,
-    )
-    cp: int = Field(
-        description="Chest pain type. 1: typical angina; 2: atypical angina, 3: non-anginal pain; 4: asymptomatic",
-        ge=1,
-        le=4,
-    )
-    trestbps: float = Field(
-        description="Resting blood pressure in mm Hg on admission to the hospital",
-        ge=90,
-        le=220,
-    )
-    chol: float = Field(
-        description="Serum cholestoral in mg/dl",
-        ge=110,
-        le=600,
-    )
-    fbs: int = Field(
-        description="Fasting blood sugar. 1: >120 mg/dl; 0: <120 mg/dl",
-        ge=0,
-        le=1,
-    )
-    restecg: int = Field(
-        description="Resting electrocardiographic results. 0: normal; 1:  having ST-T wave abnormality (T wave "
-                    "inversions and/or ST elevation or depression of > 0.05 mV), 2: showing probable or definite "
-                    "left ventricular hypertrophy by Estes' criteria",
-        ge=0,
-        le=2,
-    )
-    thalach: float = Field(
-        description="Maximum heart rate achieved (beats per minute)",
-        ge=50,
-        le=210,
-    )
-    exang: int = Field(
-        description="Exercise induced angina. 1: yes; 0: no",
-        ge=0,
-        le=1,
-    )
-    oldpeak: float = Field(
-        description="ST depression induced by exercise relative to rest",
-        ge=0.0,
-        le=7.0,
-    )
-    slope: int = Field(
-        description="The slope of the peak exercise ST segment .1: upsloping; 2: flat, 3: downsloping",
-        ge=1,
-        le=3,
-    )
-    ca: int = Field(
-        description="Number of major vessels colored by flourosopy",
-        ge=0,
-        le=3,
-    )
-    thal: Literal[3, 6, 7] = Field(
-        description="Thalassemia disease. 3: normal; 6: fixed defect; 7: reversable defect",
-    )
-
-    model_config = {
-        "json_schema_extra": {
-            "examples": [
-                {
-                    "age": 67,
-                    "sex": 1,
-                    "cp": 4,
-                    "trestbps": 160.0,
-                    "chol": 286.0,
-                    "fbs": 0,
-                    "restecg": 2,
-                    "thalach": 108.0,
-                    "exang": 1,
-                    "oldpeak": 1.5,
-                    "slope": 2,
-                    "ca": 3,
-                    "thal": 3,
-                }
-            ]
-        }
-    }
-
-
-class ModelOutput(BaseModel):
-    """
-    Output schema for the heart disease prediction model.
-
-    This class defines the output fields returned by the heart disease prediction model along with their descriptions
-    and possible values.
-
-    :param int_output: Output of the model. True if the patient has a heart disease.
-    :param str_output: Output of the model in string form. Can be "Healthy patient" or "Heart disease detected".
-    """
-
-    int_output: bool = Field(
-        description="Output of the model. True if the patient has a heart disease",
-    )
-    str_output: Literal["Healthy patient", "Heart disease detected"] = Field(
-        description="Output of the model in string form",
-    )
-
-    model_config = {
-        "json_schema_extra": {
-            "examples": [
-                {
-                    "int_output": True,
-                    "str_output": "Heart disease detected",
-                }
-            ]
-        }
-    }
-
-
 # Load the model before start
-model, version_model, data_dict = load_model("heart_disease_model_prod", "champion")
+model, version_model = load_model("rain_dataset_model_prod", "prod_best")
 
 app = FastAPI()
 
-
 @app.get("/")
-async def read_root():
+async def get_root():
     """
-    Root endpoint of the Heart Disease Detector API.
-
-    This endpoint returns a JSON response with a welcome message to indicate that the API is running.
+    Endpoint de bienvenida.
     """
-    return JSONResponse(content=jsonable_encoder({"message": "Welcome to the Heart Disease Detector API"}))
-
+    return JSONResponse(content=jsonable_encoder(
+        {"message": "Bienvenidos a la API default de Rain Prediction"}
+        ))
 
 @app.post("/predict/", response_model=ModelOutput)
 def predict(
@@ -264,10 +330,8 @@ def predict(
     background_tasks: BackgroundTasks
 ):
     """
-    Endpoint for predicting heart disease.
+    Endpoint para predecir si lloverá mañana o no, en base a las características del día actual.
 
-    This endpoint receives features related to a patient's health and predicts whether the patient has heart disease
-    or not using a trained model. It returns the prediction result in both integer and string formats.
     """
 
     # Extract features from the request and convert them into a list and dictionary
@@ -277,30 +341,28 @@ def predict(
     # Convert features into a pandas DataFrame
     features_df = pd.DataFrame(np.array(features_list).reshape([1, -1]), columns=features_key)
 
-    # Process categorical features
-    for categorical_col in data_dict["categorical_columns"]:
-        features_df[categorical_col] = features_df[categorical_col].astype(int)
-        categories = data_dict["categories_values_per_categorical"][categorical_col]
-        features_df[categorical_col] = pd.Categorical(features_df[categorical_col], categories=categories)
+    BUCKET_DATA = "data"
+    BOTO3_CLIENT = "s3"
+    #TODO: usar variables de entorno
+    # s3_input_pipeline_path = PIPES_DATA_FOLDER + INPUTS_PIPELINE_NAME
+    # PIPES_DATA_FOLDER = Variable.get("PIPES_DATA_FOLDER")
+    # INPUTS_PIPELINE_NAME = "inputs_pipeline.pkl"
 
-    # Convert categorical features into dummy variables
-    features_df = pd.get_dummies(data=features_df,
-                                 columns=data_dict["categorical_columns"],
-                                 drop_first=True)
+    s3_input_pipeline_path  = "pipes/inputs_pipeline.pkl"
 
-    # Reorder DataFrame columns
-    features_df = features_df[data_dict["columns_after_dummy"]]
+    client = boto3.client(BOTO3_CLIENT)
+    obj = client.get_object(Bucket=BUCKET_DATA, Key=s3_input_pipeline_path)
+    inputs_pipeline = pickle.load(obj["Body"])
 
-    # Scale the data using standard scaler
-    features_df = (features_df-data_dict["standard_scaler_mean"])/data_dict["standard_scaler_std"]
+    features_df = inputs_pipeline.transform(features_df)
 
     # Make the prediction using the trained model
     prediction = model.predict(features_df)
 
     # Convert prediction result into string format
-    str_pred = "Healthy patient"
+    str_pred = "Más seco que el Sahara... Mañana posiblemente no llueva."
     if prediction[0] > 0:
-        str_pred = "Heart disease detected"
+        str_pred = "Toma un paraguas. Mañana puede que llueva."
 
     # Check if the model has changed asynchronously
     background_tasks.add_task(check_model)
