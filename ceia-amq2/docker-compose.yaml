@@ -309,6 +309,16 @@ services:
     volumes:
       - ${AIRFLOW_PROJ_DIR:-./airflow}:/sources
 
+  gradio:
+    container_name: gradio
+    build: "./dockerfiles/gradio"
+    restart: always
+    ports:
+      - "7860:7860"
+    networks:
+      - frontend
+      - backend
+
 networks:
   frontend:
     driver: bridge
