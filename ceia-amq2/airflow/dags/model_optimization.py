@@ -201,7 +201,7 @@ def optimization_dag():
         from mlflow import MlflowClient
         
         client = mlflow.MlflowClient()
-        name = "rain_dataset_model_prod"
+        name = "Rain_dataset_model_prod"
         desc = "Modelo de predicción de lluvia"
 
         # Se carga el modelo guardado en MLflow

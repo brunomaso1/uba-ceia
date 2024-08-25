@@ -338,6 +338,8 @@ class RainTasks:
         mlflow.set_tracking_uri(config.MLFLOW_TRACKING_URI)
         experiment = mlflow.set_experiment(config.MLFLOW_EXPERIMENT_NAME)
 
+        client = mlflow.MlflowClient()
+
         with mlflow.start_run(
             run_name="ETL_run_" + datetime.datetime.today().strftime('%Y%m%d_%H%M%S"'),
             experiment_id=experiment.experiment_id,
@@ -353,5 +355,44 @@ class RainTasks:
             mlflow.log_param("Standard Scaler scale values", sc_X.scale_)
 
             # Registrar el pipeline en MLFlow
-            mlflow.sklearn.log_model(inputs_pipeline, "inputs_pipeline")
-            mlflow.sklearn.log_model(target_pipeline, "target_pipeline")
+            mlflow.sklearn.log_model(
+                sk_model=inputs_pipeline, 
+                artifact_path="inputs_pipeline",
+                registered_model_name="Rain_dataset_etl_inputs_pipeline"
+                )
+            mlflow.sklearn.log_model(
+                sk_model=target_pipeline, 
+                artifact_path="target_pipeline",
+                registered_model_name="Rain_dataset_etl_target_pipeline"
+                )
+            
+            # Se obtiene la ubicación del modelo guardado en MLflow
+            inputs_pipeline_uri = mlflow.get_artifact_uri("inputs_pipeline")
+            target_pipeline_uri = mlflow.get_artifact_uri("target_pipeline")
+
+            # Se crea una versión para los modelos de pipeline
+            results_inputs = client.create_model_version(
+                name = "Rain_dataset_etl_inputs_pipeline",
+                source = inputs_pipeline_uri,
+                tags = {"pipeline": "inputs"}
+            )
+            results_target = client.create_model_version(
+                name = "Rain_dataset_etl_target_pipeline",
+                source = target_pipeline_uri,
+                tags = {"pipeline": "target"}
+            )
+
+            # Se registra un alias para los modelos de pipeline
+            client.set_registered_model_alias(
+                name="Rain_dataset_etl_inputs_pipeline", 
+                alias="prod_best", 
+                version=results_inputs.version
+                )
+
+            client.set_registered_model_alias(
+                name="Rain_dataset_etl_target_pipeline", 
+                alias="prod_best", 
+                version=results_target.version
+                )
+
+
