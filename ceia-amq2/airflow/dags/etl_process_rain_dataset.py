@@ -1,27 +1,23 @@
-import datetime
+"""
+ETL de Rain Dataset
+"""
+
 from airflow import DAG
-
-
+from rain_dataset_utils import config_loader
 from rain_dataset_utils.etl_tasks import RainTasks
 from rain_dataset_utils.rain_dataset_doc import (
-    DESCRIPTION,
-    FULL_DESCRIPTION_MD,
+    DESCRIPTION_ETL,
+    FULL_DESCRIPTION_MD_ETL,
 )
 
-default_args = {
-    "owner": "AMQ2",
-    "schedule_interval": None,
-    "retries": 1,
-    "retry_delay": datetime.timedelta(minutes=5),
-    "dagrun_timeout": datetime.timedelta(minutes=15),
-}
+config = config_loader.RainDatasetConfigs()
 
 with DAG(
     dag_id="process_etl_rain_dataset",
-    description=DESCRIPTION,
-    doc_md=FULL_DESCRIPTION_MD,
+    description=DESCRIPTION_ETL,
+    doc_md=FULL_DESCRIPTION_MD_ETL,
     tags=["ETL", "Rain datset", "Dataset"],
-    default_args=default_args,
+    default_args=config.DAG_DEFAULT_CONF,
     catchup=False,
 ) as dag:
     rain_tasks = RainTasks()

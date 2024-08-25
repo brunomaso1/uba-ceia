@@ -1,8 +1,15 @@
+import datetime
 import os
 from dotenv import load_dotenv
 from airflow.models import Variable
 
+
 class RainDatasetConfigs:
+    """
+    Clase Singleton encargada de manejar la configuración relacionada con el dataset de Rain.
+    Contiene las variables de entonro cargadas, así como constantes extras.
+    """
+
     _instance = None
 
     def __new__(cls):
@@ -15,6 +22,16 @@ class RainDatasetConfigs:
         """Método privado para cargar la configuración desde diferentes fuentes."""
         # Cargar las variables desde un archivo .env
         load_dotenv()
+
+        self.DAG_DEFAULT_CONF = {
+            "owner": "AMQ2",
+            "depends_on_past": False,
+            "schedule_interval": None,
+            "schedule": None,
+            "retries": 1,
+            "retry_delay": datetime.timedelta(minutes=5),
+            "dagrun_timeout": datetime.timedelta(minutes=15),
+        }
 
         # Variables de entorno
         self.MLFLOW_S3_ENDPOINT_URL = os.getenv("MLFLOW_S3_ENDPOINT_URL")
@@ -47,17 +64,27 @@ class RainDatasetConfigs:
         self.PIPELINE_EXTENSION = ".pkl"
         self.INPUTS_PIPELINE_NAME = "inputs_pipeline"
         self.TARGET_PIPELINE_NAME = "target_pipeline"
-        
+
         # Constantes derivadas
         self.DATASET_NAME_W_EXTENSION = self.DATASET_NAME + self.DATASET_EXTENSION
         self.S3_RAW_DATA_PATH = self.S3_RAW_DATA_FOLDER + self.DATASET_NAME_W_EXTENSION
-        self.S3_DF_PATH = self.S3_PREPROCESED_DATA_FOLDER + self.DATASET_NAME_W_EXTENSION
-        self.MLFLOW_INPUT_PIPELINE_MODEL_REGISTRED_NAME = "rain_dataset_etl_" + self.INPUTS_PIPELINE_NAME
-        self.MLFLOW_TARGET_PIPELINE_MODEL_REGISTRED_NAME = "rain_dataset_etl_" + self.TARGET_PIPELINE_NAME
+        self.S3_DF_PATH = (
+            self.S3_PREPROCESED_DATA_FOLDER + self.DATASET_NAME_W_EXTENSION
+        )
+        self.MLFLOW_INPUT_PIPELINE_MODEL_REGISTRED_NAME = (
+            "rain_dataset_etl_" + self.INPUTS_PIPELINE_NAME
+        )
+        self.MLFLOW_TARGET_PIPELINE_MODEL_REGISTRED_NAME = (
+            "rain_dataset_etl_" + self.TARGET_PIPELINE_NAME
+        )
         self.S3_GDF_LOCATIONS_PATH = self.INFO_DATA_FOLDER + "gdf_locations.json"
         self.S3_COLUMNS_PATH = self.INFO_DATA_FOLDER + "columnsTypes.json"
-        self.S3_INPUT_PIPELINE_PATH = self.PIPES_DATA_FOLDER + self.INPUTS_PIPELINE_NAME + self.PIPELINE_EXTENSION
-        self.S3_TARGET_PIPELINE_PATH = self.PIPES_DATA_FOLDER + self.TARGET_PIPELINE_NAME + self.PIPELINE_EXTENSION
+        self.S3_INPUT_PIPELINE_PATH = (
+            self.PIPES_DATA_FOLDER + self.INPUTS_PIPELINE_NAME + self.PIPELINE_EXTENSION
+        )
+        self.S3_TARGET_PIPELINE_PATH = (
+            self.PIPES_DATA_FOLDER + self.TARGET_PIPELINE_NAME + self.PIPELINE_EXTENSION
+        )
 
     def get(self, key):
         """Método para obtener la configuración mediante una clave."""

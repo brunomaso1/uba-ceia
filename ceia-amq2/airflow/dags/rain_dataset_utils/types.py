@@ -1,3 +1,5 @@
+# Este archivo contiene todos las estructuras estáticas.
+
 COLUMNS_TYPES = {
     "cat_columns": ["Location", "WindGustDir", "WindDir9am", "WindDir3pm"],
     "bool_columns": ["RainToday"],
@@ -21,3 +23,22 @@ COLUMNS_TYPES = {
         "Temp3pm",
     ],
 }
+
+WIND_DIRS = [
+    "E",
+    "ENE",
+    "NE",
+    "NNE",
+    "N",
+    "NNW",
+    "NW",
+    "WNW",
+    "W",
+    "WSW",
+    "SW",
+    "SSW",
+    "S",
+    "SSE",
+    "SE",
+    "ESE",
+]

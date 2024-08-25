@@ -6,6 +6,10 @@ from . import aux_functions, enconding_functions
 
 
 class ClapOutliersIRQTransformer(BaseEstimator, TransformerMixin):
+    """
+    Hace un clap de los outliers y guarda la información como un Transformer de Sklearn.
+    O sea, se implementa un Transformer
+    """
     def __init__(self, columns):
         self.IRQ_saved = {}
         self.columns = columns
@@ -49,7 +53,7 @@ class ClapOutliersIRQTransformer(BaseEstimator, TransformerMixin):
 
         return X_transf
 
-
+# Todas las transformaciones aplicadas al conjunto.
 def convertDataTypeTransformer(cat_columns, date_columns, bool_columns):
     return ColumnTransformer(
         [

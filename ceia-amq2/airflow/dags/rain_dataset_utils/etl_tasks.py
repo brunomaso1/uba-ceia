@@ -1,3 +1,7 @@
+"""
+En este archivo se encuentran todas las tareas del ETL de Rain Dataset
+"""
+
 import datetime
 import mlflow.data.pandas_dataset
 from . import (
@@ -311,11 +315,6 @@ class RainTasks:
 
     @task
     def register_to_mlflow(final_paths):
-        # MLFLOW_S3_ENDPOINT_URL = os.getenv("MLFLOW_S3_ENDPOINT_URL")
-        # RAW_DATA_FOLDER = Variable.get("RAW_DATA_FOLDER")
-        # logger.info(f"MLFLOW_S3_ENDPOINT_URL={MLFLOW_S3_ENDPOINT_URL}")
-        # logger.info(f"RAW_DATA_FOLDER={RAW_DATA_FOLDER}")
-
         s3_raw_data_path = config.S3_RAW_DATA_FOLDER + config.DATASET_NAME_W_EXTENSION
         df = wr.s3.read_csv(s3_raw_data_path)
 
@@ -336,10 +335,6 @@ class RainTasks:
 
         sc_X = inputs_pipeline["StandardScaler"]
 
-        # source_dataset = MLFLOW_S3_ENDPOINT_URL + "/" + DATA_FOLDER + RAW_DATA_FOLDER + DATASET_NAME_W_EXTENSION
-        # logger.info(f"source_dataset={source_dataset}")
-        # dataset: PandasDataset = mlflow.data.from_pandas(df, source=LocalArtifactDatasetSource(source_dataset), name=DATASET_NAME, targets=TARGET)
-
         mlflow.set_tracking_uri(config.MLFLOW_TRACKING_URI)
         experiment = mlflow.set_experiment(config.MLFLOW_EXPERIMENT_NAME)
 
@@ -351,8 +346,6 @@ class RainTasks:
             tags={"experiment": "etl", "dataset": "Rain dataset"},
             log_system_metrics=True,
         ):
-            # mlflow.log_input(dataset, context="Dataset")
-
             mlflow.log_param("Train observations", X_train_final.shape[0])
             mlflow.log_param("Test observations", X_test_final.shape[0])
             mlflow.log_param("Standard Scaler feature names", sc_X.feature_names_in_)

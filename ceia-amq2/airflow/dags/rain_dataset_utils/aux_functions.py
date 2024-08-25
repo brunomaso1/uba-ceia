@@ -1,10 +1,10 @@
 import awswrangler as wr
-import mlflow
 import pandas as pd
 import boto3
 import pickle
 
 from . import config_loader
+
 config = config_loader.RainDatasetConfigs()
 
 
@@ -32,6 +32,10 @@ def eliminar_columnas(df, columnas_a_eliminar):
 
 
 def fix_location(df):
+    """
+    Dado que algunas ubicaciones están incorrectas en el dataset, hay que arreglaras
+    "manualmente".
+    """
     mapping_dict = {"Dartmoor": "DartmoorVillage", "Richmond": "RichmondSydney"}
     df_out = df.copy()
     df_out["Location"] = df_out["Location"].map(mapping_dict).fillna(df["Location"])
@@ -55,6 +59,9 @@ def download_split_from_s3(train_test_split_path):
 
 
 def load_pipelines_from_s3():
+    """
+    Carga los pipelines desde S3.
+    """
     client = boto3.client(config.BOTO3_CLIENT)
     obj = client.get_object(
         Bucket=config.BUCKET_DATA, Key=config.S3_INPUT_PIPELINE_PATH

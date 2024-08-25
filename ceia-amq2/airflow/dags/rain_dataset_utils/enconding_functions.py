@@ -1,18 +1,21 @@
 import numpy as np
 import pandas as pd
+from . import types
 
 
 def encode_cyclical_date(df, date_column="Date"):
-    """
-    Encodes a date column into cyclical features using sine and cosine transformations.
+    """ 
+    Codifica una columna de fecha en características cíclicas utilizando transformaciones seno y coseno.
 
-    Parameters:
-    df (pandas.DataFrame): The dataframe containing the date column.
-    date_column (str): The name of the date column. Default is 'Date'.
+    Parámetros:
 
-    Returns:
-    pandas.DataFrame: The dataframe with new 'DayCos' and 'DaySin' columns added,
-                      and intermediate columns removed.
+        df (pandas.DataFrame): El DataFrame que contiene la columna de fecha.
+        date_column (str): El nombre de la columna de fecha. El valor predeterminado es 'Date'.
+
+    Retorna:
+
+        pandas.DataFrame: El DataFrame con las nuevas columnas 'DayCos' y 'DaySin' añadidas, y las columnas intermedias eliminadas. 
+        
     """
     # Make a copy to avoid modifying the original dataframe
     df = df.copy()
@@ -42,26 +45,11 @@ def encode_cyclical_date(df, date_column="Date"):
 
 
 def encode_wind_dir(df):
-    dirs = [
-        "E",
-        "ENE",
-        "NE",
-        "NNE",
-        "N",
-        "NNW",
-        "NW",
-        "WNW",
-        "W",
-        "WSW",
-        "SW",
-        "SSW",
-        "S",
-        "SSE",
-        "SE",
-        "ESE",
-    ]
+    """
+    Codifica la función en función del viento (radianes)
+    """
     angles = np.radians(np.arange(0, 360, 22.5))
-    mapping_dict = {d: a for (d, a) in zip(dirs, angles)}
+    mapping_dict = {d: a for (d, a) in zip(types.WIND_DIRS, angles)}
 
     wind_dir_columns = ["WindGustDir", "WindDir9am", "WindDir3pm"]
     for column in wind_dir_columns:
@@ -75,4 +63,8 @@ def encode_wind_dir(df):
     return df
 
 def encode_location(df: pd.DataFrame, gdf_locations) -> pd.DataFrame:
+    """
+    Hace una magia y dada las ubicaciones (conseguidas previamente) las
+    merge con el dataframe principal.
+    """
     return pd.merge(df, gdf_locations.drop(columns="geometry"), on="Location")

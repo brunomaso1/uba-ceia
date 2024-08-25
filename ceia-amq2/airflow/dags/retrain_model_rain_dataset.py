@@ -1,42 +1,25 @@
-import datetime
-import pickle
-import boto3
-
-from airflow.decorators import dag, task
-
-from rain_dataset_utils import (
-    aux_functions,
-    custom_transformers,
-    types,
-    config_loader
-)
-config = config_loader.RainDatasetConfigs()
-
-markdown_text = """
-### Re-Train the Model for Rain Prediction
-
-This DAG re-trains the model based on new data, tests the previous model, and put in production the new one 
-if it performs better than the old one. It uses the F1 score to evaluate the model with the test data.
-
+"""
+RETRAIN: Re-entrena el modelo
 """
 
-default_args = {
-    "owner": "AMQ2",
-    "depends_on_past": False,
-    "schedule_interval": None,
-    "retries": 1,
-    "retry_delay": datetime.timedelta(minutes=5),
-    "dagrun_timeout": datetime.timedelta(minutes=15),
-}
+from airflow.decorators import dag, task
+from rain_dataset_utils import (
+    aux_functions,
+    config_loader
+)
+from rain_dataset_utils.rain_dataset_doc import (
+    DESCRIPTION_RETRAIN,
+    FULL_DESCRIPTION_MD_RETRAIN,
+)
 
+config = config_loader.RainDatasetConfigs()
 
 @dag(
     dag_id="retrain_model_rain_dataset",
-    description="Re-train the model based on new data, tests the previous model, and put in production the new one if "
-    "it performs better than the old one",
-    doc_md=markdown_text,
+    description=DESCRIPTION_RETRAIN,
+    doc_md=FULL_DESCRIPTION_MD_RETRAIN,
     tags=["Re-Train", "Rain dataset"],
-    default_args=default_args,
+    default_args=config.DAG_DEFAULT_CONF,
     catchup=False,
 )
 def processing_dag():
