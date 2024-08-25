@@ -272,14 +272,7 @@ class RainTasks:
         )
 
         client = boto3.client(config.BOTO3_CLIENT)
-        obj = client.get_object(
-            Bucket=config.BUCKET_DATA, Key=config.S3_INPUT_PIPELINE_PATH
-        )
-        inputs_pipeline = pickle.load(obj["Body"])
-        obj = client.get_object(
-            Bucket=config.BUCKET_DATA, Key=config.S3_TARGET_PIPELINE_PATH
-        )
-        target_pipeline = pickle.load(obj["Body"])
+        inputs_pipeline, target_pipeline = aux_functions.load_pipelines_from_s3()
 
         X_train = inputs_pipeline.fit_transform(X_train)
         X_test = inputs_pipeline.transform(X_test)
@@ -334,15 +327,7 @@ class RainTasks:
             train_test_split_final_path
         )
 
-        client = boto3.client(config.BOTO3_CLIENT)
-        obj = client.get_object(
-            Bucket=config.BUCKET_DATA, Key=config.S3_INPUT_PIPELINE_PATH
-        )
-        inputs_pipeline: Pipeline = pickle.load(obj["Body"])
-        obj = client.get_object(
-            Bucket=config.BUCKET_DATA, Key=config.S3_TARGET_PIPELINE_PATH
-        )
-        target_pipeline: Pipeline = pickle.load(obj["Body"])
+        inputs_pipeline, target_pipeline = aux_functions.load_pipelines_from_s3()
 
         sc_X = inputs_pipeline["StandardScaler"]
 

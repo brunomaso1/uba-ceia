@@ -1,6 +1,18 @@
 import datetime
+import pickle
+import boto3
 
 from airflow.decorators import dag, task
+
+from utils.rain_dataset.rain_dataset_tasks.tasks_utils import (
+    aux_functions,
+    custom_transformers,
+    types,
+)
+
+from utils.rain_dataset.rain_dataset_configs.config_loader import RainDatasetConfigs
+
+config = RainDatasetConfigs()
 
 markdown_text = """
 ### Re-Train the Model for Rain Prediction
@@ -11,18 +23,19 @@ if it performs better than the old one. It uses the F1 score to evaluate the mod
 """
 
 default_args = {
-    'owner': "AMQ2",
-    'depends_on_past': False,
-    'schedule_interval': None,
-    'retries': 1,
-    'retry_delay': datetime.timedelta(minutes=5),
-    'dagrun_timeout': datetime.timedelta(minutes=15)
+    "owner": "AMQ2",
+    "depends_on_past": False,
+    "schedule_interval": None,
+    "retries": 1,
+    "retry_delay": datetime.timedelta(minutes=5),
+    "dagrun_timeout": datetime.timedelta(minutes=15),
 }
 
+
 @dag(
-    dag_id="retrain_the_model",
+    dag_id="retrain_model_rain_dataset",
     description="Re-train the model based on new data, tests the previous model, and put in production the new one if "
-                "it performs better than the old one",
+    "it performs better than the old one",
     doc_md=markdown_text,
     tags=["Re-Train", "Rain dataset"],
     default_args=default_args,
@@ -32,10 +45,8 @@ def processing_dag():
 
     @task.virtualenv(
         task_id="train_the_challenger_model",
-        requirements=["scikit-learn==1.3.2",
-                      "mlflow==2.10.2",
-                      "awswrangler==3.6.0"],
-        system_site_packages=True
+        requirements=["scikit-learn==1.3.2", "mlflow==2.10.2", "awswrangler==3.6.0"],
+        system_site_packages=True,
     )
     def train_the_challenger_model():
         import datetime
@@ -46,7 +57,7 @@ def processing_dag():
         from sklearn.metrics import f1_score
         from mlflow.models import infer_signature
 
-        mlflow.set_tracking_uri('http://mlflow:5000')
+        mlflow.set_tracking_uri("http://mlflow:5000")
 
         def load_the_champion_model():
 
@@ -69,14 +80,16 @@ def processing_dag():
             return X_train, y_train, X_test, y_test
 
         def mlflow_track_experiment(model, X):
-
             # Track the experiment
             experiment = mlflow.set_experiment("Rain dataset")
 
-            mlflow.start_run(run_name='Challenger_run_' + datetime.datetime.today().strftime('%Y/%m/%d-%H:%M:%S"'),
-                             experiment_id=experiment.experiment_id,
-                             tags={"experiment": "challenger models", "dataset": "Rain dataset"},
-                             log_system_metrics=True)
+            mlflow.start_run(
+                run_name="Challenger_run_"
+                + datetime.datetime.today().strftime('%Y%m%d_%H%M%S"'),
+                experiment_id=experiment.experiment_id,
+                tags={"experiment": "challenger models", "dataset": "Rain dataset"},
+                log_system_metrics=True,
+            )
 
             params = model.get_params()
             params["model"] = type(model).__name__
@@ -92,10 +105,15 @@ def processing_dag():
                 sk_model=model,
                 artifact_path=artifact_path,
                 signature=signature,
-                serialization_format='cloudpickle',
+                serialization_format="cloudpickle",
                 registered_model_name="Rain_dataset_model_dev",
-                metadata={"model_data_version": 1}
+                metadata={"model_data_version": 1},
             )
+
+            # Registrar el pipeline en MLFlow
+            inputs_pipeline, target_pipeline = aux_functions.load_pipelines_from_s3()
+            mlflow.sklearn.log_model(inputs_pipeline, "inputs_pipeline")
+            mlflow.sklearn.log_model(target_pipeline, "target_pipeline")
 
             # Obtain the model URI
             return mlflow.get_artifact_uri(artifact_path)
@@ -112,10 +130,7 @@ def processing_dag():
 
             # Save the version of the model
             result = client.create_model_version(
-                name=name,
-                source=model_uri,
-                run_id=model_uri.split("/")[-3],
-                tags=tags
+                name=name, source=model_uri, run_id=model_uri.split("/")[-3], tags=tags
             )
 
             # Save the alias as challenger
@@ -143,13 +158,10 @@ def processing_dag():
         # Record the model
         register_challenger(challenger_model, f1_score, artifact_uri)
 
-
     @task.virtualenv(
         task_id="evaluate_champion_challenge",
-        requirements=["scikit-learn==1.3.2",
-                      "mlflow==2.10.2",
-                      "awswrangler==3.6.0"],
-        system_site_packages=True
+        requirements=["scikit-learn==1.3.2", "mlflow==2.10.2", "awswrangler==3.6.0"],
+        system_site_packages=True,
     )
     def evaluate_champion_challenge():
         import mlflow
@@ -157,7 +169,7 @@ def processing_dag():
 
         from sklearn.metrics import f1_score
 
-        mlflow.set_tracking_uri('http://mlflow:5000')
+        mlflow.set_tracking_uri("http://mlflow:5000")
 
         def load_the_model(alias):
             model_name = "Rain_dataset_model_prod"
@@ -189,7 +201,9 @@ def processing_dag():
             client.delete_registered_model_alias(name, "challenger")
 
             # Transform in champion
-            client.set_registered_model_alias(name, "prod_best", challenger_version.version)
+            client.set_registered_model_alias(
+                name, "prod_best", challenger_version.version
+            )
 
         def demote_challenger(name):
 
@@ -224,9 +238,14 @@ def processing_dag():
             mlflow.log_metric("test_f1_champion", f1_score_champion)
 
             if f1_score_challenger > f1_score_champion:
-                mlflow.log_param("Winner", 'Challenger')
+                mlflow.log_param("Winner", "Challenger")
             else:
-                mlflow.log_param("Winner", 'Champion')
+                mlflow.log_param("Winner", "Champion")
+
+            # Registrar el pipeline en MLFlow
+            inputs_pipeline, target_pipeline = aux_functions.load_pipelines_from_s3()
+            mlflow.sklearn.log_model(inputs_pipeline, "inputs_pipeline")
+            mlflow.sklearn.log_model(target_pipeline, "target_pipeline")
 
         name = "Rain_dataset_model_prod"
         if f1_score_challenger > f1_score_champion:

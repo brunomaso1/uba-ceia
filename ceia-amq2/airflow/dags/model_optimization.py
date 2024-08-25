@@ -7,6 +7,16 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 from airflow.decorators import dag, task
 
+from utils.rain_dataset.rain_dataset_tasks.tasks_utils import (
+    aux_functions,
+    custom_transformers,
+    types,
+)
+
+from utils.rain_dataset.rain_dataset_configs.config_loader import RainDatasetConfigs
+
+config = RainDatasetConfigs()
+
 
 mlflow.set_tracking_uri('http://mlflow:5000')
 
@@ -29,7 +39,7 @@ default_args = {
 }
 
 @dag(
-    dag_id="train_optimize_model",
+    dag_id="train_optimize_rain_dataset",
     description="Perform hyperparameter optimization",
     doc_md=markdown_text,
     tags=["Optimization", "Rain dataset"],
@@ -53,12 +63,12 @@ def optimization_dag():
     def experiment_creation():
         print("Creating experiment")
         # Se crea el experimento en MLflow, verificando si ya existe.
-        if experiment := mlflow.get_experiment_by_name("Rain dataset"):
+        if experiment := mlflow.get_experiment_by_name("Rain Dataset"):
             print("Found experiment")
             return experiment.experiment_id
         else:
             print("Creating new experiment")
-            return mlflow.create_experiment("Rain dataset")
+            return mlflow.create_experiment("Rain Dataset")
 
     @task
     def find_best_model(X_train, y_train, X_test, y_test, experiment_id):
@@ -66,14 +76,20 @@ def optimization_dag():
         from mlflow import MlflowClient
         client = MlflowClient()
 
-        run_name_parent = "best_hyperparam_"  + datetime.datetime.today().strftime('%Y/%m/%d-%H:%M:%S"')
+        run_name_parent = "best_hyperparam_"  + datetime.datetime.today().strftime('%Y%m%d_%H%M%S"')
 
         with mlflow.start_run(experiment_id=experiment_id, run_name=run_name_parent):
             # Definir los hiperparámetros a ajustar
+            # param_grid = {
+            #     'learning_rate': [0.1, 0.01],
+            #     'max_depth': [3, 6 ,9],
+            #     'n_estimators': [100, 500, 1000]
+            # }
+
             param_grid = {
-                'learning_rate': [0.1, 0.01],
-                'max_depth': [3, 6 ,9],
-                'n_estimators': [100, 500, 1000]
+                'learning_rate': [0.1],
+                'max_depth': [3],
+                'n_estimators': [100]
             }
 
             # Inicializar el modelo XGBoost
@@ -132,6 +148,10 @@ def optimization_dag():
                 metadata={"task": "Classification", "dataset": "Rain dataset"}
                 )
             
+            # Registrar el pipeline en MLFlow
+            inputs_pipeline, target_pipeline = aux_functions.load_pipelines_from_s3()
+            mlflow.sklearn.log_model(inputs_pipeline, "inputs_pipeline")
+            mlflow.sklearn.log_model(target_pipeline, "target_pipeline")
             
             # Se obtiene la ubicación del modelo guardado en MLflow
             model_uri = mlflow.get_artifact_uri(artifact_path)
@@ -144,7 +164,7 @@ def optimization_dag():
     @task
     def test_model(model_uri, experiment_id):
 
-        run_name_parent = "test_run_"  + datetime.datetime.today().strftime('%Y/%m/%d-%H:%M:%S"')
+        run_name_parent = "test_run_"  + datetime.datetime.today().strftime('%Y%m%d_%H%M%S"')
 
         with mlflow.start_run(experiment_id=experiment_id, run_name=run_name_parent):
             # Se carga el modelo guardado en MLflow
@@ -181,7 +201,7 @@ def optimization_dag():
         from mlflow import MlflowClient
         
         client = mlflow.MlflowClient()
-        name = "Rain_dataset_model_prod"
+        name = "rain_dataset_model_prod"
         desc = "Modelo de predicción de lluvia"
 
         # Se carga el modelo guardado en MLflow

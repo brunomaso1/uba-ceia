@@ -17,15 +17,6 @@ from sklearn.pipeline import Pipeline
 from typing_extensions import Annotated
 import os
 
-BUCKET_DATA = "data"
-BOTO3_CLIENT = "s3"
-INPUTS_PIPELINE_NAME = "inputs_pipeline.pkl"
-TARGET_PIPELINE_NAME = "target_pipeline.pkl"
-PIPES_DATA_FOLDER="pipes/"
-s3_input_pipeline_path = PIPES_DATA_FOLDER + INPUTS_PIPELINE_NAME
-s3_target_pipeline_path = PIPES_DATA_FOLDER + TARGET_PIPELINE_NAME
-
-
 class ModelInput(BaseModel):
     """
     Esta clase define la estructura de datos de entrada para el modelo de predicción de lluvia.
@@ -281,19 +272,34 @@ def load_model(model_name: str, alias: str = "prod_best"):
         model_data_mlflow = client_mlflow.get_model_version_by_alias(model_name, alias)
         model_ml = mlflow.sklearn.load_model(model_data_mlflow.source)
         version_model_ml = int(model_data_mlflow.version)
+
+        # Cargar los pipelines de entrada y objetivo desde MLFlow
+        input_pipeline_uri = f"models:/input_pipeline/{alias}"
+        input_pipeline = mlflow.sklearn.load_model(input_pipeline_uri)
+
+        target_pipeline_uri = f"models:/target_pipeline/{alias}"
+        target_pipeline = mlflow.sklearn.load_model(target_pipeline_uri)
     except:
         # # If there is no registry in MLflow, open the default model
-        # file_ml = open('/app/files/model.pkl', 'rb')
-        # model_ml = pickle.load(file_ml)
-        # file_ml.close()
-        # version_model_ml = 0
+        file_ml = open('/app/files/model.pkl', 'rb')
+        model_ml = pickle.load(file_ml)
+        file_ml.close()
+        version_model_ml = 0
+
+        input_pipeline_file = open('/app/files/inputs_pipeline.pkl', 'rb')
+        input_pipeline = pickle.load(input_pipeline_file)
+        input_pipeline_file.close()
+
+        target_pipeline_file = open('/app/files/inputs_pipeline.pkl', 'rb')
+        target_pipeline = pickle.load(target_pipeline_file)
+        target_pipeline.close()
 
         # If an error occurs during the process, pass silently
         model_ml = None
         version_model_ml = None
         pass
 
-    return model_ml, version_model_ml
+    return model_ml, version_model_ml, input_pipeline, target_pipeline
 
 
 def check_model():
@@ -325,20 +331,8 @@ def check_model():
         # If an error occurs during the process, pass silently
         pass
 
-
-def load_pipelines():
-    client = boto3.client(BOTO3_CLIENT)
-    obj = client.get_object(Bucket=BUCKET_DATA, Key=s3_input_pipeline_path)
-    inputs_pipeline: Pipeline = pickle.load(obj["Body"])
-    obj = client.get_object(Bucket=BUCKET_DATA, Key=s3_target_pipeline_path)
-    target_pipeline: Pipeline = pickle.load(obj["Body"])
-    print(inputs_pipeline)
-
-load_dotenv()
 # Load the model before start
-model, version_model = load_model("rain_dataset_model_prod", "prod_best")
-print(f"VARIABLES_ENTORNO={os.environ}")
-# load_pipelines()
+model, version_model, inputs_pipeline, target_pieline = load_model("rain_dataset_model_prod", "prod_best")
 
 app = FastAPI()
 
@@ -377,18 +371,11 @@ def predict(
         np.array(features_list).reshape([1, -1]), columns=features_key
     )
 
-    # TODO: usar variables de entorno
-    # s3_input_pipeline_path = PIPES_DATA_FOLDER + INPUTS_PIPELINE_NAME
-    # PIPES_DATA_FOLDER = Variable.get("PIPES_DATA_FOLDER")
-    # INPUTS_PIPELINE_NAME = "inputs_pipeline.pkl"
-
-    s3_input_pipeline_path = "pipes/inputs_pipeline.pkl"
-
-    client = boto3.client(BOTO3_CLIENT)
-    obj = client.get_object(Bucket=BUCKET_DATA, Key=s3_input_pipeline_path)
-    inputs_pipeline = pickle.load(obj["Body"])
-
+    print("Features before transform=")
+    print(features_df)
     features_df = inputs_pipeline.transform(features_df)
+    print("Features after transform=")
+    print(features_df)
 
     # Make the prediction using the trained model
     prediction = model.predict(features_df)
@@ -403,14 +390,3 @@ def predict(
 
     # Return the prediction result
     return ModelOutput(int_output=bool(prediction[0].item()), str_output=str_pred)
-
-
-@app.post(
-    "/test/",
-)
-def test():
-    JSONResponse(
-        content=jsonable_encoder(
-            {"message": "Bienvenidos a la API default de Rain Prediction"}
-        )
-    )

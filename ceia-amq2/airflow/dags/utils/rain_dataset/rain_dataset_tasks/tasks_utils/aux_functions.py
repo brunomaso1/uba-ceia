@@ -1,6 +1,12 @@
 import awswrangler as wr
 import mlflow
 import pandas as pd
+import boto3
+import pickle
+
+from utils.rain_dataset.rain_dataset_configs.config_loader import RainDatasetConfigs
+
+config = RainDatasetConfigs()
 
 
 def map_bool(x):
@@ -33,13 +39,12 @@ def fix_location(df):
     return df_out
 
 
-def upload_split_to_s3(
-    X_train, X_test, y_train, y_test, train_test_split_path
-):
+def upload_split_to_s3(X_train, X_test, y_train, y_test, train_test_split_path):
     save_to_csv(X_train, train_test_split_path["X_train"])
     save_to_csv(X_test, train_test_split_path["X_test"])
     save_to_csv(y_train, train_test_split_path["y_train"])
     save_to_csv(y_test, train_test_split_path["y_test"])
+
 
 def download_split_from_s3(train_test_split_path):
     X_train = wr.s3.read_csv(train_test_split_path["X_train"])
@@ -49,5 +54,16 @@ def download_split_from_s3(train_test_split_path):
 
     return X_train, X_test, y_train, y_test
 
-    
 
+def load_pipelines_from_s3():
+    client = boto3.client(config.BOTO3_CLIENT)
+    obj = client.get_object(
+        Bucket=config.BUCKET_DATA, Key=config.S3_INPUT_PIPELINE_PATH
+    )
+    inputs_pipeline = pickle.load(obj["Body"])
+    obj = client.get_object(
+        Bucket=config.BUCKET_DATA, Key=config.S3_TARGET_PIPELINE_PATH
+    )
+    target_pipeline = pickle.load(obj["Body"])
+
+    return inputs_pipeline, target_pipeline
