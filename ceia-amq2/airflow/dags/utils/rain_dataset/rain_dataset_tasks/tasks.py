@@ -1,18 +1,17 @@
+import datetime
 import mlflow.data.pandas_dataset
 from utils.rain_dataset.rain_dataset_tasks.tasks_utils import (
     aux_functions,
     custom_transformers,
-    types
+    types,
 )
-
+from utils.rain_dataset.rain_dataset_configs.config_loader import RainDatasetConfigs
 import re
 from airflow.decorators import task
 import pickle
-from dotenv import load_dotenv
 import pandas as pd
 import logging
 import awswrangler as wr
-from airflow.models import Variable
 import boto3
 import json
 from sklearn.model_selection import train_test_split
@@ -23,50 +22,10 @@ import osmnx as ox
 from shapely.geometry import Point
 import mlflow
 import logging
-import os
-from mlflow.data.pandas_dataset import PandasDataset
-from mlflow.data.sources import LocalArtifactDatasetSource
 
 logger = logging.getLogger(__name__)
+config = RainDatasetConfigs()
 
-load_dotenv()
-
-DATASET_NAME = "rain"
-DATASET_NAME_W_EXTENSION = DATASET_NAME + ".csv"
-COLUMNS_TYPE_FILE_NAME = "columnsTypes.json"
-TARGET_PIPELINE_NAME = "target_pipeline.pkl"
-INPUTS_PIPELINE_NAME = "inputs_pipeline.pkl"
-BUCKET_DATA = "data"
-BOTO3_CLIENT = "s3"
-X_TRAIN_NAME = "X_train.csv"
-X_TEST_NAME = "X_test.csv"
-Y_TRAIN_NAME = "y_train.csv"
-Y_TEST_NAME = "y_test.csv"
-GDF_LOCATIONS_NAME = "gdf_locations.json"
-MLFLOW_EXPERIMENT_NAME = "Rain Dataset"
-TARGET = "RainTomorrow"
-
-MLFLOW_S3_ENDPOINT_URL = os.getenv("MLFLOW_S3_ENDPOINT_URL")
-RAW_DATA_FOLDER = Variable.get("RAW_DATA_FOLDER")
-DATA_FOLDER = Variable.get("DATA_FOLDER")
-
-S3_PREPROCESED_DATA_FOLDER = Variable.get("S3_PREPROCESED_DATA_FOLDER")
-S3_RAW_DATA_FOLDER = Variable.get("S3_RAW_DATA_FOLDER")
-S3_INFO_DATA_FOLDER = Variable.get("S3_INFO_DATA_FOLDER")
-S3_PIPES_DATA_FOLDER = Variable.get("S3_PIPES_DATA_FOLDER")
-S3_FINAL_DATA_FOLDER = Variable.get("S3_FINAL_DATA_FOLDER")
-
-INFO_DATA_FOLDER = Variable.get("INFO_DATA_FOLDER")
-PIPES_DATA_FOLDER = Variable.get("PIPES_DATA_FOLDER")
-TEST_SIZE = Variable.get("TEST_SIZE")
-MLFLOW_TRACKING_URI = Variable.get("MLFLOW_TRACKING_URI")
-
-S3_RAW_DATA_PATH = S3_RAW_DATA_FOLDER + DATASET_NAME_W_EXTENSION
-S3_DF_PATH = S3_PREPROCESED_DATA_FOLDER + DATASET_NAME_W_EXTENSION
-S3_GDF_LOCATIONS_PATH=INFO_DATA_FOLDER + GDF_LOCATIONS_NAME
-S3_COLUMNS_PATH = INFO_DATA_FOLDER + COLUMNS_TYPE_FILE_NAME
-S3_INPUT_PIPELINE_PATH = PIPES_DATA_FOLDER + INPUTS_PIPELINE_NAME
-S3_TARGET_PIPELINE_PATH = PIPES_DATA_FOLDER + TARGET_PIPELINE_NAME
 
 class RainTasks:
     @task.virtualenv(requirements=["kagglehub"], system_site_packages=True)
@@ -87,8 +46,8 @@ class RainTasks:
     def search_upload_locations(dummy):
         logger = logging.getLogger(__name__)
 
-        client = boto3.client(BOTO3_CLIENT)
-        df = wr.s3.read_csv(S3_RAW_DATA_PATH)
+        client = boto3.client(config.BOTO3_CLIENT)
+        df = wr.s3.read_csv(config.S3_RAW_DATA_PATH)
 
         country = "Australia"
         mapping_dict = {"Dartmoor": "DartmoorVillage", "Richmond": "RichmondSydney"}
@@ -127,38 +86,40 @@ class RainTasks:
         gdf_locations_json = json.loads(gdf_locations.to_json())
 
         client.put_object(
-            Bucket=BUCKET_DATA,
-            Key=S3_GDF_LOCATIONS_PATH,
+            Bucket=config.BUCKET_DATA,
+            Key=config.S3_GDF_LOCATIONS_PATH,
             Body=json.dumps(gdf_locations_json),
         )
 
-        return 'dummy'
+        return "dummy"
 
     @task
     def process_column_types():
-        client = boto3.client(BOTO3_CLIENT)
+        client = boto3.client(config.BOTO3_CLIENT)
         client.put_object(
-            Bucket=BUCKET_DATA, Key=S3_COLUMNS_PATH, Body=json.dumps(types.COLUMNS_TYPES)
+            Bucket=config.BUCKET_DATA,
+            Key=config.S3_COLUMNS_PATH,
+            Body=json.dumps(types.COLUMNS_TYPES),
         )
 
-        return 'dummy'
+        return "dummy"
 
     @task
     def upload_raw_data_to_S3(local_path):
         df = pd.read_csv(local_path, compression="zip")
 
-        wr.s3.to_csv(df, path=S3_RAW_DATA_PATH, index=False)
+        wr.s3.to_csv(df, path=config.S3_RAW_DATA_PATH, index=False)
 
-        return 'dummy'
+        return "dummy"
 
     @task
     def process_target_drop_na(dummy):
-        df = wr.s3.read_csv(S3_RAW_DATA_PATH)
+        df = wr.s3.read_csv(config.S3_RAW_DATA_PATH)
         df.dropna(subset=["RainTomorrow"], inplace=True, ignore_index=True)
 
-        wr.s3.to_csv(df, path=S3_DF_PATH, index=False)
+        wr.s3.to_csv(df, path=config.S3_DF_PATH, index=False)
 
-        return 'dummy'
+        return "dummy"
 
     @task
     def create_target_pipe():
@@ -167,22 +128,21 @@ class RainTasks:
             ("mapping", FunctionTransformer(aux_functions.map_bool))
         )
 
-        
-        client = boto3.client(BOTO3_CLIENT)
+        client = boto3.client(config.BOTO3_CLIENT)
         client.put_object(
-            Bucket=BUCKET_DATA,
-            Key=S3_TARGET_PIPELINE_PATH,
+            Bucket=config.BUCKET_DATA,
+            Key=config.S3_TARGET_PIPELINE_PATH,
             Body=pickle.dumps(target_pipeline),
         )
 
-        return 'dummy'
+        return "dummy"
 
     @task
     def create_inputs_pipe(*dummy):
         inputs_pipeline = Pipeline(steps=[])
 
-        client = boto3.client(BOTO3_CLIENT)
-        obj = client.get_object(Bucket=BUCKET_DATA, Key=S3_COLUMNS_PATH)
+        client = boto3.client(config.BOTO3_CLIENT)
+        obj = client.get_object(Bucket=config.BUCKET_DATA, Key=config.S3_COLUMNS_PATH)
         columns_types = json.load(obj["Body"])
         cat_columns = columns_types["cat_columns"]
         bool_columns = columns_types["bool_columns"]
@@ -226,7 +186,9 @@ class RainTasks:
         )
 
         # Location
-        obj = client.get_object(Bucket=BUCKET_DATA, Key=S3_GDF_LOCATIONS_PATH)
+        obj = client.get_object(
+            Bucket=config.BUCKET_DATA, Key=config.S3_GDF_LOCATIONS_PATH
+        )
         gdf_locations = gpd.read_file(obj["Body"])
         location_pieline = Pipeline(
             [
@@ -275,26 +237,26 @@ class RainTasks:
 
         # Subimos el pipeline
         client.put_object(
-            Bucket=BUCKET_DATA,
-            Key=S3_INPUT_PIPELINE_PATH,
+            Bucket=config.BUCKET_DATA,
+            Key=config.S3_INPUT_PIPELINE_PATH,
             Body=pickle.dumps(inputs_pipeline),
         )
 
-        return 'dummy'
+        return "dummy"
 
     @task
     def split_dataset(dummy):
-        df = wr.s3.read_csv(S3_DF_PATH)
+        df = wr.s3.read_csv(config.S3_DF_PATH)
         X = df.drop(columns="RainTomorrow")
         y = df["RainTomorrow"]
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
         train_test_split_preprocesed_path = {
-            "X_train": S3_PREPROCESED_DATA_FOLDER + X_TRAIN_NAME,
-            "X_test": S3_PREPROCESED_DATA_FOLDER + X_TEST_NAME,
-            "y_train": S3_PREPROCESED_DATA_FOLDER + Y_TRAIN_NAME,
-            "y_test": S3_PREPROCESED_DATA_FOLDER + Y_TEST_NAME,
+            "X_train": config.S3_PREPROCESED_DATA_FOLDER + config.X_TRAIN_NAME,
+            "X_test": config.S3_PREPROCESED_DATA_FOLDER + config.X_TEST_NAME,
+            "y_train": config.S3_PREPROCESED_DATA_FOLDER + config.Y_TRAIN_NAME,
+            "y_test": config.S3_PREPROCESED_DATA_FOLDER + config.Y_TEST_NAME,
         }
 
         aux_functions.upload_split_to_s3(
@@ -304,15 +266,19 @@ class RainTasks:
         return train_test_split_preprocesed_path
 
     @task
-    def fit_transform_pipes(        train_test_split_preprocesed_path, *dummy    ):
+    def fit_transform_pipes(train_test_split_preprocesed_path, *dummy):
         X_train, X_test, y_train, y_test = aux_functions.download_split_from_s3(
             train_test_split_preprocesed_path
         )
 
-        client = boto3.client(BOTO3_CLIENT)
-        obj = client.get_object(Bucket=BUCKET_DATA, Key=S3_INPUT_PIPELINE_PATH)
+        client = boto3.client(config.BOTO3_CLIENT)
+        obj = client.get_object(
+            Bucket=config.BUCKET_DATA, Key=config.S3_INPUT_PIPELINE_PATH
+        )
         inputs_pipeline = pickle.load(obj["Body"])
-        obj = client.get_object(Bucket=BUCKET_DATA, Key=S3_TARGET_PIPELINE_PATH)
+        obj = client.get_object(
+            Bucket=config.BUCKET_DATA, Key=config.S3_TARGET_PIPELINE_PATH
+        )
         target_pipeline = pickle.load(obj["Body"])
 
         X_train = inputs_pipeline.fit_transform(X_train)
@@ -321,22 +287,22 @@ class RainTasks:
         y_test = target_pipeline.transform(y_test)
 
         client.put_object(
-            Bucket=BUCKET_DATA,
-            Key=S3_INPUT_PIPELINE_PATH,
+            Bucket=config.BUCKET_DATA,
+            Key=config.S3_INPUT_PIPELINE_PATH,
             Body=pickle.dumps(inputs_pipeline),
         )
 
         client.put_object(
-            Bucket=BUCKET_DATA,
-            Key=S3_TARGET_PIPELINE_PATH,
+            Bucket=config.BUCKET_DATA,
+            Key=config.S3_TARGET_PIPELINE_PATH,
             Body=pickle.dumps(target_pipeline),
         )
 
         train_test_split_final_path = {
-            "X_train": S3_FINAL_DATA_FOLDER + X_TRAIN_NAME,
-            "X_test": S3_FINAL_DATA_FOLDER + X_TEST_NAME,
-            "y_train": S3_FINAL_DATA_FOLDER + Y_TRAIN_NAME,
-            "y_test": S3_FINAL_DATA_FOLDER + Y_TEST_NAME,
+            "X_train": config.S3_FINAL_DATA_FOLDER + config.X_TRAIN_NAME,
+            "X_test": config.S3_FINAL_DATA_FOLDER + config.X_TEST_NAME,
+            "y_train": config.S3_FINAL_DATA_FOLDER + config.Y_TRAIN_NAME,
+            "y_test": config.S3_FINAL_DATA_FOLDER + config.Y_TEST_NAME,
         }
 
         aux_functions.upload_split_to_s3(
@@ -347,7 +313,7 @@ class RainTasks:
         # Por esto el boilerplate de código para serializarlo por JSON.
         final_paths = {
             "train_test_split_preprocesed_path": train_test_split_preprocesed_path,
-            "train_test_split_final_path": train_test_split_final_path
+            "train_test_split_final_path": train_test_split_final_path,
         }
 
         return final_paths
@@ -359,7 +325,7 @@ class RainTasks:
         # logger.info(f"MLFLOW_S3_ENDPOINT_URL={MLFLOW_S3_ENDPOINT_URL}")
         # logger.info(f"RAW_DATA_FOLDER={RAW_DATA_FOLDER}")
 
-        s3_raw_data_path = S3_RAW_DATA_FOLDER + DATASET_NAME_W_EXTENSION
+        s3_raw_data_path = config.S3_RAW_DATA_FOLDER + config.DATASET_NAME_W_EXTENSION
         df = wr.s3.read_csv(s3_raw_data_path)
 
         train_test_split_final_path = final_paths["train_test_split_final_path"]
@@ -368,10 +334,14 @@ class RainTasks:
             train_test_split_final_path
         )
 
-        client = boto3.client(BOTO3_CLIENT)
-        obj = client.get_object(Bucket=BUCKET_DATA, Key=S3_INPUT_PIPELINE_PATH)
+        client = boto3.client(config.BOTO3_CLIENT)
+        obj = client.get_object(
+            Bucket=config.BUCKET_DATA, Key=config.S3_INPUT_PIPELINE_PATH
+        )
         inputs_pipeline: Pipeline = pickle.load(obj["Body"])
-        obj = client.get_object(Bucket=BUCKET_DATA, Key=S3_TARGET_PIPELINE_PATH)
+        obj = client.get_object(
+            Bucket=config.BUCKET_DATA, Key=config.S3_TARGET_PIPELINE_PATH
+        )
         target_pipeline: Pipeline = pickle.load(obj["Body"])
 
         sc_X = inputs_pipeline["StandardScaler"]
@@ -380,12 +350,15 @@ class RainTasks:
         # logger.info(f"source_dataset={source_dataset}")
         # dataset: PandasDataset = mlflow.data.from_pandas(df, source=LocalArtifactDatasetSource(source_dataset), name=DATASET_NAME, targets=TARGET)
 
-        mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
-        mlflow.set_experiment(MLFLOW_EXPERIMENT_NAME)
+        mlflow.set_tracking_uri(config.MLFLOW_TRACKING_URI)
+        experiment = mlflow.set_experiment(config.MLFLOW_EXPERIMENT_NAME)
 
-        with mlflow.start_run():
-            mlflow.set_tag("Training info", "Training data for Rain DataSet")
-
+        with mlflow.start_run(
+            run_name="ETL_run_" + datetime.datetime.today().strftime('%Y%m%d_%H%M%S"'),
+            experiment_id=experiment.experiment_id,
+            tags={"experiment": "etl", "dataset": "Rain dataset"},
+            log_system_metrics=True,
+        ):
             # mlflow.log_input(dataset, context="Dataset")
 
             mlflow.log_param("Train observations", X_train.shape[0])
@@ -397,5 +370,3 @@ class RainTasks:
             # Registrar el pipeline en MLFlow
             mlflow.sklearn.log_model(inputs_pipeline, "inputs_pipeline")
             mlflow.sklearn.log_model(target_pipeline, "target_pipeline")
-
-            print("Pipeline registered successfully in MLFlow.")
