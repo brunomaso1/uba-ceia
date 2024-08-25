@@ -314,15 +314,26 @@ services:
   gradio:
     container_name: gradio
     build: "./dockerfiles/gradio"
-    restart: always
+    profiles:
+      - all
     ports:
-      - "7860:7860"
+      - "${GRADIO_PORT:-7860}:7860"
     networks:
       - frontend
       - backend
+    environment:
+      - FASTAPI_URL=http://fastapi:${FASTAPI_PORT:-8800}
+    depends_on:
+      fastapi:
+        condition: service_healthy
     volumes:
       - ./dockerfiles/gradio:/gradioapp
-
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://fastapi:${GRADIO_PORT:-7860}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 networks:
   frontend:
