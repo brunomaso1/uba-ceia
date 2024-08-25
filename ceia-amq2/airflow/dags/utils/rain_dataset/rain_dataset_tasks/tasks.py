@@ -347,33 +347,32 @@ class RainTasks:
         # Por esto el boilerplate de código para serializarlo por JSON.
         final_paths = {
             "train_test_split_preprocesed_path": train_test_split_preprocesed_path,
-            "train_test_split_final_path": train_test_split_final_path,
-            "s3_input_pipeline_path": S3_INPUT_PIPELINE_PATH,
-            "s3_target_pipeline_path": S3_TARGET_PIPELINE_PATH,
+            "train_test_split_final_path": train_test_split_final_path
         }
 
         return final_paths
 
     @task
     def register_to_mlflow(final_paths):
-        MLFLOW_S3_ENDPOINT_URL = os.getenv("MLFLOW_S3_ENDPOINT_URL")
-        RAW_DATA_FOLDER = Variable.get("RAW_DATA_FOLDER")
-        logger.info(f"MLFLOW_S3_ENDPOINT_URL={MLFLOW_S3_ENDPOINT_URL}")
-        logger.info(f"RAW_DATA_FOLDER={RAW_DATA_FOLDER}")
+        # MLFLOW_S3_ENDPOINT_URL = os.getenv("MLFLOW_S3_ENDPOINT_URL")
+        # RAW_DATA_FOLDER = Variable.get("RAW_DATA_FOLDER")
+        # logger.info(f"MLFLOW_S3_ENDPOINT_URL={MLFLOW_S3_ENDPOINT_URL}")
+        # logger.info(f"RAW_DATA_FOLDER={RAW_DATA_FOLDER}")
 
         s3_raw_data_path = S3_RAW_DATA_FOLDER + DATASET_NAME_W_EXTENSION
         df = wr.s3.read_csv(s3_raw_data_path)
 
         train_test_split_final_path = final_paths["train_test_split_final_path"]
-        s3_input_pipeline_path = final_paths["s3_input_pipeline_path"]
 
         X_train, X_test, _, _ = aux_functions.download_split_from_s3(
             train_test_split_final_path
         )
 
         client = boto3.client(BOTO3_CLIENT)
-        obj = client.get_object(Bucket=BUCKET_DATA, Key=s3_input_pipeline_path)
+        obj = client.get_object(Bucket=BUCKET_DATA, Key=S3_INPUT_PIPELINE_PATH)
         inputs_pipeline: Pipeline = pickle.load(obj["Body"])
+        obj = client.get_object(Bucket=BUCKET_DATA, Key=S3_TARGET_PIPELINE_PATH)
+        target_pipeline: Pipeline = pickle.load(obj["Body"])
 
         sc_X = inputs_pipeline["StandardScaler"]
 
@@ -394,3 +393,9 @@ class RainTasks:
             mlflow.log_param("Standard Scaler feature names", sc_X.feature_names_in_)
             mlflow.log_param("Standard Scaler mean values", sc_X.mean_)
             mlflow.log_param("Standard Scaler scale values", sc_X.scale_)
+
+            # Registrar el pipeline en MLFlow
+            mlflow.sklearn.log_model(inputs_pipeline, "inputs_pipeline")
+            mlflow.sklearn.log_model(target_pipeline, "target_pipeline")
+
+            print("Pipeline registered successfully in MLFlow.")
