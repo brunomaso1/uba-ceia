@@ -10,3 +10,4 @@ xgboost
 awswrangler
 apache-airflow
 geopandas
+osmnx
