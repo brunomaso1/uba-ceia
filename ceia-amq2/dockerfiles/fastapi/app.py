@@ -18,13 +18,17 @@ from pydantic import BaseModel, Field
 from sklearn.pipeline import Pipeline
 from typing_extensions import Annotated
 from datetime import date
+import logging
+import os
 
 import utils.rain_dataset.rain_dataset_tasks.tasks_utils # type: ignore
 from utils.rain_dataset.rain_dataset_configs.config_loader import RainDatasetConfigs # type: ignore
+
+
 config = RainDatasetConfigs()
+logger = logging.getLogger(__name__)
 
 
-import os
 
 class ModelInput(BaseModel):
     """
@@ -277,31 +281,25 @@ def load_model(model_name: str, alias: str = "prod_best"):
         mlflow.set_tracking_uri("http://mlflow:5000")
         client_mlflow = mlflow.MlflowClient()
 
-        print("step 1 completed")
-
+        logger.info("LOADDING MODELS...")
         # Se carga el modelo guardado en MLflow
-        model_data_mlflow = client_mlflow.get_model_version_by_alias(model_name, alias)
-        model_ml = mlflow.sklearn.load_model(model_data_mlflow.source)
-        version_model_ml = int(model_data_mlflow.version)
-
-        print("step 2 completed")
+        model_data_info = client_mlflow.get_model_version_by_alias(model_name, alias)
+        logger.info("model_data_info={model_data_info}")
+        model_ml = mlflow.sklearn.load_model(model_data_info.source)
+        version_model_ml = int(model_data_info.version)
 
         # Cargar los pipelines de entrada y objetivo desde MLFlow
-        input_pipeline_uri = client_mlflow.get_model_version_by_alias("Rain_dataset_etl_inputs_pipeline", alias).source
-        print(input_pipeline_uri)
-        input_pipeline = mlflow.sklearn.load_model(input_pipeline_uri)
+        input_pipeline_info = client_mlflow.get_model_version_by_alias(config.MLFLOW_INPUT_PIPELINE_MODEL_REGISTRED_NAME, config.MLFLOW_INPUT_PIPELINE_ALIAS)
+        logger.info(f"input_pipeline_info={input_pipeline_info}")
+        input_pipeline = mlflow.sklearn.load_model(input_pipeline_info.source)
 
-        print("step 3, input pipeline load completed")
-
-        target_pipeline_uri = client_mlflow.get_model_version_by_alias("Rain_dataset_etl_target_pipeline", alias).source
-        target_pipeline = mlflow.sklearn.load_model(target_pipeline_uri)
-
-        print("step 4, target pipeline load completed")
+        target_pipeline_info = client_mlflow.get_model_version_by_alias(config.MLFLOW_INPUT_PIPELINE_MODEL_REGISTRED_NAME, config.MLFLOW_INPUT_PIPELINE_ALIAS)
+        logger.info(f"target_pipeline_info={target_pipeline_info}")
+        target_pipeline = mlflow.sklearn.load_model(target_pipeline_info.source)
 
     except Exception as e:
-        print("Exception!!!")
-        print(e)
-        print("Error loading model")
+        logger.warning('No se pudo cargar el modelo de MLFlow', e)
+        
         # If there is no registry in MLflow, open the default model
         file_ml = open('/app/files/model.pkl', 'rb')
         model_ml = pickle.load(file_ml)
@@ -317,10 +315,10 @@ def load_model(model_name: str, alias: str = "prod_best"):
         target_pipeline_file.close()
 
         # If an error occurs during the process, pass silently
-        # model_ml = None
-        # version_model_ml = None
-        # input_pipeline = None
-        # target_pipeline = None
+        model_ml = None
+        version_model_ml = None
+        input_pipeline = None
+        target_pipeline = None
         pass
 
     return model_ml, version_model_ml, input_pipeline, target_pipeline

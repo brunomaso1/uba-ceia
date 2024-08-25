@@ -70,11 +70,9 @@ class RainTasks:
                 lats.append(lat)
                 lons.append(lon)
             except Exception as e:
-                print(f"Error retrieving coordinates for {location}: {e}")
+                logger.error(f"Error retrieving coordinates for {location}: {e}")
 
         df_locations = pd.DataFrame({"Location": locs, "Lat": lats, "Lon": lons})
-        logger.info("df_locations=")
-        logger.info(df_locations.head())
         geometry = [
             Point(lon, lat)
             for lon, lat in zip(df_locations["Lon"], df_locations["Lat"])
@@ -322,9 +320,16 @@ class RainTasks:
         df = wr.s3.read_csv(s3_raw_data_path)
 
         train_test_split_final_path = final_paths["train_test_split_final_path"]
+        train_test_split_preprocesed_path = final_paths[
+            "train_test_split_preprocesed_path"
+        ]
 
-        X_train, X_test, _, _ = aux_functions.download_split_from_s3(
+        X_train_final, X_test_final, _, _ = aux_functions.download_split_from_s3(
             train_test_split_final_path
+        )
+
+        X_train, _, y_train, _ = aux_functions.download_split_from_s3(
+            train_test_split_preprocesed_path
         )
 
         inputs_pipeline, target_pipeline = aux_functions.load_pipelines_from_s3()
@@ -348,51 +353,49 @@ class RainTasks:
         ):
             # mlflow.log_input(dataset, context="Dataset")
 
-            mlflow.log_param("Train observations", X_train.shape[0])
-            mlflow.log_param("Test observations", X_test.shape[0])
+            mlflow.log_param("Train observations", X_train_final.shape[0])
+            mlflow.log_param("Test observations", X_test_final.shape[0])
             mlflow.log_param("Standard Scaler feature names", sc_X.feature_names_in_)
             mlflow.log_param("Standard Scaler mean values", sc_X.mean_)
             mlflow.log_param("Standard Scaler scale values", sc_X.scale_)
 
             # Registrar el pipeline en MLFlow
             mlflow.sklearn.log_model(
-                sk_model=inputs_pipeline, 
-                artifact_path="inputs_pipeline",
-                registered_model_name="Rain_dataset_etl_inputs_pipeline"
-                )
+                sk_model=inputs_pipeline,
+                artifact_path=config.INPUTS_PIPELINE_NAME,
+                registered_model_name=config.MLFLOW_INPUT_PIPELINE_MODEL_REGISTRED_NAME,
+            )
             mlflow.sklearn.log_model(
-                sk_model=target_pipeline, 
-                artifact_path="target_pipeline",
-                registered_model_name="Rain_dataset_etl_target_pipeline"
-                )
-            
+                sk_model=target_pipeline,
+                artifact_path=config.TARGET_PIPELINE_NAME,
+                registered_model_name=config.MLFLOW_TARGET_PIPELINE_MODEL_REGISTRED_NAME
+            )
+
             # Se obtiene la ubicación del modelo guardado en MLflow
-            inputs_pipeline_uri = mlflow.get_artifact_uri("inputs_pipeline")
-            target_pipeline_uri = mlflow.get_artifact_uri("target_pipeline")
+            inputs_pipeline_uri = mlflow.get_artifact_uri(config.INPUTS_PIPELINE_NAME)
+            target_pipeline_uri = mlflow.get_artifact_uri(config.TARGET_PIPELINE_NAME)
 
             # Se crea una versión para los modelos de pipeline
             results_inputs = client.create_model_version(
-                name = "Rain_dataset_etl_inputs_pipeline",
-                source = inputs_pipeline_uri,
-                tags = {"pipeline": "inputs"}
+                name=config.MLFLOW_INPUT_PIPELINE_MODEL_REGISTRED_NAME,
+                source=inputs_pipeline_uri,
+                tags={"pipeline": "inputs"},
             )
             results_target = client.create_model_version(
-                name = "Rain_dataset_etl_target_pipeline",
-                source = target_pipeline_uri,
-                tags = {"pipeline": "target"}
+                name=config.MLFLOW_TARGET_PIPELINE_MODEL_REGISTRED_NAME,
+                source=target_pipeline_uri,
+                tags={"pipeline": "target"},
             )
 
             # Se registra un alias para los modelos de pipeline
             client.set_registered_model_alias(
-                name="Rain_dataset_etl_inputs_pipeline", 
-                alias="prod_best", 
-                version=results_inputs.version
-                )
+                name=config.MLFLOW_INPUT_PIPELINE_MODEL_REGISTRED_NAME,
+                alias=config.MLFLOW_INPUT_PIPELINE_ALIAS,
+                version=results_inputs.version,
+            )
 
             client.set_registered_model_alias(
-                name="Rain_dataset_etl_target_pipeline", 
-                alias="prod_best", 
-                version=results_target.version
-                )
-
-
+                name=config.MLFLOW_TARGET_PIPELINE_MODEL_REGISTRED_NAME,
+                alias=config.MLFLOW_TARGET_PIPELINE_ALIAS,
+                version=results_target.version,
+            )
