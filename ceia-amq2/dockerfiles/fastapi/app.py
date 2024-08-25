@@ -1,6 +1,8 @@
 import json
 import pickle
 import mlflow
+import awswrangler
+import airflow
 from dotenv import load_dotenv
 
 import numpy as np
@@ -15,6 +17,12 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel, Field
 from sklearn.pipeline import Pipeline
 from typing_extensions import Annotated
+from datetime import date
+
+import utils.rain_dataset.rain_dataset_tasks.tasks_utils
+import utils.rain_dataset.rain_dataset_configs
+
+
 import os
 
 class ModelInput(BaseModel):
@@ -22,7 +30,7 @@ class ModelInput(BaseModel):
     Esta clase define la estructura de datos de entrada para el modelo de predicción de lluvia.
     """
 
-    date: str = Field(
+    current_date: date = Field(
         description="Fecha de los datos.",
     )
     location: Literal[
@@ -203,7 +211,7 @@ class ModelInput(BaseModel):
         "json_schema_extra": {
             "ejemplos": [
                 {
-                    "date": "2021-01-01",
+                    "current_date": "2021-01-01",
                     "location": "Sydney",
                     "mintemp": 15.0,
                     "maxtemp": 25.0,
@@ -268,19 +276,31 @@ def load_model(model_name: str, alias: str = "prod_best"):
         mlflow.set_tracking_uri("http://mlflow:5000")
         client_mlflow = mlflow.MlflowClient()
 
+        print("step 1 completed")
+
         # Se carga el modelo guardado en MLflow
         model_data_mlflow = client_mlflow.get_model_version_by_alias(model_name, alias)
         model_ml = mlflow.sklearn.load_model(model_data_mlflow.source)
         version_model_ml = int(model_data_mlflow.version)
 
+        print("step 2 completed")
+
         # Cargar los pipelines de entrada y objetivo desde MLFlow
-        input_pipeline_uri = f"models:/input_pipeline/{alias}"
+        input_pipeline_uri = client_mlflow.get_model_version_by_alias("Rain_dataset_etl_inputs_pipeline", alias).source
+        print(input_pipeline_uri)
         input_pipeline = mlflow.sklearn.load_model(input_pipeline_uri)
 
-        target_pipeline_uri = f"models:/target_pipeline/{alias}"
+        print("step 3, input pipeline load completed")
+
+        target_pipeline_uri = client_mlflow.get_model_version_by_alias("Rain_dataset_etl_target_pipeline", alias).source
         target_pipeline = mlflow.sklearn.load_model(target_pipeline_uri)
-    except:
-        # # If there is no registry in MLflow, open the default model
+
+        print("step 4, target pipeline load completed")
+
+    except Exception as e:
+        print(e)
+        print("Error loading model")
+        # If there is no registry in MLflow, open the default model
         file_ml = open('/app/files/model.pkl', 'rb')
         model_ml = pickle.load(file_ml)
         file_ml.close()
@@ -297,6 +317,8 @@ def load_model(model_name: str, alias: str = "prod_best"):
         # If an error occurs during the process, pass silently
         model_ml = None
         version_model_ml = None
+        input_pipeline = None
+        target_pipeline = None
         pass
 
     return model_ml, version_model_ml, input_pipeline, target_pipeline
@@ -312,7 +334,7 @@ def check_model():
     global version_model
 
     try:
-        model_name = "rain_dataset_model_prod"
+        model_name = "Rain_dataset_model_prod"
         alias = "prod_best"
 
         mlflow.set_tracking_uri("http://mlflow:5000")
@@ -332,7 +354,7 @@ def check_model():
         pass
 
 # Load the model before start
-model, version_model, inputs_pipeline, target_pieline = load_model("rain_dataset_model_prod", "prod_best")
+model, version_model, inputs_pipeline, target_pieline = load_model("Rain_dataset_model_prod", "prod_best")
 
 app = FastAPI()
 
