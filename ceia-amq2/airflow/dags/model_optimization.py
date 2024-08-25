@@ -7,15 +7,14 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 from airflow.decorators import dag, task
 
-from utils.rain_dataset.rain_dataset_tasks.tasks_utils import (
+from rain_dataset_utils import (
     aux_functions,
     custom_transformers,
     types,
+    config_loader
 )
 
-from utils.rain_dataset.rain_dataset_configs.config_loader import RainDatasetConfigs
-
-config = RainDatasetConfigs()
+config = config_loader.RainDatasetConfigs()
 
 
 mlflow.set_tracking_uri('http://mlflow:5000')

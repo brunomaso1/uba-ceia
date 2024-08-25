@@ -181,7 +181,7 @@ services:
     # También para compartir modulos
     volumes:
       - ./dockerfiles/fastapi:/app
-      - ./airflow/dags/utils:/app/utils
+      - ./airflow/dags/rain_dataset_utils:/app/rain_dataset_utils
 
   airflow-webserver:
     <<: *airflow-common

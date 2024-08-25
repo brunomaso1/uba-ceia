@@ -1,5 +1,4 @@
 import os
-import json
 from dotenv import load_dotenv
 from airflow.models import Variable
 
@@ -45,7 +44,7 @@ class RainDatasetConfigs:
         self.X_TEST_NAME = "X_test.csv"
         self.Y_TRAIN_NAME = "y_train.csv"
         self.Y_TEST_NAME = "y_test.csv"
-        self.PIPELINE_EXTENSION = "pkl"
+        self.PIPELINE_EXTENSION = ".pkl"
         self.INPUTS_PIPELINE_NAME = "inputs_pipeline"
         self.TARGET_PIPELINE_NAME = "target_pipeline"
         

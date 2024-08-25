@@ -21,11 +21,14 @@ from datetime import date
 import logging
 import os
 
-import utils.rain_dataset.rain_dataset_tasks.tasks_utils # type: ignore
-from utils.rain_dataset.rain_dataset_configs.config_loader import RainDatasetConfigs # type: ignore
+from rain_dataset_utils import (
+    aux_functions,
+    custom_transformers,
+    types,
+    config_loader
+)
 
-
-config = RainDatasetConfigs()
+rain_config = config_loader.RainDatasetConfigs()
 logger = logging.getLogger(__name__)
 
 
@@ -289,17 +292,17 @@ def load_model(model_name: str, alias: str = "prod_best"):
         version_model_ml = int(model_data_info.version)
 
         # Cargar los pipelines de entrada y objetivo desde MLFlow
-        input_pipeline_info = client_mlflow.get_model_version_by_alias(config.MLFLOW_INPUT_PIPELINE_MODEL_REGISTRED_NAME, config.MLFLOW_INPUT_PIPELINE_ALIAS)
+        input_pipeline_info = client_mlflow.get_model_version_by_alias(rain_config.MLFLOW_INPUT_PIPELINE_MODEL_REGISTRED_NAME, rain_config.MLFLOW_INPUT_PIPELINE_ALIAS)
         logger.info(f"input_pipeline_info={input_pipeline_info}")
         input_pipeline = mlflow.sklearn.load_model(input_pipeline_info.source)
 
-        target_pipeline_info = client_mlflow.get_model_version_by_alias(config.MLFLOW_INPUT_PIPELINE_MODEL_REGISTRED_NAME, config.MLFLOW_INPUT_PIPELINE_ALIAS)
+        target_pipeline_info = client_mlflow.get_model_version_by_alias(rain_config.MLFLOW_INPUT_PIPELINE_MODEL_REGISTRED_NAME, rain_config.MLFLOW_INPUT_PIPELINE_ALIAS)
         logger.info(f"target_pipeline_info={target_pipeline_info}")
         target_pipeline = mlflow.sklearn.load_model(target_pipeline_info.source)
 
     except Exception as e:
-        logger.warning('No se pudo cargar el modelo de MLFlow', e)
-        
+        logger.warning('No se pudo cargar el modelo de MLFlow, se utiliza el modelo por defecto')
+
         # If there is no registry in MLflow, open the default model
         file_ml = open('/app/files/model.pkl', 'rb')
         model_ml = pickle.load(file_ml)
@@ -313,12 +316,6 @@ def load_model(model_name: str, alias: str = "prod_best"):
         target_pipeline_file = open('/app/files/inputs_pipeline.pkl', 'rb')
         target_pipeline = pickle.load(target_pipeline_file)
         target_pipeline_file.close()
-
-        # If an error occurs during the process, pass silently
-        model_ml = None
-        version_model_ml = None
-        input_pipeline = None
-        target_pipeline = None
         pass
 
     return model_ml, version_model_ml, input_pipeline, target_pipeline
@@ -393,16 +390,11 @@ def predict(
         np.array(features_list).reshape([1, -1]), columns=features_key
     )
 
-    print("Features before transform=")
-    print(features_df)
     features_df = inputs_pipeline.transform(features_df)
-    print("Features after transform=")
-    print(features_df)
-
     # Make the prediction using the trained model
     prediction = model.predict(features_df)
 
-    print(f"Prediction={prediction}")
+    logger.info(f"Prediction={prediction}")
     # Me da correctamente 0
 
     # Convert prediction result into string format

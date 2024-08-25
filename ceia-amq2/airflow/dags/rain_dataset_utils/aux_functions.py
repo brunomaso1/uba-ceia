@@ -4,9 +4,8 @@ import pandas as pd
 import boto3
 import pickle
 
-from utils.rain_dataset.rain_dataset_configs.config_loader import RainDatasetConfigs
-
-config = RainDatasetConfigs()
+from . import config_loader
+config = config_loader.RainDatasetConfigs()
 
 
 def map_bool(x):

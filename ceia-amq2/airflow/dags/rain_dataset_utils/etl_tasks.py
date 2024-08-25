@@ -1,11 +1,11 @@
 import datetime
 import mlflow.data.pandas_dataset
-from utils.rain_dataset.rain_dataset_tasks.tasks_utils import (
+from . import (
     aux_functions,
     custom_transformers,
     types,
+    config_loader
 )
-from utils.rain_dataset.rain_dataset_configs.config_loader import RainDatasetConfigs
 import re
 from airflow.decorators import task
 import pickle
@@ -24,7 +24,7 @@ import mlflow
 import logging
 
 logger = logging.getLogger(__name__)
-config = RainDatasetConfigs()
+config = config_loader.RainDatasetConfigs()
 
 
 class RainTasks:
