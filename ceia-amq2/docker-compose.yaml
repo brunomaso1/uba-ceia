@@ -318,6 +318,9 @@ services:
     networks:
       - frontend
       - backend
+    volumes:
+      - ./dockerfiles/gradio:/gradioapp
+
 
 networks:
   frontend:
