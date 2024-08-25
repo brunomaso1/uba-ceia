@@ -20,7 +20,8 @@ from typing_extensions import Annotated
 from datetime import date
 
 import utils.rain_dataset.rain_dataset_tasks.tasks_utils
-import utils.rain_dataset.rain_dataset_configs
+from utils.rain_dataset.rain_dataset_configs.config_loader import RainDatasetConfigs
+config = RainDatasetConfigs()
 
 
 import os
@@ -265,6 +266,64 @@ class ModelOutput(BaseModel):
         }
     }
 
+
+# def load_model(model_name: str, alias: str = "prod_best"):
+#     """
+#     Función para cargar el modelo de predicción de lluvia.
+#     """
+
+#     try:
+#         # Se obtiene la ubicación del modelo guardado en MLflow
+#         mlflow.set_tracking_uri("http://mlflow:5000")
+#         client_mlflow = mlflow.MlflowClient()
+
+#         print("step 1 completed")
+
+#         # Se carga el modelo guardado en MLflow
+#         model_data_mlflow = client_mlflow.get_model_version_by_alias(model_name, alias)
+#         model_ml = mlflow.sklearn.load_model(model_data_mlflow.source)
+#         version_model_ml = int(model_data_mlflow.version)
+
+#         print("step 2 completed")
+
+#         # Cargar los pipelines de entrada y objetivo desde MLFlow
+#         input_pipeline_uri = client_mlflow.get_model_version_by_alias("Rain_dataset_etl_inputs_pipeline", alias).source
+#         print(input_pipeline_uri)
+#         input_pipeline = mlflow.sklearn.load_model(input_pipeline_uri)
+
+#         print("step 3, input pipeline load completed")
+
+#         target_pipeline_uri = client_mlflow.get_model_version_by_alias("Rain_dataset_etl_target_pipeline", alias).source
+#         target_pipeline = mlflow.sklearn.load_model(target_pipeline_uri)
+
+#         print("step 4, target pipeline load completed")
+
+#     except Exception as e:
+#         print("Exception!!!")
+#         print(e)
+#         print("Error loading model")
+#         # If there is no registry in MLflow, open the default model
+#         file_ml = open('/app/files/model.pkl', 'rb')
+#         model_ml = pickle.load(file_ml)
+#         file_ml.close()
+#         version_model_ml = 0
+
+#         input_pipeline_file = open('/app/files/inputs_pipeline.pkl', 'rb')
+#         input_pipeline = pickle.load(input_pipeline_file)
+#         input_pipeline_file.close()
+
+#         target_pipeline_file = open('/app/files/inputs_pipeline.pkl', 'rb')
+#         target_pipeline = pickle.load(target_pipeline_file)
+#         target_pipeline_file.close()
+
+#         # If an error occurs during the process, pass silently
+#         # model_ml = None
+#         # version_model_ml = None
+#         # input_pipeline = None
+#         # target_pipeline = None
+#         pass
+
+#     return model_ml, version_model_ml, input_pipeline, target_pipeline
 
 def load_model(model_name: str, alias: str = "prod_best"):
     """
