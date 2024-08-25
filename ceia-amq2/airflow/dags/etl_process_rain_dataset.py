@@ -38,6 +38,5 @@ with DAG(
     s3_target_pipeline_path = rain_tasks.create_target_pipe()
 
     train_test_split_paths = rain_tasks.split_dataset(s3_df_path)
-    rain_tasks.fit_transform_pipes(
-        train_test_split_paths, s3_input_pipeline_path, s3_target_pipeline_path
-    )
+    final_paths = rain_tasks.fit_transform_pipes(train_test_split_paths, s3_input_pipeline_path, s3_target_pipeline_path)
+    rain_tasks.register_to_mlflow(final_paths)

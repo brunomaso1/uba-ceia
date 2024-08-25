@@ -1,5 +1,4 @@
 import pickle
-from pprint import pprint
 import boto3
 import json
 
@@ -11,7 +10,8 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import FunctionTransformer, Pipeline
 import pandas as pd
 
-DATASET_NAME = "rain.csv"
+DATASET_NAME = "rain"
+DATASET_NAME_W_EXTENSION = DATASET_NAME + ".csv"
 COLUMNS_TYPE_FILE_NAME = "columnsTypes.json"
 GDF_LOCATIONS_NAME = "gdf_locations.json"
 TARGET_PIPELINE_NAME = "target_pipeline.pkl"
@@ -364,7 +364,6 @@ def create_inputs_pipe(s3_columns_path):
     bool_columns = columns_types["bool_columns"]
     date_columns = columns_types["date_columns"]
     cont_columns = columns_types["cont_columns"]
-    target_columns = columns_types["target_columns"]
 
     col_types_transf = ColumnTransformer(
         [
@@ -473,11 +472,91 @@ def test_pipelines():
     save_to_csv(y_train, train_test_split_final_path['y_train'])
     save_to_csv(y_test, train_test_split_final_path['y_test'])
 
+def test_json_return():
+     # Define Variable
+    language = "Python"
+    company = "GeeksForGeeks"
+    Itemid = 1
+    price = 0.00
+ 
+    # Create Dictionary
+    dictionary = {language, company, Itemid, price}
+    # value = {
+    #     "language": language,
+    #     "company": company,
+    #     "Itemid": Itemid,
+    #     "price": price
+    # }
+ 
+    # Dictionary to JSON Object using dumps() method
+    # Return JSON Object
+    return json.dumps(dictionary)
+
+def test_pipeline_json():
+    # Configuración de la conexión a Minio
+    endpoint_url = "http://localhost:9000"
+    access_key = "minio"
+    secret_key = "minio123"
+
+    # Crear una sesión de boto3
+    session = boto3.Session(
+        aws_access_key_id=access_key, aws_secret_access_key=secret_key
+    )
+
+    # Configurar awswrangler para usar Minio
+    wr.config.s3_endpoint_url = endpoint_url
+
+    # Cargar la configuración de Minio
+    client = session.client(
+        BOTO3_CLIENT,
+        endpoint_url=endpoint_url,
+        aws_access_key_id=access_key,
+        aws_secret_access_key=secret_key,
+    )
+
+    s3_input_pipeline_path = PIPES_DATA_FOLDER + INPUTS_PIPELINE_NAME
+    s3_target_pipeline_path = PIPES_DATA_FOLDER + TARGET_PIPELINE_NAME
+
+    train_test_split_preprocesed_path = {
+        "X_train": S3_PREPROCESED_DATA_FOLDER + X_TRAIN_NAME,
+        "X_test": S3_PREPROCESED_DATA_FOLDER + X_TEST_NAME,
+        "y_train": S3_PREPROCESED_DATA_FOLDER + X_TEST_NAME,
+        "y_test": S3_PREPROCESED_DATA_FOLDER + Y_TEST_NAME,
+    }
+
+    def save_to_csv(df, path):
+        wr.s3.to_csv(df=df, path=path, index=False, boto3_session=session)
+
+    X_train = wr.s3.read_csv(
+        train_test_split_preprocesed_path["X_train"], boto3_session=session
+    )
+    X_test = wr.s3.read_csv(
+        train_test_split_preprocesed_path["X_test"], boto3_session=session
+    )
+    y_train = wr.s3.read_csv(
+        train_test_split_preprocesed_path["y_train"], boto3_session=session
+    )
+    y_test = wr.s3.read_csv(
+        train_test_split_preprocesed_path["y_test"], boto3_session=session
+    )
+
+    obj = client.get_object(Bucket=BUCKET_DATA, Key=s3_input_pipeline_path)
+    inputs_pipeline: Pipeline = pickle.load(obj["Body"])
+    obj = client.get_object(Bucket=BUCKET_DATA, Key=s3_target_pipeline_path)
+    target_pipeline = pickle.load(obj["Body"])
+
+    print(inputs_pipeline)
+
+def test2():
+    print()
 
 # process_column_types()
 # download_dataset_from_minio()
 # create_inputs_pipe(s3_columns_path)
 # create_target_pipe()
-test_pipelines()
+# test_pipelines()
 # upload_gdf_locations()
 # read_gdf_locations(INFO_DATA_FOLDER + GDF_LOCATIONS_NAME)
+# test_json_return()
+# test_pipeline_json()
+test2()

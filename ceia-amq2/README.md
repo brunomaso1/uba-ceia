@@ -230,7 +230,66 @@ Una vez que todos los servicios estén funcionando (verifica con el comando dock
     API: http://localhost:8800/
     Documentación de la API: http://localhost:8800/docs
 
+## Testing
 
+Podemos realizar predicciones utilizando la API, accediendo a `http://localhost:8800/`.
+
+Para hacer una predicción, debemos enviar una solicitud al endpoint `Predict` con un 
+cuerpo de tipo JSON que contenga un campo de características (`features`) con cada 
+entrada para el modelo.
+
+Un ejemplo utilizando `curl` sería:
+
+```bash
+curl -X 'POST' \
+  'http://localhost:8800/predict/' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "features": {
+    "age": 67,
+    "ca": 3,
+    "chol": 286,
+    "cp": 4,
+    "exang": 1,
+    "fbs": 0,
+    "oldpeak": 1.5,
+    "restecg": 2,
+    "sex": 1,
+    "slope": 2,
+    "thal": 3,
+    "thalach": 108,
+    "trestbps": 160
+  }
+}'
+```
+
+La respuesta del modelo será un valor booleano y un mensaje en forma de cadena de texto que 
+indicará si el paciente tiene o no una enfermedad cardiaca.
+
+```json
+{
+  "int_output": true,
+  "str_output": "Heart disease detected"
+}
+```
+
+Para obtener más detalles sobre la API, ingresa a `http://localhost:8800/docs`.
+
+Nota: Recuerda que si esto se ejecuta en un servidor diferente a tu computadora, debes reemplazar 
+`localhost` por la IP correspondiente o el dominio DNS, si corresponde.
+
+Nota: Recordar que si esto se ejecuta en un servidor aparte de tu computadora, reemplazar a 
+localhost por la IP correspondiente o DNS domain si corresponde.
+
+La forma en que se implementó tiene la desventaja de que solo se puede hacer una predicción a 
+la vez, pero tiene la ventaja de que FastAPI y Pydantic nos permiten tener un fuerte control 
+sobre los datos sin necesidad de agregar una línea de código adicional. FastAPI maneja toda 
+la validación.
+
+Otra forma más típica es pasar los features como una lista u otro formato similar con 
+N observaciones y M features, lo que permite realizar varias predicciones al mismo tiempo. 
+Sin embargo, se pierde la validación automática.
 
 <!-- ROADMAP -->
 ## Roadmap

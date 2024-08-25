@@ -14,6 +14,9 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel, Field
 from typing_extensions import Annotated
 
+BUCKET_DATA = "data"
+BOTO3_CLIENT = "s3"
+
 
 class ModelInput(BaseModel):
     """
@@ -24,57 +27,58 @@ class ModelInput(BaseModel):
         description="Fecha de los datos.",
     )
     location: Literal[
-        "Adelaide", 
-        "Albany", 
-        "Albury", 
-        "AliceSprings", 
-        "BadgerysCreek", 
-        "Ballarat", 
-        "Bendigo", 
-        "Brisbane", 
-        "Cairns", 
-        "Canberra", 
-        "Cobar", 
-        "CoffsHarbour", 
-        "Dartmoor", 
-        "Darwin", 
-        "GoldCoast", 
-        "Hobart", 
-        "Katherine", 
-        "Launceston", 
-        "Melbourne", 
-        "MelbourneAirport", 
-        "Mildura", 
-        "Moree", 
-        "MountGambier", 
-        "MountGinini", 
-        "Newcastle", 
-        "Nhil", 
-        "NorahHead", 
-        "NorfolkIsland", 
-        "Nuriootpa", 
-        "PearceRAAF", 
-        "Penrith", 
-        "Perth", 
-        "PerthAirport", 
-        "Portland", 
-        "Richmond", 
-        "Sale", 
-        "SalmonGums", 
-        "Sydney", 
-        "SydneyAirport", 
-        "Townsville", 
-        "Tuggeranong", 
-        "Uluru", 
-        "WaggaWagga", 
-        "Walpole", 
-        "Watsonia", 
-        "Williamtown", 
-        "Witchcliffe", 
-        "Wollongong", 
-        "Woomera"] = Field(
-            description="Ubicación de la estación meteorológica.",
-        )
+        "Adelaide",
+        "Albany",
+        "Albury",
+        "AliceSprings",
+        "BadgerysCreek",
+        "Ballarat",
+        "Bendigo",
+        "Brisbane",
+        "Cairns",
+        "Canberra",
+        "Cobar",
+        "CoffsHarbour",
+        "Dartmoor",
+        "Darwin",
+        "GoldCoast",
+        "Hobart",
+        "Katherine",
+        "Launceston",
+        "Melbourne",
+        "MelbourneAirport",
+        "Mildura",
+        "Moree",
+        "MountGambier",
+        "MountGinini",
+        "Newcastle",
+        "Nhil",
+        "NorahHead",
+        "NorfolkIsland",
+        "Nuriootpa",
+        "PearceRAAF",
+        "Penrith",
+        "Perth",
+        "PerthAirport",
+        "Portland",
+        "Richmond",
+        "Sale",
+        "SalmonGums",
+        "Sydney",
+        "SydneyAirport",
+        "Townsville",
+        "Tuggeranong",
+        "Uluru",
+        "WaggaWagga",
+        "Walpole",
+        "Watsonia",
+        "Williamtown",
+        "Witchcliffe",
+        "Wollongong",
+        "Woomera",
+    ] = Field(
+        description="Ubicación de la estación meteorológica.",
+    )
     mintemp: float = Field(
         description="Temperatura mínima de hoy.",
         ge=-10,
@@ -194,8 +198,7 @@ class ModelInput(BaseModel):
         ge=0,
     )
 
-
-    #TODO: Change inputs to Sin + Cos for winddir9am, winddir3pm, location, date
+    # TODO: Change inputs to Sin + Cos for winddir9am, winddir3pm, location, date
 
     model_config = {
         "json_schema_extra": {
@@ -222,7 +225,7 @@ class ModelInput(BaseModel):
                     "cloud3pm": 5.0,
                     "temp9am": 20.0,
                     "temp3pm": 23.0,
-                    "raintoday": 0
+                    "raintoday": 0,
                 }
             ]
         }
@@ -235,8 +238,14 @@ class ModelOutput(BaseModel):
 
     Esta clase define el modelo de salida de la API incluyendo una descripción.
     """
-    prediction_bool: bool = Field(..., description="Predicción de lluvia para el día próximo.")
-    prediction_str: Literal["Toma un paraguas. Mañana puede que llueva.", "Más seco que el Sahara. Mañana posiblemente no llueva..."]
+
+    prediction_bool: bool = Field(
+        ..., description="Predicción de lluvia para el día próximo."
+    )
+    prediction_str: Literal[
+        "Toma un paraguas. Mañana puede que llueva.",
+        "Más seco que el Sahara. Mañana posiblemente no llueva...",
+    ]
 
     model_config = {
         "json_schema_extra": {
@@ -249,6 +258,7 @@ class ModelOutput(BaseModel):
         }
     }
 
+
 def load_model(model_name: str, alias: str = "prod_best"):
     """
     Función para cargar el modelo de predicción de lluvia.
@@ -256,7 +266,7 @@ def load_model(model_name: str, alias: str = "prod_best"):
 
     try:
         # Se obtiene la ubicación del modelo guardado en MLflow
-        mlflow.set_tracking_uri('http://mlflow:5000')
+        mlflow.set_tracking_uri("http://mlflow:5000")
         client_mlflow = mlflow.MlflowClient()
 
         # Se carga el modelo guardado en MLflow
@@ -277,6 +287,7 @@ def load_model(model_name: str, alias: str = "prod_best"):
 
     return model_ml, version_model_ml
 
+
 def check_model():
     """
     Función para verificar si el modelo ha cambiado en el registro de modelos de MLflow
@@ -290,7 +301,7 @@ def check_model():
         model_name = "rain_dataset_model_prod"
         alias = "prod_best"
 
-        mlflow.set_tracking_uri('http://mlflow:5000')
+        mlflow.set_tracking_uri("http://mlflow:5000")
         client = mlflow.MlflowClient()
 
         # Check in the model registry if the version of the champion has changed
@@ -307,19 +318,27 @@ def check_model():
         pass
 
 
+def load_pipelines():
+    client = boto3.client(BOTO3_CLIENT)
+
+
 # Load the model before start
 model, version_model = load_model("rain_dataset_model_prod", "prod_best")
 
 app = FastAPI()
+
 
 @app.get("/")
 async def get_root():
     """
     Endpoint de bienvenida.
     """
-    return JSONResponse(content=jsonable_encoder(
-        {"message": "Bienvenidos a la API default de Rain Prediction"}
-        ))
+    return JSONResponse(
+        content=jsonable_encoder(
+            {"message": "Bienvenidos a la API default de Rain Prediction"}
+        )
+    )
+
 
 @app.post("/predict/", response_model=ModelOutput)
 def predict(
@@ -327,7 +346,7 @@ def predict(
         ModelInput,
         Body(embed=True),
     ],
-    background_tasks: BackgroundTasks
+    background_tasks: BackgroundTasks,
 ):
     """
     Endpoint para predecir si lloverá mañana o no, en base a las características del día actual.
@@ -339,16 +358,16 @@ def predict(
     features_key = [*features.dict().keys()]
 
     # Convert features into a pandas DataFrame
-    features_df = pd.DataFrame(np.array(features_list).reshape([1, -1]), columns=features_key)
+    features_df = pd.DataFrame(
+        np.array(features_list).reshape([1, -1]), columns=features_key
+    )
 
-    BUCKET_DATA = "data"
-    BOTO3_CLIENT = "s3"
-    #TODO: usar variables de entorno
+    # TODO: usar variables de entorno
     # s3_input_pipeline_path = PIPES_DATA_FOLDER + INPUTS_PIPELINE_NAME
     # PIPES_DATA_FOLDER = Variable.get("PIPES_DATA_FOLDER")
     # INPUTS_PIPELINE_NAME = "inputs_pipeline.pkl"
 
-    s3_input_pipeline_path  = "pipes/inputs_pipeline.pkl"
+    s3_input_pipeline_path = "pipes/inputs_pipeline.pkl"
 
     client = boto3.client(BOTO3_CLIENT)
     obj = client.get_object(Bucket=BUCKET_DATA, Key=s3_input_pipeline_path)
@@ -369,3 +388,14 @@ def predict(
 
     # Return the prediction result
     return ModelOutput(int_output=bool(prediction[0].item()), str_output=str_pred)
+
+
+@app.post(
+    "/test/",
+)
+def test():
+    JSONResponse(
+        content=jsonable_encoder(
+            {"message": "Bienvenidos a la API default de Rain Prediction"}
+        )
+    )

@@ -1,4 +1,5 @@
 import awswrangler as wr
+import mlflow
 import pandas as pd
 
 
@@ -47,3 +48,6 @@ def download_split_from_s3(train_test_split_path):
     y_test = wr.s3.read_csv(train_test_split_path["y_test"])
 
     return X_train, X_test, y_train, y_test
+
+    
+
