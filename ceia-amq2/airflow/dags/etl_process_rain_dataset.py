@@ -25,18 +25,16 @@ with DAG(
 ) as dag:
     rain_tasks = RainTasks()
 
-    local_path = rain_tasks.download_raw_data_from_internet()
-    s3_raw_data_path = rain_tasks.upload_raw_data_to_S3(local_path)
-    s3_df_path = rain_tasks.process_target_drop_na(s3_raw_data_path)
-    s3_gdf_locations_path = rain_tasks.search_upload_locations(s3_raw_data_path)
+    task_data01 = rain_tasks.download_raw_data_from_internet()
+    task_data10 = rain_tasks.upload_raw_data_to_S3(task_data01)
+    task_data21 = rain_tasks.process_target_drop_na(task_data10)
+    task_data22 = rain_tasks.search_upload_locations(task_data10)
 
-    s3_columns_path = rain_tasks.process_column_types()
-    s3_input_pipeline_path = rain_tasks.create_inputs_pipe(
-        s3_columns_path, s3_gdf_locations_path
-    )
+    task_data02 = rain_tasks.process_column_types()
+    task_data30 = rain_tasks.create_inputs_pipe(task_data02, task_data22)
 
-    s3_target_pipeline_path = rain_tasks.create_target_pipe()
+    task_data03 = rain_tasks.create_target_pipe()
 
-    train_test_split_paths = rain_tasks.split_dataset(s3_df_path)
-    final_paths = rain_tasks.fit_transform_pipes(train_test_split_paths, s3_input_pipeline_path, s3_target_pipeline_path)
-    rain_tasks.register_to_mlflow(final_paths)
+    tast_data31 = rain_tasks.split_dataset(task_data21)
+    task_data40 = rain_tasks.fit_transform_pipes(tast_data31, task_data30, task_data03)
+    rain_tasks.register_to_mlflow(task_data40)
