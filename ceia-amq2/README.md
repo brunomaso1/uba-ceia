@@ -212,13 +212,19 @@ docker compose up -d --no-deps --build airflow-webserver
 
 Attachearte a un servicio:
 ```sh
-docker compose --profile all up --no-deps --attach fastapi
+docker compose --profile all up --no-deps --no-recreate --attach fastapi
 ```
 
 Logs de FastAPI:
 ```sh
 docker-compose logs -f fastapi
 ```
+
+Reiniciar FastAPI (cargar otro modelo de entrada):
+```sh
+docker compose restart --no-deps fastapi
+```
+
 
 #### Airflow
 

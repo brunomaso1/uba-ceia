@@ -19,8 +19,8 @@ from sklearn.pipeline import Pipeline
 from typing_extensions import Annotated
 from datetime import date
 
-import utils.rain_dataset.rain_dataset_tasks.tasks_utils
-from utils.rain_dataset.rain_dataset_configs.config_loader import RainDatasetConfigs
+import utils.rain_dataset.rain_dataset_tasks.tasks_utils # type: ignore
+from utils.rain_dataset.rain_dataset_configs.config_loader import RainDatasetConfigs # type: ignore
 config = RainDatasetConfigs()
 
 
