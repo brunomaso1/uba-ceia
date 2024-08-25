@@ -312,7 +312,7 @@ def load_model(model_name: str, alias: str = "prod_best"):
 
         target_pipeline_file = open('/app/files/inputs_pipeline.pkl', 'rb')
         target_pipeline = pickle.load(target_pipeline_file)
-        target_pipeline.close()
+        target_pipeline_file.close()
 
         # If an error occurs during the process, pass silently
         model_ml = None
