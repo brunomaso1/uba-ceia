@@ -30,10 +30,10 @@ class ModelInput(BaseModel):
     Esta clase define la estructura de datos de entrada para el modelo de predicción de lluvia.
     """
 
-    current_date: date = Field(
+    Date: date = Field(
         description="Fecha de los datos.",
     )
-    location: Literal[
+    Location: Literal[
         "Adelaide",
         "Albany",
         "Albury",
@@ -86,28 +86,28 @@ class ModelInput(BaseModel):
     ] = Field(
         description="Ubicación de la estación meteorológica.",
     )
-    mintemp: float = Field(
+    MinTemp: float = Field(
         description="Temperatura mínima de hoy.",
         ge=-10,
         le=50,
     )
-    maxtemp: float = Field(
+    MaxTemp: float = Field(
         description="Temperatura máxima de hoy.",
         ge=-20,
         le=70,
     )
-    rainfall: float = Field(
+    Rainfall: float = Field(
         description="Cantidad de lluvia caída hoy.",
     )
-    evaporation: float = Field(
+    Evaporation: float = Field(
         description="Evaporación hoy.",
     )
-    sunshine: float = Field(
+    Sunshine: float = Field(
         description="Horas de sol hoy.",
         ge=0,
         le=24,
     )
-    windgustdir: Literal[
+    WindGustDir: Literal[
         "E",
         "ENE",
         "ESE",
@@ -127,10 +127,10 @@ class ModelInput(BaseModel):
     ] = Field(
         description="Dirección de las ráfagas.",
     )
-    windgustspeed: float = Field(
+    WindGustSpeed: float = Field(
         description="Velocidad máxima de las ráfagas hoy.",
     )
-    winddir9am: Literal[
+    WindDir9am: Literal[
         "E",
         "ENE",
         "ESE",
@@ -150,7 +150,7 @@ class ModelInput(BaseModel):
     ] = Field(
         description="Dirección del viento a las 9am.",
     )
-    winddir3pm: Literal[
+    WindDir3pm: Literal[
         "E",
         "ENE",
         "ESE",
@@ -170,37 +170,37 @@ class ModelInput(BaseModel):
     ] = Field(
         description="Dirección del viento a las 3pm.",
     )
-    windspeed9am: float = Field(
+    WindSpeed9am: float = Field(
         description="Velocidad del viento a las 9am.",
     )
-    windspeed3pm: float = Field(
+    WindSpeed3pm: float = Field(
         description="Velocidad del viento a las 3pm.",
     )
-    humidity9am: float = Field(
+    Humidity9am: float = Field(
         description="Humedad a las 9am.",
     )
-    humidity3pm: float = Field(
+    Humidity3pm: float = Field(
         description="Humedad a las 3pm.",
     )
-    pressure9am: float = Field(
+    Pressure9am: float = Field(
         description="Presión a las 9am.",
     )
-    pressure3pm: float = Field(
+    Pressure3pm: float = Field(
         description="Presión a las 3pm.",
     )
-    cloud9am: float = Field(
+    Cloud9am: float = Field(
         description="Cobertura de nubes a las 9am.",
     )
-    cloud3pm: float = Field(
+    Cloud3pm: float = Field(
         description="Cobertura de nubes a las 3pm.",
     )
-    temp9am: float = Field(
+    Temp9am: float = Field(
         description="Temperatura a las 9am.",
     )
-    temp3pm: float = Field(
+    Temp3pm: float = Field(
         description="Temperatura a las 3pm.",
     )
-    raintoday: float = Field(
+    RainToday: float = Field(
         description="Llovio hoy? 1: si llovió, 0: no llovió.",
         ge=0,
     )
@@ -211,28 +211,28 @@ class ModelInput(BaseModel):
         "json_schema_extra": {
             "ejemplos": [
                 {
-                    "current_date": "2021-01-01",
-                    "location": "Sydney",
-                    "mintemp": 15.0,
-                    "maxtemp": 25.0,
-                    "rainfall": 0.0,
-                    "evaporation": 5.0,
-                    "sunshine": 10.0,
+                    "Date": "2021-01-01",
+                    "Location": "Sydney",
+                    "MinTemp": 15.0,
+                    "MaxTemp": 25.0,
+                    "Rainfall": 0.0,
+                    "Evaporation": 5.0,
+                    "Sunshine": 10.0,
                     "windgustdir": "N",
-                    "windgustspeed": 30.0,
-                    "winddir9am": "N",
-                    "winddir3pm": "N",
-                    "windspeed9am": 10.0,
-                    "windspeed3pm": 15.0,
-                    "humidity9am": 50.0,
-                    "humidity3pm": 60.0,
-                    "pressure9am": 1010.0,
-                    "pressure3pm": 1005.0,
-                    "cloud9am": 5.0,
-                    "cloud3pm": 5.0,
-                    "temp9am": 20.0,
-                    "temp3pm": 23.0,
-                    "raintoday": 0,
+                    "WindGustSpeed": 30.0,
+                    "WindDir9am": "N",
+                    "WindDir3pm": "N",
+                    "WindSpeed9am": 10.0,
+                    "WindSpeed3pm": 15.0,
+                    "Humidity9am": 50.0,
+                    "Humidity3pm": 60.0,
+                    "Pressure9am": 1010.0,
+                    "Pressure3pm": 1005.0,
+                    "Cloud9am": 5.0,
+                    "Cloud3pm": 5.0,
+                    "Temp9am": 20.0,
+                    "Temp3pm": 23.0,
+                    "RainToday": 0,
                 }
             ]
         }
@@ -246,7 +246,7 @@ class ModelOutput(BaseModel):
     Esta clase define el modelo de salida de la API incluyendo una descripción.
     """
 
-    prediction_bool: bool = Field(
+    prediction_bool: int = Field(
         ..., description="Predicción de lluvia para el día próximo."
     )
     prediction_str: Literal[
@@ -258,7 +258,7 @@ class ModelOutput(BaseModel):
         "json_schema_extra": {
             "ejemplos": [
                 {
-                    "prediction_bool": True,
+                    "prediction_bool": 1,
                     "prediction_str": "Toma un paraguas. Mañana puede que llueva...",
                 }
             ]
@@ -298,6 +298,7 @@ def load_model(model_name: str, alias: str = "prod_best"):
         print("step 4, target pipeline load completed")
 
     except Exception as e:
+        print("Exception!!!")
         print(e)
         print("Error loading model")
         # If there is no registry in MLflow, open the default model
@@ -315,10 +316,10 @@ def load_model(model_name: str, alias: str = "prod_best"):
         target_pipeline_file.close()
 
         # If an error occurs during the process, pass silently
-        model_ml = None
-        version_model_ml = None
-        input_pipeline = None
-        target_pipeline = None
+        # model_ml = None
+        # version_model_ml = None
+        # input_pipeline = None
+        # target_pipeline = None
         pass
 
     return model_ml, version_model_ml, input_pipeline, target_pipeline
