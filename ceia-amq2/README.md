@@ -210,6 +210,15 @@ Nota: Le podes dar en otra terminal si no arrancaste docker compose de forma det
 docker compose up -d --no-deps --build airflow-webserver
 ```
 
+Attachearte a un servicio:
+```sh
+docker compose --profile all up --no-deps --attach fastapi
+```
+
+Logs de FastAPI:
+```sh
+docker-compose logs -f fastapi
+```
 
 #### Airflow
 

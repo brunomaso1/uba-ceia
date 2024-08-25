@@ -1,6 +1,7 @@
 import json
 import pickle
 import mlflow
+from dotenv import load_dotenv
 
 import numpy as np
 import pandas as pd
@@ -12,10 +13,17 @@ from fastapi import FastAPI, Body, BackgroundTasks
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel, Field
+from sklearn.pipeline import Pipeline
 from typing_extensions import Annotated
+import os
 
 BUCKET_DATA = "data"
 BOTO3_CLIENT = "s3"
+INPUTS_PIPELINE_NAME = "inputs_pipeline.pkl"
+TARGET_PIPELINE_NAME = "target_pipeline.pkl"
+PIPES_DATA_FOLDER="pipes/"
+s3_input_pipeline_path = PIPES_DATA_FOLDER + INPUTS_PIPELINE_NAME
+s3_target_pipeline_path = PIPES_DATA_FOLDER + TARGET_PIPELINE_NAME
 
 
 class ModelInput(BaseModel):
@@ -320,10 +328,17 @@ def check_model():
 
 def load_pipelines():
     client = boto3.client(BOTO3_CLIENT)
+    obj = client.get_object(Bucket=BUCKET_DATA, Key=s3_input_pipeline_path)
+    inputs_pipeline: Pipeline = pickle.load(obj["Body"])
+    obj = client.get_object(Bucket=BUCKET_DATA, Key=s3_target_pipeline_path)
+    target_pipeline: Pipeline = pickle.load(obj["Body"])
+    print(inputs_pipeline)
 
-
+load_dotenv()
 # Load the model before start
 model, version_model = load_model("rain_dataset_model_prod", "prod_best")
+print(f"VARIABLES_ENTORNO={os.environ}")
+# load_pipelines()
 
 app = FastAPI()
 
@@ -335,7 +350,7 @@ async def get_root():
     """
     return JSONResponse(
         content=jsonable_encoder(
-            {"message": "Bienvenidos a la API default de Rain Prediction"}
+            {"message": "Bienvenido a la API default de Rain Prediction"}
         )
     )
 
