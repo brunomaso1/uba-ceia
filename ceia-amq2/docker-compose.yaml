@@ -178,8 +178,10 @@ services:
       start_period: 120s
       retries: 3
     # Se monta el volumen para el hotreload
+    # También para compartir modulos
     volumes:
       - ./dockerfiles/fastapi:/app
+      - ./airflow/dags/utils:/app/utils
 
   airflow-webserver:
     <<: *airflow-common
