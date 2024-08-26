@@ -71,7 +71,7 @@ Se trabaja para una empresa llamada **ML Models and something more Inc.**, la cu
 
 ## La implementación y su arquitectura
 
-![Arquitectura de la Implementación](resources\images\arquitectura_mlops.png)
+![Arquitectura de la Implementación][arquitectura]
 
 La implementación incluye:
 - MinIO como servicio de almacenamiento de objetos en *buckets* con dos rutas de almacenamiento: `s3://data` para almacenar los datasets a utilizar (en crudo, transformado, sets de train y test) y `s3://mlflow` para almacenar los artefactos y objetos relacionados a MLFlow. 
@@ -316,7 +316,7 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 <!-- MARKDOWN LINKS & images -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-
+[arquitectura]: resources/images/arquitectura_mlops.png
 
 [MLflow]: https://img.shields.io/badge/MLflow-0194E2?style=for-the-badge&logo=MLflow&logoColor=white
 [mlflow-url]: https://mlflow.org/
