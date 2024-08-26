@@ -175,7 +175,11 @@ def optimization_dag():
         model = mlflow.sklearn.load_model(model_uri)
 
         # Creamos el modelo en productivo
-        client.create_registered_model(name=config.MODEL_PROD_NAME, description=config.MODEL_PROD_DESC)
+        try:
+            client.create_registered_model(name=config.MODEL_PROD_NAME, description=config.MODEL_PROD_DESC)
+        except:
+            print("Model already exists")
+            pass
 
         # Guardamos como tag los hiperparámetros del modelo
         tags = model.get_params()
