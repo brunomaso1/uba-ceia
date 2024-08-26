@@ -70,8 +70,8 @@ class RainDatasetConfigs:
         self.PIPELINE_EXTENSION = ".pkl"
         self.INPUTS_PIPELINE_NAME = "inputs_pipeline"
         self.TARGET_PIPELINE_NAME = "target_pipeline"
-        self.MODEL_PROD_NAME = "Rain_dataset_model_prod"  # TODO: Minimizar
-        self.MODEL_DEV_NAME = "Rain_dataset_model_dev"  # TODO: Minimizar
+        self.MODEL_PROD_NAME = "Rain_dataset_model_prod"
+        self.MODEL_DEV_NAME = "Rain_dataset_model_dev"
         self.MODEL_PROD_DESC = "Modelo de predicción de lluvia"
         self.PROD_ALIAS = "prod_best"
         self.MODEL_ARTIFACT_PATH = "model_xgboost"

@@ -213,7 +213,6 @@ class ModelInput(BaseModel):
         ge=0,
     )
 
-    # TODO: Change inputs to Sin + Cos for winddir9am, winddir3pm, location, date
 
     model_config = {
         "json_schema_extra": {

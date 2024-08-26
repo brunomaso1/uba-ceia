@@ -113,9 +113,6 @@ def optimization_dag():
                 }
             )
 
-            # Se registran la matriz de confusión en MLflow
-            # TODO: Log confusion matrix
-
             signature = mlflow.models.signature.infer_signature(
                 X_train, best_model.predict(X_train)
             )
@@ -130,17 +127,8 @@ def optimization_dag():
                 metadata={"task": "Classification", "dataset": config.MLFLOW_EXPERIMENT_NAME},
             )
 
-            # TODO: Eliminar esto?
-            # Registrar el pipeline en MLFlow
-            inputs_pipeline, target_pipeline = aux_functions.load_pipelines_from_s3()
-            mlflow.sklearn.log_model(inputs_pipeline, config.INPUTS_PIPELINE_NAME)
-            mlflow.sklearn.log_model(target_pipeline, config.TARGET_PIPELINE_NAME)
-
             # Se obtiene la ubicación del modelo guardado en MLflow
             model_uri = mlflow.get_artifact_uri(config.MODEL_ARTIFACT_PATH)
-
-            # TODO: Agregar un alias
-            # client.set_registered_model_alias(name=config.MODEL_NAME_DEV, alias="dev_best", version=1)
 
             return model_uri
 
@@ -178,9 +166,6 @@ def optimization_dag():
                 }
             )
 
-            # Se registran la matriz de confusión en MLflow
-            # TODO: Log confusion matrix
-
     @task
     def register_model(model_uri):
         client = mlflow.MlflowClient()
@@ -205,7 +190,6 @@ def optimization_dag():
         # proceso de servicio del modelo on-line.
         client.set_registered_model_alias(config.MODEL_PROD_NAME, "prod_best", result.version)
 
-    # TODO: Codigo repetido?
     # Cargar el conjunto de datos de entrenamiento
     load_train_test = load_train_test_dataset()
     X_train = load_train_test["X_train"]
