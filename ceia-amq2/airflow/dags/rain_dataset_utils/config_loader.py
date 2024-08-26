@@ -33,6 +33,12 @@ class RainDatasetConfigs:
             "dagrun_timeout": datetime.timedelta(minutes=15),
         }
 
+        self.PARAM_GRID = {
+            "learning_rate": [0.1, 0.01],
+            "max_depth": [3, 6, 9],
+            "n_estimators": [100, 500, 1000],
+        }
+
         # Variables de entorno
         self.MLFLOW_S3_ENDPOINT_URL = os.getenv("MLFLOW_S3_ENDPOINT_URL")
         self.MLFLOW_INPUT_PIPELINE_ALIAS = os.getenv("MLFLOW_INPUT_PIPELINE_ALIAS")
@@ -64,6 +70,12 @@ class RainDatasetConfigs:
         self.PIPELINE_EXTENSION = ".pkl"
         self.INPUTS_PIPELINE_NAME = "inputs_pipeline"
         self.TARGET_PIPELINE_NAME = "target_pipeline"
+        self.MODEL_PROD_NAME = "Rain_dataset_model_prod"  # TODO: Minimizar
+        self.MODEL_DEV_NAME = "Rain_dataset_model_dev"  # TODO: Minimizar
+        self.MODEL_PROD_DESC = "Modelo de predicción de lluvia"
+        self.PROD_ALIAS = "prod_best"
+        self.MODEL_ARTIFACT_PATH = "model_xgboost"
+        self.CURRENT_MODEL = "XGBoost"
 
         # Constantes derivadas
         self.DATASET_NAME_W_EXTENSION = self.DATASET_NAME + self.DATASET_EXTENSION

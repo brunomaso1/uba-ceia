@@ -1,9 +1,9 @@
 """
 OPTIMIZE: Crea y optimiza el modelo.
 """
-
 import datetime
 import mlflow
+from mlflow import MlflowClient
 import awswrangler as wr
 import xgboost as xgb
 from sklearn.model_selection import GridSearchCV
@@ -20,27 +20,18 @@ from rain_dataset_utils.rain_dataset_doc import (
     DESCRIPTION_OPTIMIZE,
     FULL_DESCRIPTION_MD_OPTIMIZE,
 )
+import logging
 
+logger = logging.getLogger(__name__)
 config = config_loader.RainDatasetConfigs()
 
 mlflow.set_tracking_uri(config.MLFLOW_TRACKING_URI)
-
-default_args = {
-    "owner": "AMQ2",
-    "depends_on_past": False,
-    "schedule_interval": None,
-    "schedule": None,
-    "retries": 1,
-    "retry_delay": datetime.timedelta(minutes=5),
-    "dagrun_timeout": datetime.timedelta(minutes=15),
-}
-
 
 @dag(
     dag_id="train_optimize_rain_dataset",
     description=DESCRIPTION_OPTIMIZE,
     doc_md=FULL_DESCRIPTION_MD_OPTIMIZE,
-    tags=["Optimization", "Rain dataset"],
+    tags=["Optimization", config.MLFLOW_EXPERIMENT_NAME],
     default_args=config.DAG_DEFAULT_CONF,
     catchup=False,
 )
@@ -48,10 +39,7 @@ def optimization_dag():
 
     @task(multiple_outputs=True)
     def load_train_test_dataset():
-        X_train = wr.s3.read_csv("s3://data/final/X_train.csv")
-        y_train = wr.s3.read_csv("s3://data/final/y_train.csv")
-        X_test = wr.s3.read_csv("s3://data/final/X_test.csv")
-        y_test = wr.s3.read_csv("s3://data/final/y_test.csv")
+        X_train, X_test, y_train, y_test = aux_functions.download_split_from_s3_final()
 
         return {
             "X_train": X_train,
@@ -64,44 +52,28 @@ def optimization_dag():
     def experiment_creation():
         print("Creating experiment")
         # Se crea el experimento en MLflow, verificando si ya existe.
-        if experiment := mlflow.get_experiment_by_name("Rain Dataset"):
-            print("Found experiment")
+        if experiment := mlflow.get_experiment_by_name(config.MLFLOW_EXPERIMENT_NAME):
+            logger.info("Found experiment")
             return experiment.experiment_id
         else:
-            print("Creating new experiment")
-            return mlflow.create_experiment("Rain Dataset")
+            logger.info("Creating new experiment")
+            return mlflow.create_experiment(config.MLFLOW_EXPERIMENT_NAME)
 
     @task
     def find_best_model(X_train, y_train, X_test, y_test, experiment_id):
 
         from mlflow import MlflowClient
-
-        client = MlflowClient()
-
         run_name_parent = "best_hyperparam_" + datetime.datetime.today().strftime(
             '%Y%m%d_%H%M%S"'
         )
 
         with mlflow.start_run(experiment_id=experiment_id, run_name=run_name_parent):
-            # Definir los hiperparámetros a ajustar
-            # param_grid = {
-            #     'learning_rate': [0.1, 0.01],
-            #     'max_depth': [3, 6 ,9],
-            #     'n_estimators': [100, 500, 1000]
-            # }
-
-            param_grid = {
-                "learning_rate": [0.1],
-                "max_depth": [3],
-                "n_estimators": [100],
-            }
-
             # Inicializar el modelo XGBoost
             xgb_model = xgb.XGBClassifier(objective="binary:logistic")
 
             # Configurar la búsqueda grid con validación cruzada
             grid_search = GridSearchCV(
-                estimator=xgb_model, param_grid=param_grid, cv=5, scoring="accuracy"
+                estimator=xgb_model, param_grid=config.PARAM_GRID, cv=5, scoring="accuracy"
             )
             grid_search.fit(X_train.astype(float), y_train)
 
@@ -112,8 +84,8 @@ def optimization_dag():
 
             mlflow.set_tags(
                 tags={
-                    "project": "Rain dataset",
-                    "model": "XGBoost",
+                    "project": config.MLFLOW_EXPERIMENT_NAME,
+                    "model": config.CURRENT_MODEL,
                     "optimizer": "GridSearchCV",
                 }
             )
@@ -143,8 +115,6 @@ def optimization_dag():
             # Se registran la matriz de confusión en MLflow
             # TODO: Log confusion matrix
 
-            # Se guarda el artefacto del modelo
-            artifact_path = "model_xgboost"
             signature = mlflow.models.signature.infer_signature(
                 X_train, best_model.predict(X_train)
             )
@@ -152,23 +122,24 @@ def optimization_dag():
             # Se guarda el modelo en MLflow
             mlflow.sklearn.log_model(
                 sk_model=best_model,
-                artifact_path=artifact_path,
+                artifact_path=config.MODEL_ARTIFACT_PATH,
                 signature=signature,
                 serialization_format="cloudpickle",
-                registered_model_name="Rain_dataset_model_dev",
-                metadata={"task": "Classification", "dataset": "Rain dataset"},
+                registered_model_name=config.MODEL_DEV_NAME,
+                metadata={"task": "Classification", "dataset": config.MLFLOW_EXPERIMENT_NAME},
             )
 
+            # TODO: Eliminar esto?
             # Registrar el pipeline en MLFlow
             inputs_pipeline, target_pipeline = aux_functions.load_pipelines_from_s3()
-            mlflow.sklearn.log_model(inputs_pipeline, "inputs_pipeline")
-            mlflow.sklearn.log_model(target_pipeline, "target_pipeline")
+            mlflow.sklearn.log_model(inputs_pipeline, config.INPUTS_PIPELINE_NAME)
+            mlflow.sklearn.log_model(target_pipeline, config.TARGET_PIPELINE_NAME)
 
             # Se obtiene la ubicación del modelo guardado en MLflow
-            model_uri = mlflow.get_artifact_uri(artifact_path)
+            model_uri = mlflow.get_artifact_uri(config.MODEL_ARTIFACT_PATH)
 
             # TODO: Agregar un alias
-            # client.set_registered_model_alias(name="Rain_dataset_model_dev", alias="dev_best", version=1)
+            # client.set_registered_model_alias(name=config.MODEL_NAME_DEV, alias="dev_best", version=1)
 
             return model_uri
 
@@ -184,8 +155,7 @@ def optimization_dag():
             model = mlflow.sklearn.load_model(model_uri)
 
             # Se cargan los datos de prueba
-            X_test = wr.s3.read_csv("s3://data/final/X_test.csv")
-            y_test = wr.s3.read_csv("s3://data/final/y_test.csv")
+            _, X_test, _, y_test = aux_functions.download_split_from_s3_final()
 
             # Se realiza la predicción con el modelo
             y_pred = model.predict(X_test)
@@ -212,18 +182,14 @@ def optimization_dag():
 
     @task
     def register_model(model_uri):
-
-        from mlflow import MlflowClient
-
         client = mlflow.MlflowClient()
-        name = "Rain_dataset_model_prod"
-        desc = "Modelo de predicción de lluvia"
+        config.MODEL_PROD_DESC = "Modelo de predicción de lluvia"
 
         # Se carga el modelo guardado en MLflow
         model = mlflow.sklearn.load_model(model_uri)
 
         # Creamos el modelo en productivo
-        client.create_registered_model(name=name, description=desc)
+        client.create_registered_model(name=config.MODEL_PROD_NAME, description=config.MODEL_PROD_DESC)
 
         # Guardamos como tag los hiperparámetros del modelo
         tags = model.get_params()
@@ -231,13 +197,14 @@ def optimization_dag():
 
         # Guardamos la versión del modelo
         result = client.create_model_version(
-            name=name, source=model_uri, run_id=model_uri.split("/")[-3], tags=tags
+            name=config.MODEL_PROD_NAME, source=model_uri, run_id=model_uri.split("/")[-3], tags=tags
         )
 
         # Y creamos como la version con el alias de prod_best para poder levantarlo en nuestro
         # proceso de servicio del modelo on-line.
-        client.set_registered_model_alias(name, "prod_best", result.version)
+        client.set_registered_model_alias(config.MODEL_PROD_NAME, "prod_best", result.version)
 
+    # TODO: Codigo repetido?
     # Cargar el conjunto de datos de entrenamiento
     load_train_test = load_train_test_dataset()
     X_train = load_train_test["X_train"]

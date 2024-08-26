@@ -58,6 +58,17 @@ def download_split_from_s3(train_test_split_path):
     return X_train, X_test, y_train, y_test
 
 
+def download_split_from_s3_final():
+    train_test_split_final_path = {
+        "X_train": config.S3_FINAL_DATA_FOLDER + config.X_TRAIN_NAME,
+        "X_test": config.S3_FINAL_DATA_FOLDER + config.X_TEST_NAME,
+        "y_train": config.S3_FINAL_DATA_FOLDER + config.Y_TRAIN_NAME,
+        "y_test": config.S3_FINAL_DATA_FOLDER + config.Y_TEST_NAME,
+    }
+
+    return download_split_from_s3(train_test_split_final_path)
+
+
 def load_pipelines_from_s3():
     """
     Carga los pipelines desde S3.
