@@ -18,46 +18,23 @@
 *** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
 *** https://www.markdownguide.org/basic-syntax/#reference-style-links
 -->
-[![Contributors][contributors-shield]][contributors-url]
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-url]
-[![MIT License][license-shield]][license-url]
-[![LinkedIn][linkedin-shield]][linkedin-url]
-
 
 
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/othneildrew/Best-README-Template">
     <img src="resources/images/logo.png" alt="Logo" width="80" height="80">
   </a>
 
-  <h3 align="center">Best-README-Template</h3>
-
-  <p align="center">
-    An awesome README template to jumpstart your projects!
-    <br />
-    <a href="https://github.com/othneildrew/Best-README-Template"><strong>Explore the docs »</strong></a>
-    <br />
-    <br />
-    <a href="https://github.com/othneildrew/Best-README-Template">View Demo</a>
-    ·
-    <a href="https://github.com/othneildrew/Best-README-Template/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
-    ·
-    <a href="https://github.com/othneildrew/Best-README-Template/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
-  </p>
+  <h3 align="center">Aprendizaje de Máquinas II - MLOps</h3>
 </div>
-
-
 
 <!-- TABLE OF CONTENTS -->
 <details>
-  <summary>Table of Contents</summary>
+  <summary>Índice</summary>
   <ol>
     <li>
-      <a href="#about-the-project">About The Project</a>
+      <a href="#el-proyecto">El Proyecto</a>
       <ul>
         <li><a href="#built-with">Built With</a></li>
       </ul>
@@ -65,106 +42,196 @@
     <li>
       <a href="#getting-started">Getting Started</a>
       <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
+        <li><a href="#requisitos">Requisitos</a></li>
+        <li><a href="#instalacion">Instalación</a></li>
       </ul>
     </li>
-    <li><a href="#usage">Usage</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li>
+    <li><a href="#como-utilizar">Cómo Utilizar</a></li>
+    <ul>
+        <li><a href="#servicios">Servicios</a></li>
+        <li><a href="#test-obtener-prediccion">Test (Obtener Predicción)</a></li>
+        <ul>
+          <li><a href="#utilizando-el-backend">Utilizando el Backend</a></li>
+          <li><a href="#utilizando-el-frontend-con-gradio">Utilizando el Frontend con Gradio</a></li>
+      </ul>
+    </ul>
     <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgments">Acknowledgments</a></li>
   </ol>
 </details>
 
 
 
 <!-- ABOUT THE PROJECT -->
-## About The Project
+# El Proyecto
 
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
+Este proyecto se realizó como Trabajo Práctico final para la materia **Aprendizaje de Máquinas II** de la **Carrera de Especialización en Inteligencia Artificial** de la Universidad de Buenos Aires.
 
-There are many great README templates available on GitHub; however, I didn't find one that really suited my needs so I created this enhanced one. I want to create a README template so amazing that it'll be the last one you ever need -- I think this is it.
+## Contexto del proyecto
+Se trabaja para una empresa llamada **ML Models and something more Inc.**, la cual ofrece un servicio que proporciona modelos mediante una REST API. Internamente, tanto para realizar tareas de DataOps como de MLOps, la empresa cuenta con Apache Airflow y MLflow. También dispone de un Data Lake en S3.
 
-Here's why:
-* Your time should be focused on creating something amazing. A project that solves a problem and helps others
-* You shouldn't be doing the same tasks over and over like creating a README from scratch
-* You should implement DRY principles to the rest of your life :smile:
+## La implementación y su arquitectura
 
-Of course, no one template will serve all projects since your needs may be different. So I'll be adding more in the near future. You may also suggest changes by forking this repo and creating a pull request or opening an issue. Thanks to all the people have contributed to expanding this template!
+![Arquitectura de la Implementación](resources\images\arquitectura_mlops.png)
 
-Use the `BLANK_README.md` to get started.
+La implementación incluye:
+- MinIO como servicio de almacenamiento de objetos en *buckets* con dos rutas de almacenamiento: `s3://data` para almacenar los datasets a utilizar (en crudo, transformado, sets de train y test) y `s3://mlflow` para almacenar los artefactos y objetos relacionados a MLFlow. 
+- En Apache Airflow se tienen 3 DAGs:
+  1. `etl_process_rain_dataset`: este DAG obtiene el dataset (Extract); lo procesa utilizando pipelines para transformar los datos de entrada y prepararlos para el modelo, divide el dataset en *train* y *test* [Transform]; y por último, guarda los datasets procesados y divididos en un Bucket en MinIO (en `s3://data`). Este DAG también realiza un registro en MLflow de las tareas realizadas.
+  2. `model_optimization`: este DAG se encarga de crear, entrenar y optimizar el primer modelo. Las tareas del DAG incluyen la carga de los datasets de *train* y *test* desde el bucket en MinIo, crea y registra el experimento en MLflow, crea un modelo de XGBoost y encuentra los mejores parámetros haciendo un ajuste de hiperparámetros, registra los hiperparámetros y el modelo en MLflow, prueba el modelo (cargando el modelo desde MLflow), y por último, registra el modelo con el alias `prod_best`.
+  3. `retrain_model_rain_dataset`: este DAG reentrena el modelo con un nuevo dataset (en caso de estar disponible); compara el nuevo modelo, entrenado con el dataset actualizado, con el modelo entrenado anteriormente (sin hacer una búsqueda o ajuste de hiperparámetros); y elige el mejor modelo de los dos. En caso de que el modelo entrenado con el nuevo dataset resulte mejor (comparando el F1 Score), se le asigna el alias `prod_best`.
+- Un servicio de API utilizando `FastAPI` para exponer el modelo almacenado en MLflow con el alias `prod_best` y permite predecir si lloverá al día siguiente.
+- Un servicio de Gradio, como Front-End, que se conecta al endpoint de predicción de la API del sistema. En dicho sitio se introducen los datos del tiempo del día de hoy y se realiza solicita una predicción para el día siguiente. Una vez enviados los datos, se observa la respuesta: llueve o no llueve al día siguiente.
+- Una base de datos Postgres para almacenar los datos de las aplicaciones MLFlow y Apache Airflow.
+
+
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
-### Built With
+## Built With
 
-This section should list any major frameworks/libraries used to bootstrap your project. Leave any add-ons/plugins for the acknowledgements section. Here are a few examples.
+Para este proyecto se utilizó:
 
-* [![Next][Next.js]][Next-url]
-* [![React][React.js]][React-url]
-* [![Vue][Vue.js]][Vue-url]
-* [![Angular][Angular.io]][Angular-url]
-* [![Svelte][Svelte.dev]][Svelte-url]
-* [![Laravel][Laravel.com]][Laravel-url]
-* [![Bootstrap][Bootstrap.com]][Bootstrap-url]
-* [![JQuery][JQuery.com]][JQuery-url]
+* [![MLflow][MLflow]][mlflow-url]
+* [![Apache Airflow][Apache-Airflow]][airflow-url]
+* [![MinIO][MinIO]][minio-url]
+* [![PostgreSQL][PostgreSQL]][postgresql-url]
+* [![FastAPI][FastAPI]][fastapi-url]
+* [![Gradio][Gradio]][gradio-url]
+
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
 <!-- GETTING STARTED -->
-## Getting Started
+# Getting Started
 
-This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
+Este proyecto está implementado utilizando contenedores en Docker para facilitar su deployment. Las librerías necesarias se instalan al momento de levantar los contenedores del proyecto.
 
-### Prerequisites
+## Requisitos
 
-This is an example of how to list things you need to use the software and how to install them.
-* npm
-  ```sh
-  npm install npm@latest -g
-  ```
+El proyecto está contenido en Docker, por lo que el requisito principal es tenerlo instalado localmente.
+Para más información se puede visitar el sitio de [Docker](https://docs.docker.com/get-started/get-docker/).
 
-### Installation
 
-_Below is an example of how you can instruct your audience on installing and setting up your app. This template doesn't rely on any external dependencies or services._
+## Instalación
 
-1. Get a free API Key at [https://example.com](https://example.com)
-2. Clone the repo
-   ```sh
-   git clone https://github.com/your_username_/Project-Name.git
-   ```
-3. Install NPM packages
-   ```sh
-   npm install
-   ```
-4. Enter your API in `config.js`
-   ```js
-   const API_KEY = 'ENTER YOUR API';
-   ```
+1. Clonar este repositorio localmente.
+2. Si estás en Linux o MacOS, en el archivo `.env`, reemplaza `AIRFLOW_UID` por el de tu usuario o alguno que consideres oportuno (para encontrar el UID, usa el comando `id -u <username>`). De lo contrario, Airflow dejará sus carpetas internas como root y no podrás subir DAGs (en airflow/dags) o plugins, etc.
+3. En el directorio raíz de este repositorio, levantar el ambiente con:
+```sh
+docker compose --profile all up
+```
+4. Una vez que todos los servicios estén funcionando (se verifica con el comando `docker ps -a` que todos los servicios estén *healthy* o revisando en Docker Desktop), podrás acceder a los diferentes [servicios](#servicios). 
+
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
 <!-- USAGE EXAMPLES -->
-## Usage
+# Cómo utilizar
 
-Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
+A continuación se explica cómo utilizar este repositorio y comandos útiles para su ejecución e implementación local.
 
-_For more examples, please refer to the [Documentation](https://example.com)_
+## Servicios
+
+Una vez que todos los servicios estén funcionando (verifica con el comando docker ps -a que todos los servicios estén healthy o revisa en Docker Desktop), podrás acceder a los diferentes servicios mediante:
+
+* Apache Airflow: [http://localhost:8080](http://localhost:8080)
+* MLflow: [http://localhost:5000](http://localhost:5000)
+* MinIO: [http://localhost:9001](http://localhost:9001) (ventana de administración de Buckets)
+* API: [http://localhost:8800/](http://localhost:8800/)
+* Docume*ntación de la API: [http://localhost:8800/docs](http://localhost:8800/docs)
+* Gradio: [http://localhost:7860](http://localhost:7860)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-### Commands
 
-#### Docker compose
+## Test (Obtener Predicción)
+
+### Utilizando el Backend
+Podemos realizar predicciones utilizando la API, accediendo a `http://localhost:8800/`.
+
+Para hacer una predicción, debemos enviar una solicitud al endpoint `Predict` con un 
+cuerpo de tipo JSON que contenga un campo de características (`features`) con cada 
+entrada para el modelo.
+
+Un ejemplo utilizando `curl` sería:
+
+```bash
+curl -X 'POST' \
+  'http://localhost:8800/predict/' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "features": {
+    "Date": "2024-08-26",
+    "Location": "Adelaide",
+    "MinTemp": 9.8,
+    "MaxTemp": 18.2,
+    "Rainfall": 0.2,
+    "Evaporation": 1.4,
+    "Sunshine": 0,
+    "WindGustDir": "ESE",
+    "WindGustSpeed": 39,
+    "WindDir9am": "NW",
+    "WindDir3pm": "W",
+    "WindSpeed9am": 17,
+    "WindSpeed3pm": 11,
+    "Humidity9am": 91,
+    "Humidity3pm": 95,
+    "Pressure9am": 1020.3,
+    "Pressure3pm": 1016.4,
+    "Cloud9am": 7,
+    "Cloud3pm": 8,
+    "Temp9am": 12.7,
+    "Temp3pm": 14.6,
+    "RainToday": 0
+  }
+}'
+```
+
+La respuesta del modelo será un valor entero (1: lloverá, 0: no lloverá) y un mensaje en forma de cadena de texto que 
+indicará si lloverá al día siguiente.
+
+```json
+{
+  "prediction_bool": 0,
+  "prediction_str": "Toma un paraguas. Mañana puede que llueva."
+}
+```
+
+Para obtener más detalles sobre la API, ingresa a `http://localhost:8800/docs`.
+
+Nota: Recuerda que si esto se ejecuta en un servidor diferente a tu computadora, debes reemplazar 
+`localhost` por la IP correspondiente o el dominio DNS, si corresponde.
+
+Nota: Recordar que si esto se ejecuta en un servidor aparte de tu computadora, reemplazar a 
+localhost por la IP correspondiente o DNS domain si corresponde.
+
+La forma en que se implementó tiene la desventaja de que solo se puede hacer una predicción a 
+la vez, pero tiene la ventaja de que FastAPI y Pydantic nos permiten tener un fuerte control 
+sobre los datos sin necesidad de agregar una línea de código adicional. FastAPI maneja toda 
+la validación.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+### Utilizando el Frontend con Gradio
+
+Otra forma disponible para realizar una predicción es ingresando al frontend de Gradio en `http://localhost:7860/`.
+
+El sitio es una página única con un formulario que permite ingresar los valores del tiempo para un día específico y obtener una predicción de si lloverá o no al día siguiente.
+
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+## Otros Comandos
+
+### Docker compose
 <!-- TODO: Hacer una tabla en vez de esto -->
 
 Levantar el ambiente:
@@ -225,124 +292,20 @@ Reiniciar FastAPI (cargar otro modelo de entrada):
 docker compose restart --no-deps fastapi
 ```
 
+### Airflow
 
-#### Airflow
-
-Una vez metido dentro de la instancia web de airflow, se puede utilizar el cli de airflow. Para no esperar el tiempo de 
+Una vez dentro de la instancia web de airflow, se puede utilizar el cli de airflow. Para no esperar el tiempo de 
 refresh de los DAGs (una vez que actualizamos algún archivo de python):
 
 ```sh
 airflow dags reserialize
 ```
 
-### Services
-
-Una vez que todos los servicios estén funcionando (verifica con el comando docker ps -a que todos los servicios estén healthy o revisa en Docker Desktop), podrás acceder a los diferentes servicios mediante:
-
-    Apache Airflow: http://localhost:8080
-    MLflow: http://localhost:5000
-    MinIO: http://localhost:9001 (ventana de administración de Buckets)
-    API: http://localhost:8800/
-    Documentación de la API: http://localhost:8800/docs
-
-## Testing
-
-Podemos realizar predicciones utilizando la API, accediendo a `http://localhost:8800/`.
-
-Para hacer una predicción, debemos enviar una solicitud al endpoint `Predict` con un 
-cuerpo de tipo JSON que contenga un campo de características (`features`) con cada 
-entrada para el modelo.
-
-Un ejemplo utilizando `curl` sería:
-
-```bash
-curl -X 'POST' \
-  'http://localhost:8800/predict/' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: application/json' \
-  -d '{
-  "features": {
-    "age": 67,
-    "ca": 3,
-    "chol": 286,
-    "cp": 4,
-    "exang": 1,
-    "fbs": 0,
-    "oldpeak": 1.5,
-    "restecg": 2,
-    "sex": 1,
-    "slope": 2,
-    "thal": 3,
-    "thalach": 108,
-    "trestbps": 160
-  }
-}'
-```
-
-La respuesta del modelo será un valor booleano y un mensaje en forma de cadena de texto que 
-indicará si el paciente tiene o no una enfermedad cardiaca.
-
-```json
-{
-  "int_output": true,
-  "str_output": "Heart disease detected"
-}
-```
-
-Para obtener más detalles sobre la API, ingresa a `http://localhost:8800/docs`.
-
-Nota: Recuerda que si esto se ejecuta en un servidor diferente a tu computadora, debes reemplazar 
-`localhost` por la IP correspondiente o el dominio DNS, si corresponde.
-
-Nota: Recordar que si esto se ejecuta en un servidor aparte de tu computadora, reemplazar a 
-localhost por la IP correspondiente o DNS domain si corresponde.
-
-La forma en que se implementó tiene la desventaja de que solo se puede hacer una predicción a 
-la vez, pero tiene la ventaja de que FastAPI y Pydantic nos permiten tener un fuerte control 
-sobre los datos sin necesidad de agregar una línea de código adicional. FastAPI maneja toda 
-la validación.
-
-Otra forma más típica es pasar los features como una lista u otro formato similar con 
-N observaciones y M features, lo que permite realizar varias predicciones al mismo tiempo. 
-Sin embargo, se pierde la validación automática.
-
-<!-- ROADMAP -->
-## Roadmap
-
-- [x] Add Changelog
-- [x] Add back to top links
-- [ ] Add Additional Templates w/ Examples
-- [ ] Add "components" document to easily copy & paste sections of the readme
-- [ ] Multi-language Support
-    - [ ] Chinese
-    - [ ] Spanish
-
-See the [open issues](https://github.com/othneildrew/Best-README-Template/issues) for a full list of proposed features (and known issues).
-
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
-<!-- CONTRIBUTING -->
-## Contributing
-
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
-
-If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
-Don't forget to give the project a star! Thanks again!
-
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 
 
 <!-- LICENSE -->
-## License
+# License
 
 Distributed under the MIT License. See `LICENSE.txt` for more information.
 
@@ -350,63 +313,20 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 
 
-<!-- CONTACT -->
-## Contact
-
-Your Name - [@your_twitter](https://twitter.com/your_username) - email@example.com
-
-Project Link: [https://github.com/your_username/repo_name](https://github.com/your_username/repo_name)
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
-<!-- ACKNOWLEDGMENTS -->
-## Acknowledgments
-
-Use this space to list resources you find helpful and would like to give credit to. I've included a few of my favorites to kick things off!
-
-* [Choose an Open Source License](https://choosealicense.com)
-* [GitHub Emoji Cheat Sheet](https://www.webpagefx.com/tools/emoji-cheat-sheet)
-* [Malven's Flexbox Cheatsheet](https://flexbox.malven.co/)
-* [Malven's Grid Cheatsheet](https://grid.malven.co/)
-* [Img Shields](https://shields.io)
-* [GitHub Pages](https://pages.github.com)
-* [Font Awesome](https://fontawesome.com)
-* [React Icons](https://react-icons.github.io/react-icons/search)
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
 
 <!-- MARKDOWN LINKS & images -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/othneildrew/Best-README-Template.svg?style=for-the-badge
-[contributors-url]: https://github.com/othneildrew/Best-README-Template/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/othneildrew/Best-README-Template.svg?style=for-the-badge
-[forks-url]: https://github.com/othneildrew/Best-README-Template/network/members
-[stars-shield]: https://img.shields.io/github/stars/othneildrew/Best-README-Template.svg?style=for-the-badge
-[stars-url]: https://github.com/othneildrew/Best-README-Template/stargazers
-[issues-shield]: https://img.shields.io/github/issues/othneildrew/Best-README-Template.svg?style=for-the-badge
-[issues-url]: https://github.com/othneildrew/Best-README-Template/issues
-[license-shield]: https://img.shields.io/github/license/othneildrew/Best-README-Template.svg?style=for-the-badge
-[license-url]: https://github.com/othneildrew/Best-README-Template/blob/master/LICENSE.txt
-[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
-[linkedin-url]: https://linkedin.com/in/othneildrew
-[product-screenshot]: resources/images/screenshot.png
-[Next.js]: https://img.shields.io/badge/next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white
-[Next-url]: https://nextjs.org/
-[React.js]: https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB
-[React-url]: https://reactjs.org/
-[Vue.js]: https://img.shields.io/badge/Vue.js-35495E?style=for-the-badge&logo=vuedotjs&logoColor=4FC08D
-[Vue-url]: https://vuejs.org/
-[Angular.io]: https://img.shields.io/badge/Angular-DD0031?style=for-the-badge&logo=angular&logoColor=white
-[Angular-url]: https://angular.io/
-[Svelte.dev]: https://img.shields.io/badge/Svelte-4A4A55?style=for-the-badge&logo=svelte&logoColor=FF3E00
-[Svelte-url]: https://svelte.dev/
-[Laravel.com]: https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white
-[Laravel-url]: https://laravel.com
-[Bootstrap.com]: https://img.shields.io/badge/Bootstrap-563D7C?style=for-the-badge&logo=bootstrap&logoColor=white
-[Bootstrap-url]: https://getbootstrap.com
-[JQuery.com]: https://img.shields.io/badge/jQuery-0769AD?style=for-the-badge&logo=jquery&logoColor=white
-[JQuery-url]: https://jquery.com 
+
+
+[MLflow]: https://img.shields.io/badge/MLflow-0194E2?style=for-the-badge&logo=MLflow&logoColor=white
+[mlflow-url]: https://mlflow.org/
+[Apache-Airflow]: https://img.shields.io/badge/Airflow-017CEE?style=for-the-badge&logo=Apache%20Airflow&logoColor=white
+[airflow-url]: https://airflow.apache.org/
+[MinIO]: https://img.shields.io/badge/MinIO-C72E49?style=for-the-badge&logo=MinIO&logoColor=white
+[minio-url]: https://min.io
+[PostgreSQL]: https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white
+[postgresql-url]: https://www.postgresql.org/
+[FastAPI]: https://img.shields.io/badge/fastapi-109989?style=for-the-badge&logo=FASTAPI&logoColor=white
+[fastapi-url]: https://fastapi.tiangolo.com/
+[Gradio]: https://img.shields.io/badge/Gradio-F08705?style=for-the-badge&logo=Gradio&logoColor=white
+[gradio-url]: https://www.gradio.app/
