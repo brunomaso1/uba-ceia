@@ -1,32 +1,12 @@
 <!-- Improved compatibility of back to top link: See: https://github.com/othneildrew/Best-README-Template/pull/73 -->
 <a id="readme-top"></a>
-<!--
-*** Thanks for checking out the Best-README-Template. If you have a suggestion
-*** that would make this better, please fork the repo and create a pull request
-*** or simply open an issue with the tag "enhancement".
-*** Don't forget to give the project a star!
-*** Thanks again! Now go create something AMAZING! :D
--->
 
-
-
-<!-- PROJECT SHIELDS -->
-<!--
-*** I'm using markdown "reference style" links for readability.
-*** Reference links are enclosed in brackets [ ] instead of parentheses ( ).
-*** See the bottom of this document for the declaration of the reference variables
-*** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
-*** https://www.markdownguide.org/basic-syntax/#reference-style-links
--->
-
-
-<!-- PROJECT LOGO -->
 <br />
 <div align="center">
     <img src="resources/images/logo.png" alt="Logo" width="80" height="80">
   </a>
 
-  <h3 align="center">Aprendizaje de Máquinas II - MLOps</h3>
+  <h1 align="center">TP - Aprendizaje de Máquinas II - CEIA</h1>
 </div>
 
 <!-- TABLE OF CONTENTS -->
@@ -59,9 +39,16 @@
   </ol>
 </details>
 
+<center>
+<p>✨Datos del proyecto:✨<p>
 
+| Subtitulo       | TP - Aprendizaje de Máquinas II - FIUBA                                                                                                   |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Descrpción**  | Template matching                                                                                                                      |
+| **Integrantes** | - Bruno Masoller </br> - Simón Rodriguez                                                                                               |
 
-<!-- ABOUT THE PROJECT -->
+</center>
+
 # El Proyecto
 
 Este proyecto se realizó como Trabajo Práctico final para la materia **Aprendizaje de Máquinas II** de la **Carrera de Especialización en Inteligencia Artificial** de la Universidad de Buenos Aires.
@@ -87,8 +74,6 @@ La implementación incluye:
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-
 ## Built With
 
 Para este proyecto se utilizó:
@@ -103,9 +88,36 @@ Para este proyecto se utilizó:
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-
 <!-- GETTING STARTED -->
+# Capturas del proyecto
+
+Este proyecto está implementado utilizando contenedores en Docker para facilitar su deployment. Las librerías necesarias se instalan al momento de levantar los contenedores del proyecto.
+
+## Airflow
+
+![Airflow - ETL][etl]
+![Airflow - TRAIN AND OPTIMIZE][train_optimize]
+![Airflow - RETRAIN][retrain]
+
+## MLFlow
+
+![MLFlow - EXPERIMENTS][mlflow1]
+![MLFlow - MODELS][mlflow2]
+
+## Mino
+
+![minio_capture][minio_capture]
+
+## Fast API
+
+![fastapi_capture][fastapi_capture]
+
+## Gradio
+
+![gradio_capture][gradio_capture]
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 # Getting Started
 
 Este proyecto está implementado utilizando contenedores en Docker para facilitar su deployment. Las librerías necesarias se instalan al momento de levantar los contenedores del proyecto.
@@ -114,7 +126,6 @@ Este proyecto está implementado utilizando contenedores en Docker para facilita
 
 El proyecto está contenido en Docker, por lo que el requisito principal es tenerlo instalado localmente.
 Para más información se puede visitar el sitio de [Docker](https://docs.docker.com/get-started/get-docker/).
-
 
 ## Instalación
 
@@ -129,9 +140,6 @@ docker compose --profile all up
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-
-<!-- USAGE EXAMPLES -->
 # Cómo utilizar
 
 A continuación se explica cómo utilizar este repositorio y comandos útiles para su ejecución e implementación local.
@@ -144,7 +152,7 @@ Una vez que todos los servicios estén funcionando (verifica con el comando dock
 * MLflow: [http://localhost:5000](http://localhost:5000)
 * MinIO: [http://localhost:9001](http://localhost:9001) (ventana de administración de Buckets)
 * API: [http://localhost:8800/](http://localhost:8800/)
-* Docume*ntación de la API: [http://localhost:8800/docs](http://localhost:8800/docs)
+* Documentación de la API: [http://localhost:8800/docs](http://localhost:8800/docs)
 * Gradio: [http://localhost:7860](http://localhost:7860)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -229,10 +237,9 @@ El sitio es una página única con un formulario que permite ingresar los valore
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
-## Otros Comandos
+## Otros comandos útiles en este proyecto
 
 ### Docker compose
-<!-- TODO: Hacer una tabla en vez de esto -->
 
 Levantar el ambiente:
 ```sh
@@ -303,20 +310,34 @@ airflow dags reserialize
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+# Mejoras futuras
 
-<!-- LICENSE -->
-# License
+<font color='MediumSeaGreen'>✔</font> *Mejoras posibles:* <font color='MediumSeaGreen'>✔</font>
 
-Distributed under the MIT License. See `LICENSE.txt` for more information.
+- [ ] Mejorar la configuración: Actualmente, la configuración está solamente para un dataset. Pero si se quiere manejar un concepto
+de configuración globar entre todas las instancias, hoy lo estamos haciendo con variables de entorno, pero debe de haber una mejor
+forma (ConfigMaps?)
+- [ ] Mejorar la API: Se podrían agregar otros endpoints para distintos modelos o casos donde ya tengan datos ingresados.
+- [ ] FrontEnd + Backend: Agregar un frontend en alguna tecnología conocida (React) que soporta más complejidades que Gradio. Así también
+como agregar un backend para dicho fontend, con el objetivo de tener una arquitectura Backend For Frontend.
+- [ ] Mejorar DAGS: Los dags actuales todos utilizan @task, solamente algunos utilizan @task.virtualenv. Lo mejor sería cambiar a este estilo
+para reducir el tamaño de la imagen, sin embargo, hay que analizar el costo-beneficio de dicho cambio.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
 
 
 <!-- MARKDOWN LINKS & images -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
 [arquitectura]: resources/images/arquitectura_mlops.png
+[etl]: resources/images/ETL.png
+[train_optimize]: resources/images/train_optimize.png
+[retrain]: resources/images/retrain.png
+[mlflow1]: resources/images/mlflow1.png
+[mlflow2]: resources/images/mlflow2.png
+[minio_capture]: resources/images/minio.png
+[fastapi_capture]: resources/images/fastapi.png
+[gradio_capture]: resources/images/gradio.png
+
 
 [MLflow]: https://img.shields.io/badge/MLflow-0194E2?style=for-the-badge&logo=MLflow&logoColor=white
 [mlflow-url]: https://mlflow.org/
