@@ -33,10 +33,16 @@ class RainDatasetConfigs:
             "dagrun_timeout": datetime.timedelta(minutes=15),
         }
 
+        # self.PARAM_GRID = {
+        #     "learning_rate": [0.1, 0.01],
+        #     "max_depth": [3, 6, 9],
+        #     "n_estimators": [100, 500, 1000],
+        # }
+
         self.PARAM_GRID = {
-            "learning_rate": [0.1, 0.01],
-            "max_depth": [3, 6, 9],
-            "n_estimators": [100, 500, 1000],
+            "learning_rate": [0.1],
+            "max_depth": [3],
+            "n_estimators": [100],
         }
 
         # Variables de entorno

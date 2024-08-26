@@ -3,8 +3,6 @@ OPTIMIZE: Crea y optimiza el modelo.
 """
 import datetime
 import mlflow
-from mlflow import MlflowClient
-import awswrangler as wr
 import xgboost as xgb
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import (
@@ -15,7 +13,10 @@ from sklearn.metrics import (
     confusion_matrix,
 )
 from airflow.decorators import dag, task
-from rain_dataset_utils import aux_functions, config_loader
+from rain_dataset_utils import (
+    aux_functions,
+    config_loader
+)
 from rain_dataset_utils.rain_dataset_doc import (
     DESCRIPTION_OPTIMIZE,
     FULL_DESCRIPTION_MD_OPTIMIZE,

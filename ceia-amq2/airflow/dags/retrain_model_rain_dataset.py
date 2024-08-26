@@ -33,10 +33,12 @@ def processing_dag():
         import datetime
         import mlflow
         import awswrangler as wr
-
         from sklearn.base import clone
         from sklearn.metrics import f1_score
         from mlflow.models import infer_signature
+        from rain_dataset_utils import config_loader, aux_functions
+
+        config = config_loader.RainDatasetConfigs()
 
         mlflow.set_tracking_uri(config.MLFLOW_TRACKING_URI)
 
@@ -132,8 +134,10 @@ def processing_dag():
     def evaluate_champion_challenge():
         import mlflow
         import awswrangler as wr
-
         from sklearn.metrics import f1_score
+        from rain_dataset_utils import config_loader, aux_functions
+
+        config = config_loader.RainDatasetConfigs()
 
         mlflow.set_tracking_uri(config.MLFLOW_TRACKING_URI)
 
