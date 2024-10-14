@@ -1,0 +1,6 @@
+pycocotools
+ultralytics
+fiftyone
+torchinfo
+albumentations
+gputil

@@ -1,1 +1,5 @@
-resources
+ceia-vpc2/resources/datasets
+ceia-vpc2/resources/models
+ceia-vpc2/resources/utils
+
+
