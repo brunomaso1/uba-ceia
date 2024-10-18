@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <link type="text/css" rel="stylesheet" href="./static/css/materialize.min.css" media="screen,projection" />
+    <link type="text/css" rel="stylesheet" href="./static/css/styles.css" media="screen,projection" />
+    <script type="text/javascript" src="./static/js/materialize.min.js"></script>
+    <script src="js/user.js"></script>
+    <script type="text/javascript" src="js/main.js"></script>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Device Dashboard</title>
+  </head>
+  <body class="container">
+   
+    <header>
+      <div class="card-panel indigo darken-3 center-div white-text">
+        <i class="material-icons left">devices_other</i>
+        <span class="material-symbols-outlined"> </span>
+        <div>
+          <strong>
+            Device<br />
+            Dashboard
+          </strong>
+        </div>
+      </div>
+    </header>
+
+    <div id="add-update-device-modal" class="modal">
+      <form id="device-form">
+        <section>
+          <div class="modal-content">
+            <h4>Agregar/Modificar dispositivo</h4>
+            <div class="input-field">
+              <input id="device-name" name="device-name" type="text" required />
+              <label for="device-name">Nombre del Dispositivo</label>
+            </div>
+            <div class="input-field">
+              <input id="device-description" name="device-description" type="text" required />
+              <label for="device-description">Descripción</label>
+            </div>
+            <div class="input-field">
+              <select id="device-icon" name="device-icon" required>
+                <option value="" disabled selected>Selecciona un ícono</option>
+                <option value="ac_unit">❄️ AC Unit</option>
+                <option value="lightbulb_outline">💡 Light Bulb</option>
+                <option value="music_note">🎵 Music Note</option>
+                <option value="tv">📺 TV</option>
+                <option value="fan">🌬️ Fan</option>
+                <option value="roller_shades">🖼️ Roller</option>
+              </select>
+              <label for="device-icon">Ícono del Dispositivo</label>
+            </div>
+            <div class="input-field">
+              <select id="device-type" name="device-type" required>
+                <option value="" disabled selected>Selecciona el tipo</option>
+                <option value="0">Tipo 0 (con estado)</option>
+                <option value="1">Tipo 1 (con rango)</option>
+              </select>
+              <label for="device-type">Tipo de Dispositivo</label>
+            </div>
+            <!-- Campo oculto para almacenar el ID del dispositivo -->
+            <input id="device-id" name="device-id" type="hidden" />
+          </div>
+        </section>
+
+        <menu>
+          <div class="modal-footer">
+            <button class="btn grey lighten-1 waves-effect waves-light white-text" id="dismissModal" type="reset">
+              Cancelar
+            </button>
+            <button class="btn waves-effect waves-light white-text" id="sendModal" type="submit">Confirmar</button>
+          </div>
+        </menu>
+      </form>
+    </div>
+
+    <main>
+      <section>
+        <button
+          data-target="add-update-device-modal"
+          class="btn waves-effect waves-light white-text modal-trigger"
+          id="add-device-buttion"
+        >
+          AGREGAR DISPOSITIVO
+          <i class="material-icons left">add</i>
+        </button>
+      </section>
+      <section id="lista-dispositivos">Lista de dispositivos</section>
+    </main>
+    <footer class="page-footer card-panel indigo darken-3">
+      <div class="container">
+        <div class="row">
+          <div class="col l6 s6">
+            <h5 class="white-text">Smart Home</h5>
+            <p class="grey-text text-lighten-4">Copyright - 2024</p>
+          </div>
+          <div class="col l6 s6">
+            <h5 class="white-text right-align">Contact</h5>
+            <p class="white-text right-align">
+              <a class="grey-text text-lighten-3" href="!#">Email | </a>
+              <a class="grey-text text-lighten-3" href="!#">Twitter | </a>
+              <a class="grey-text text-lighten-3" href="!#">LinkedIn</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

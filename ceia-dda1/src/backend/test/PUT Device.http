@@ -1,0 +1,9 @@
+PUT http://localhost:8000/devices/1 HTTP/1.1
+content-type: application/json
+
+{
+    "name": "Lampara 12333",
+    "description": "Luz living",
+    "icon": "lightbulb_outline",
+    "type": 0
+}
