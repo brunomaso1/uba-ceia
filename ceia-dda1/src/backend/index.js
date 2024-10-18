@@ -80,8 +80,75 @@ app.put("/devices/:id", function (req, res) {
   }
 
   // Defino la query con placeholders
-  let query = 'UPDATE Devices SET name = ?, description = ?, icon = ?, type = ? WHERE id = ?';
+  let query = "UPDATE Devices SET name = ?, description = ?, icon = ?, type = ? WHERE id = ?";
   let queryParams = [nombre, description, icon, type, id];
+
+  // Ejecutar la query
+  utils.query(query, queryParams, (error, results) => {
+    if (error) {
+      console.error("Error actualizando el dispositivo:", error);
+      return res.status(500).send("Error actualizando el dispositivo");
+    }
+    if (results.affectedRows === 0) {
+      return res.status(404).send("Dispositivo no encontrado");
+    }
+    // Éxito
+    res.status(200).send({ message: "Dispositivo actualizado exitosamente" });
+  });
+});
+
+// PATCH para editar un dispositivo existente
+app.patch("/devices/:id", function (req, res) {
+  let id = +req.params.id;
+
+  // Validar que el ID sea válido
+  if (!id) {
+    return res.status(400).send("ID del dispositivo es requerido.");
+  }
+
+  // Inicializar un array para almacenar los campos que se actualizarán
+  let fields = [];
+  let queryParams = [];
+
+  // Comprobamos qué campos han sido enviados y los añadimos a la consulta
+  if (req.body.name) {
+    fields.push("name = ?");
+    queryParams.push(req.body.name);
+  }
+
+  if (req.body.description) {
+    fields.push("description = ?");
+    queryParams.push(req.body.description);
+  }
+
+  if (req.body.icon) {
+    fields.push("icon = ?");
+    queryParams.push(req.body.icon);
+  }
+
+  if (typeof req.body.type === "number") {
+    fields.push("type = ?");
+    queryParams.push(req.body.type);
+  }
+
+  if (typeof req.body.state === "boolean" || req.body.state === 0 || req.body.state === 1) {
+    fields.push("state = ?");
+    queryParams.push(req.body.state);
+  }
+
+  if (typeof req.body.device_range === "number") {
+    fields.push("device_range = ?");
+    queryParams.push(req.body.device_range);
+  }
+
+  // Si no se ha enviado ningún campo para actualizar, devolvemos un error
+  if (fields.length === 0) {
+    return res.status(400).send("No se han enviado campos válidos para actualizar.");
+  }
+
+  // Construimos la consulta SQL dinámica para actualizar solo los campos enviados
+  let query = `UPDATE Devices SET ${fields.join(", ")} WHERE id = ?`;
+  queryParams.push(id); // Agregamos el ID como el último parámetro para la consulta
 
   // Ejecutar la query
   utils.query(query, queryParams, (error, results) => {
@@ -107,7 +174,7 @@ app.delete("/devices/:id", function (req, res) {
   }
 
   // Defino la query
-  let query = 'DELETE FROM Devices WHERE id = ?';
+  let query = "DELETE FROM Devices WHERE id = ?";
   let queryParams = [id];
 
   // Ejecutar la query
@@ -123,7 +190,6 @@ app.delete("/devices/:id", function (req, res) {
     res.status(200).send({ message: "Dispositivo eliminado existosamente" });
   });
 });
-
 
 app.listen(PORT, function (req, res) {
   console.log("NodeJS API running correctly");

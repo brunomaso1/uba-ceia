@@ -25,6 +25,27 @@ class Main implements EventListenerObject {
     });
   }
 
+  loadDevicesFromDB(): void {
+    const xmlHttp = new XMLHttpRequest();
+
+    xmlHttp.onload = () => {
+      if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+        this.devices = JSON.parse(xmlHttp.responseText);
+        this.renderDevices();
+      } else {
+        console.error(`HTTP error! status: ${xmlHttp.status}`);
+      }
+    };
+
+    xmlHttp.onerror = () => {
+      console.error("Request failed");
+    };
+
+    xmlHttp.open("GET", "http://localhost:8000/devices", true);
+    xmlHttp.setRequestHeader("Content-Type", "application/json");
+    xmlHttp.send();
+  }
+
   renderDevices() {
     const devices = this.devices;
     let hmtlInterno: string = "";
@@ -50,6 +71,20 @@ class Main implements EventListenerObject {
     for (const button of deleteButtons) {
       button.addEventListener("click", this.deleteDevice.bind(this));
     }
+
+    // Asigno el evento "click" para el botón switch
+    const switchButtons = document.querySelectorAll(".switch-btn");
+
+    for (const button of switchButtons) {
+      button.addEventListener("click", this.switchButtonPressed.bind(this));
+    }
+
+    // Asigno el evento "click" para el botón range
+    const rangeButtons = document.querySelectorAll(".device_range-btn");
+
+    for (const button of rangeButtons) {
+      button.addEventListener("click", this.deviceRangePressed.bind(this));
+    }
   }
 
   createDevice(device: Device) {
@@ -68,7 +103,7 @@ class Main implements EventListenerObject {
       <div class="switch">
         <label>
           Off
-          <input type="checkbox" ${device.state ? "checked" : ""}>
+          <input data-id="${device.id}" class="switch-btn" type="checkbox" ${device.state ? "checked" : ""}>
           <span class="lever"></span>
           On
         </label>
@@ -76,7 +111,7 @@ class Main implements EventListenerObject {
     } else {
       deviceHTML += `
       <div class="range-field">
-        <input type="range" min="0" max="100" value="${device.device_range}">
+        <input data-id="${device.id}" class="device_range-btn" type="range" min="0" max="100" value="${device.device_range}">
       </div>`;
     }
     deviceHTML += `</div>
@@ -91,25 +126,30 @@ class Main implements EventListenerObject {
     return deviceHTML;
   }
 
-  loadDevicesFromDB(): void {
-    const xmlHttp = new XMLHttpRequest();
+  switchButtonPressed(event: Event): void {
+    const target = <HTMLInputElement>event.target;
+    const deviceId = +target.getAttribute("data-id"); // Obtener el ID del dispositivo
+    const newState = target.checked; // Obtener el nuevo estado (on/off)
 
-    xmlHttp.onload = () => {
-      if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-        this.devices = JSON.parse(xmlHttp.responseText);
-        this.renderDevices();
-      } else {
-        console.error(`HTTP error! status: ${xmlHttp.status}`);
-      }
-    };
+    // Encontrar el dispositivo a actualizar
+    const device = this.devices.find((d) => d.id === deviceId);
 
-    xmlHttp.onerror = () => {
-      console.error("Request failed");
-    };
+    device.state = newState;
 
-    xmlHttp.open("GET", "http://localhost:8000/devices", true);
-    xmlHttp.setRequestHeader("Content-Type", "application/json");
-    xmlHttp.send();
+    this.patchDeviceDB(deviceId, device);
+  }
+
+  deviceRangePressed(event: Event): void {
+    const target = <HTMLInputElement>event.target;
+    const deviceId = +target.getAttribute("data-id"); // Obtener el ID del dispositivo
+    const newValue = +target.value; // Obtener el nuevo valor
+
+    // Encontrar el dispositivo a actualizar
+    const device = this.devices.find((d) => d.id === deviceId);
+
+    device.device_range = newValue;
+
+    this.patchDeviceDB(deviceId, device);
   }
 
   handleAddUpdateDevicesEvent(object: Event): void {
@@ -167,10 +207,6 @@ class Main implements EventListenerObject {
       };
     }
 
-    if (!device.name) {
-      M.toast("El nombre no puede ser vacío");
-    }
-
     if (deviceId) {
       // Si estamos editando, actualizar el dispositivo existente
       this.updateDeviceDB(deviceId, device);
@@ -186,6 +222,8 @@ class Main implements EventListenerObject {
 
     // Limpiar el formulario
     form.reset();
+    // Le asignamos el valor nulo a si estamos editando o no.
+    (<HTMLInputElement>document.getElementById("device-id")).value = null;
   }
 
   editDevice(event: Event): void {
@@ -288,6 +326,28 @@ class Main implements EventListenerObject {
     };
 
     xmlHttp.open("POST", "http://localhost:8000/devices", true);
+    xmlHttp.setRequestHeader("Content-Type", "application/json");
+    xmlHttp.send(JSON.stringify(device));
+  }
+
+  patchDeviceDB(deviceId: number, device: Device): void {
+    const xmlHttp = new XMLHttpRequest();
+
+    xmlHttp.onload = () => {
+      if (xmlHttp.readyState == 4 && (xmlHttp.status == 200 || xmlHttp.status == 204)) {
+        // Si el dispositivo se actualizó correctamente, recarga la lista
+        this.loadDevicesFromDB();
+      } else {
+        console.error(`HTTP error! status: ${xmlHttp.status}`);
+        M.toast({ html: this.wrrongHtml });
+      }
+    };
+
+    xmlHttp.onerror = () => {
+      console.error("Request failed");
+    };
+
+    xmlHttp.open("PATCH", `http://localhost:8000/devices/${deviceId}`, true);
     xmlHttp.setRequestHeader("Content-Type", "application/json");
     xmlHttp.send(JSON.stringify(device));
   }

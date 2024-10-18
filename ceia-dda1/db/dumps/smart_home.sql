@@ -49,7 +49,7 @@ CREATE TABLE `Devices` (
 INSERT INTO `Devices` (`id`, `name`, `description`, `icon`, `type`, `state`, `device_range`) VALUES
 (1, 'Lampara 1', 'Luz living', 'lightbulb_outline', 0, 0, NULL),
 (2, 'Lampara 2', 'Luz cocina', 'lightbulb_outline', 0, 0, NULL),
-(3, 'Velador', 'Velador living', 'fan', 1, NULL, 50),
+(3, 'Velador', 'Velador living', 'mode_fan', 1, NULL, 50),
 (4, 'Persiana 1', 'Persiana living', 'roller_shades', 1, NULL, 30);
 
 --

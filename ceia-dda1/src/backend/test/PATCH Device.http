@@ -1,0 +1,6 @@
+PATCH http://localhost:8000/devices/1 HTTP/1.1
+content-type: application/json
+
+{
+    "state" : true
+}

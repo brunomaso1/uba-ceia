@@ -277,7 +277,7 @@ Connection: close
 }
 ```
 
-4. *Modificar un dispositivo:*
+4. *Modificar un dispositivo (nombre, descripción, icono y tipo):*
 
 - Request ➡️
 
@@ -332,6 +332,35 @@ Connection: close
 
 {
   "message": "Dispositivo eliminado existosamente"
+}
+```
+
+6. *Actualizar dispositivo (permite algunos campos):*
+
+- Request ➡️
+
+```http
+PATCH http://localhost:8000/devices/1 HTTP/1.1
+content-type: application/json
+
+{
+    "state" : true
+}
+```
+
+- Response ⬅️
+
+```http
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Content-Type: application/json; charset=utf-8
+Content-Length: 50
+ETag: W/"32-odQi6Et1Al7UbxTNg/3gDdkPqRA"
+Date: Fri, 18 Oct 2024 23:14:28 GMT
+Connection: close
+
+{
+  "message": "Dispositivo actualizado exitosamente"
 }
 ```
 
