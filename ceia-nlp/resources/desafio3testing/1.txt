@@ -1,0 +1,11 @@
+model = Sequential()
+
+model.add(Embedding(input_dim=vocab_size + 1, output_dim=100, mask_zero=True))
+
+model.add(LSTM(100, return_sequences=True))
+model.
+model.add(LSTM(100, return_sequences=True))
+
+model.add(Dense(vocab_size + 1, activation="softmax"))
+
+model.build(input_shape=(None, max_context_size))
