@@ -5,32 +5,32 @@
 
 
 % El títulos de la memoria, se usa en la carátula y se puede usar el cualquier lugar del documento con el comando \ttitle
-\titulo{Título del proyecto} 
+\titulo{Sistema de monitoreo de rhynchophorus ferrugineus en palmeras de Montevideo} 
 
 % Nombre del posgrado, se usa en la carátula y se puede usar el cualquier lugar del documento con el comando \degreename
-\posgrado{Carrera de Especialización en Sistemas Embebidos} 
+% \posgrado{Carrera de Especialización en Sistemas Embebidos} 
 %\posgrado{Carrera de Especialización en Internet de las Cosas} 
-%\posgrado{Carrera de Especialización en Inteligencia Artificial}
+\posgrado{Carrera de Especialización en Inteligencia Artificial}
 %\posgrado{Maestría en Sistemas Embebidos} 
 %\posgrado{Maestría en Internet de las cosas}
 
 % Tu nombre, se puede usar el cualquier lugar del documento con el comando \authorname
 % IMPORTANTE: no omitir titulaciones ni tildación en los nombres, también se recomienda escribir los nombres completos (tal cual los tienen en su documento)
-\autor{Título y Nombre del autor}
+\autor{Ing. Bruno Masoller}
 
 % El nombre del director y co-director, se puede usar el cualquier lugar del documento con el comando \supname y \cosupname y \pertesupname y \pertecosupname
-\director{Título y Nombre del director}
+\director{TODO: Competar director}
 \pertenenciaDirector{pertenencia} 
 \codirector{} % para que aparezca en la portada se debe descomentar la opción codirector en los parámetros de documentclass
 \pertenenciaCoDirector{FIUBA}
 
 % Nombre del cliente, quien va a aprobar los resultados del proyecto, se puede usar con el comando \clientename y \empclientename
-\cliente{Nombre del cliente}
-\empresaCliente{Empresa del cliente}
+\cliente{Ing. Agr. Alfonso Arcos}
+\empresaCliente{Intendencia de Montevideo}
  
-\fechaINICIO{30 de abril de 2023}		%Fecha de inicio de la cursada de GdP \fechaInicioName
-\fechaFINALPlan{18 de junio de 2023} 	%Fecha de final de cursada de GdP
-\fechaFINALTrabajo{15 de mayo de 2024}	%Fecha de defensa pública del trabajo final
+\fechaINICIO{01 de octubre de 2024}		%Fecha de inicio de la cursada de GdP \fechaInicioName
+\fechaFINALPlan{01 de diciembre de 2024} 	%Fecha de final de cursada de GdP
+\fechaFINALTrabajo{TODO: Completar fecha final}	%Fecha de defensa pública del trabajo final
 
 
 \begin{document}
@@ -59,7 +59,7 @@
 \rowcolor[HTML]{C0C0C0} 
 Revisión & \multicolumn{1}{c|}{\cellcolor[HTML]{C0C0C0}Detalles de los cambios realizados} & Fecha      \\ \hline
 0      & Creación del documento                                 &\fechaInicioName \\ \hline
-%1      & Se completa hasta el punto 5 inclusive                & {día} de {mes} de 202X \\ \hline
+1      & Se completa hasta el punto 5 inclusive                & {29} de {octubre} de 2024 \\ \hline
 %2      & Se completa hasta el punto 9 inclusive
 %		  Se puede agregar algo más \newline
 %		  En distintas líneas \newline
@@ -85,7 +85,7 @@ Buenos Aires, \fechaInicioName
 
 \vspace{2cm}
 
-Por medio de la presente se acuerda con el \authorname\hspace{1px} que su Trabajo Final de la \degreename\hspace{1px} se titulará ``\ttitle'' y consistirá en \textcolor{red}{la implementación de un prototipo de un sistema de control de temperatura de una caldera industrial}. El trabajo tendrá un presupuesto preliminar estimado de \textcolor{red}{600} horas y un costo estimado de \textcolor{red}{\$ XXX}, con fecha de inicio el \fechaInicioName\hspace{1px} y fecha de presentación pública el \fechaFinalName.
+Por medio de la presente se acuerda con el \authorname\hspace{1px} que su Trabajo Final de la \degreename\hspace{1px} se titulará ``\ttitle'' y consistirá en la implementación de una prueba de concepto de un sistema de monitoreo de la plaga rhynchophorus ferrugineus en palmeras de Montevideo. El trabajo tendrá un presupuesto preliminar estimado de \textcolor{red}{600} horas y un costo estimado de \textcolor{red}{\$ XXX}, con fecha de inicio el \fechaInicioName\hspace{1px} y fecha de presentación pública el \fechaFinalName.
 
 Se adjunta a esta acta la planificación inicial.
 
@@ -100,58 +100,44 @@ Se adjunta a esta acta la planificación inicial.
 \end{tabular}
 \end{table}
 
-
-
-
 \section{1. Descripción técnica-conceptual del proyecto a realizar}
 \label{sec:descripcion}
 
-\begin{consigna}{red} % ELIMINAR \begin{consigna}{red} y \end{consigna}{red} en las secciones que vayan completando para cada entrega parcial.
-El objetivo es que el lector, en una o dos páginas, exponga de qué se trata el proyecto y cuáles son sus desafíos, cuál es la motivación para realizarlo y su importancia.
+En Montevideo, existen aproximadamente 25.000 palmeras, las cuales son parte integral del paisaje urbano y del ecosistema local. Desde el 2010, la plaga del rhynchophorus ferrugineus (también conocido como “picudo rojo”), la cual se puede observar en la figura \ref{fig:picudo-rojo}, ha estado expandiéndose en América, alcanzando Uruguay en 2022. Esta plaga representa una amenaza significativa para las palmeras, ya que las larvas de este escarabajo se alimentan de su tejido interno, lo cual provoca el coplapso estructural en un período de 8 a 10 meses. Los efectos de esta plaga tienen implicancias tanto ecológicas como económicas. La caída de palmeras infectadas puede causar daños a personas o propiedades debido a los fuertes vientos que afectan a Montevideo. Además, la remoción de estos árboles infestados tiene un costo aproximado de 1.000 dólares estadounidenses, lo que hace crucial la detección temprana para tratar la infección con insecticidas antes de que el daño sea irreversible.
 
-Se debe introducir el contexto del proyecto, el estado del arte en la temática, describir la propuesta de valor, cuál es el problema que atiende y cuál es la solución que se propone. Se debe dar una descripción funcional de la solución que incluya un diagrama en bloques.
-
-Puede ser útil incluir en esta sección la respuesta a alguna de estas preguntas:
-
-\begin{itemize}
-	\item ¿Cuál es el contexto del proyecto, es un emprendimiento personal, un proyecto para una empresa, es parte del programa de vinculación con empresas del posgrado?
-	\item ¿Existen o aplican condiciones especiales al proyecto, financiamiento de algún programa público o privado, acuerdos de confidencialidad, acuerdos sobre la propiedad intelectual de los entregables u otros?
-	\item ¿Cómo se compara la solución propuesta con el estado del arte en el campo de aplicación? ¿En qué aspectos destaca?
-	\item ¿Ayuda a la explicación si se incluye un lienzo Canvas del Modelo de Negocio?
-	\item ¿En qué estado del ciclo de vida está la solución que se propone?
-	\item ¿Cuáles son las características del cliente (el adoptante de los entregables del proyecto) qué valora, qué necesita?
-	\item ¿Por dónde pasa la innovación?
-\end{itemize}
-
-La descripción técnica-conceptual \textbf{debe incluir al menos un diagrama en bloques del sistema} y descripción funcional de la solución propuesta.
-
-Las figuras se deben mencionar en el texto ANTES de que aparezcan con una frase como la siguiente: ``En la figura \ref{fig:diagBloques} se presenta el diagrama en bloques del sistema. Se observa que...''.  La regla es que las figuras nunca pueden ir antes de ser mencionadas en el texto, porque sino el lector no entiende por qué de pronto aparece una figura.
-
-\begin{figure}[htpb]
+\begin{figure}[H]
 \centering 
-\includegraphics[width=.65\textwidth]{./Figuras/diagBloques.png}
-\caption{Diagrama en bloques del sistema.}
-\label{fig:diagBloques}
+\includegraphics[width=.30\textwidth]{./Figuras/picudo-rojo.png}
+\caption{Rhynchophorus Ferrugineus.}
+\label{fig:picudo-rojo}
 \end{figure}
 
-\vspace{25px}
+% \vspace{25px}
 
-El tamaño del texto en TODAS las figuras debe ser adecuado \textbf{para que NO pase lo que ocurre en la figura \ref{fig:diagBloques}}, donde el lector debe esforzarse para poder leer el texto. 
+Se propone realizar una prueba de concepto (POC) para la Intendencia de Montevideo (IM) de un sistema de monitoreo basado en dos etapas que utiliza visión por computadora y aprendizaje profundo:
 
-Los colores usados en el diagrama deben ser adecuados, tal que ayuden a comprender mejor el diagrama. Se recomienda evitar colores primarios (como rojo, verde o cyan) y usar la gama de colores pastel.
+\begin{enumerate}
 
-\end{consigna} % ELIMINAR \begin{consigna}{red} y \end{consigna}{red} en las secciones que vayan completando para cada entrega parcial.
+    \item \textbf{Detección preliminar mediante imágenes aéreas:} En esta etapa inicial, se estudiará la viabilidad  de identificar indicios visuales de infección en imágenes satelitales. Esto permitirá generar una alerta temprana de posibles casos de infestación.
+    
+    \item \textbf{Detección mediante drones:} Una vez detectados indicios de infección (o según demanda), se realizan vuelos de drones en zonas específicas para obtener imágenes de alta resolución que confirmen si la palmera está efectivamente infectada. El uso de drones permitirá una inspección detallada y eficiente, lo que mejorará la precisión en la identificación de la plaga.
+\end{enumerate}
+
+El objetivo principal, es llegar a una POC que cumpla con la detección de imágenes de drones según la demanda, como se puede obaservar el la siguiente figura \ref{fig:bosquejo-inicial-solucion}.
+
+\begin{figure}[H]
+\centering 
+\includegraphics[width=.95\textwidth]{./Figuras/bosquejo-inicial-solucion.png}
+\caption{Diagrama de la solución.}
+\label{fig:bosquejo-inicial-solucion}
+\end{figure}
+
+Cabe destacar que el sistema no consta solamente del modelo de detección, sino de toda una plataforma asociada para la implementación de la solución, con la capacidad de extensión a otros ámbitos, siendo un hito para la IM en inovación de este tipo de proyectos.
+
+Este enfoque proporciona beneficios tanto desde el punto de vista económico como ambiental. La identificación temprana, así como la tardía, reduce los costos de inspección presencial y se optimiza el uso de drones dado a su cobertura de grandes áreas. En particular, esta implementación permitirá a la IM optimizar el uso de recursos para el manejo de la plaga del picudo rojo, lo que implica reducir los costos de remoción de palmeras, mejorar la inspección presencial a casos excepcionalmente necesarios, realizar vuelos efectivos y programados de los drones (aumentando su autonomía), así como validar una POC que se puede extender a otros proyectos. Al mismo tiempo, ayudará a preservar el entorno ecológico de la ciudad y mejorar la seguridad de sus habitantes.
 
 \section{2. Identificación y análisis de los interesados}
 \label{sec:interesados}
-
-\begin{consigna}{red} % ELIMINAR \begin{consigna}{red} y \end{consigna}{red} en las secciones que vayan completando para cada entrega parcial.
-\textbf{Nota importante:} borrar esto y todas las consignas en color rojo antes de entregar este documento). Esto se hace eliminando el par de comandos que forman el bloque consigna, \verb!\begin{consigna}{red}! y \verb!\end{consigna}{red}! del código. 
- 
-Es inusual que una misma persona esté en más de un rol, incluso en proyectos chicos. Si se considera que una persona cumple dos o más roles, entonces \textbf{solo dejarla en el rol más importante}. 
-
-Por ejemplo, si una persona es Cliente pero también colabora u orienta, dejarla solo como Cliente. Si una persona es el Responsable, \textbf{no debe ser colocado también como miembro del equipo}.
-
 
 \begin{table}[ht]
 %\caption{Identificación de los interesados}
@@ -160,90 +146,61 @@ Por ejemplo, si una persona es Cliente pero también colabora u orienta, dejarla
 \hline
 \rowcolor[HTML]{C0C0C0} 
 Rol           & Nombre y Apellido & Organización 	& Puesto 	\\ \hline
-Auspiciante   &                   &              	&        	\\ \hline
-Cliente       & \clientename      &\empclientename	&        	\\ \hline
-Impulsor      &                   &              	&        	\\ \hline
-Responsable   & \authorname       & FIUBA        	& Alumno 	\\ \hline
-Colaboradores &                   &              	&        	\\ \hline
+Cliente       & \clientename      &\empclientename	& Director sector arbolado \\ \hline
+Impulsor      & Msc. Ing. Juan Prada &\empclientename & Director ciudades inteligenes \\ \hline
+Responsable   & \authorname       &\empclientename    & Alumno 	\\ \hline
 Orientador    & \supname	      & \pertesupname 	& Director del Trabajo Final \\ \hline
-Equipo        & miembro1 \newline 
-				miembro2          &              	&        	\\ \hline
-Opositores    &                   &              	&        	\\ \hline
-Usuario final &                   &              	&        	\\ \hline
+Usuario final & Usuarios de áreas verdes &\empclientename &  Administrativo \\ \hline
 \end{tabularx}
 \end{table}
-
-El Director suele ser uno de los orientadores.
-
-No dejar celdas vacías; si no hay nada que poner en una celda colocar un signo ``-''.
-
-No dejar filas vacías; si no hay nada que poner en una fila entonces eliminarla.
-
-Es deseable listar a continuación las principales características de cada interesado.
- 
-Por ejemplo:
-\begin{itemize}
-	\item Orientador: la Dra. Ing. María Gómez es experta en la temática y va a ayudar con la definición de los requerimientos y el desarrollo del firmware del embebido.
-	\item Auspiciante: es riguroso y exigente con la rendición de gastos. Tener mucho cuidado con esto.
-	\item Equipo: Juan Perez, suele pedir licencia porque tiene un familiar con una enfermedad. Planificar considerando esto.
-\end{itemize}
-
-\end{consigna} % ELIMINAR \begin{consigna}{red} y \end{consigna}{red} en las secciones que vayan completando para cada entrega parcial.
-
 
 \section{3. Propósito del proyecto}
 \label{sec:proposito}
 
-\begin{consigna}{red} % ELIMINAR \begin{consigna}{red} y \end{consigna}{red} en las secciones que vayan completando para cada entrega parcial.
-
-¿Por qué se hace el proyecto? ¿Qué se quiere lograr? 
-
-Se recomienda que sea solo un párrafo que continúe con la idea de la frase ``el propósito de este proyecto es...'' (omitir la frase, ya que está en el título de la sección).
-\end{consigna}
+Realizar una POC con dos objetivos:
+\begin{enumerate}
+    \item Reducir los costos para el tratamiento de la plaga.
+    \item Validar una plataforma que resuleva este tipo de proyectos dentro de la organización, con recursos propios (no tercerizados).
+\end{enumerate}
 
 \section{4. Alcance del proyecto}
 \label{sec:alcance}
 
-\begin{consigna}{red}
-¿Qué se incluye y que no se incluye en este proyecto?
-
-Se refiere al trabajo que se va a hacer para entregar el producto o resultado especificado. 
-
-Explicitar todo lo quede comprendido dentro del alcance del proyecto. Por ejemplo:
-
 El proyecto incluye:
 \begin{itemize}
-	\item Ítem 1.
-	\item Ítem 2.
-		\begin{itemize}
-		\item Subítem 1.
-		\item Subítem 2.
-		\item ...
-		\end{itemize}
-	\item ...
-	
+	\item Estudio de la viabilidad de detección de la plaga mediante imágenes satelitales.
+	\item Desarrollo e implementación de una plataforma de soporte para la identificación de la plaga, que comprenda los componentes de software necesarios para la solución.
+	\item Desarrollo e implementación de un modelo de visión por computadora que sea capaz de detectar la presencia de la plaga mediante imágenes de drones.
+    \item Gestionón del etiquetamiento de los datos.
 \end{itemize}
 
-Explicitar además todo lo que no quede incluido (``El presente proyecto no incluye...'')
-
-\end{consigna} % ELIMINAR \begin{consigna}{red} y \end{consigna}{red} en las secciones que vayan completando para cada entrega parcial.
-
+El proyecto no incluye:
+\begin{itemize}
+	\item La detección de la plaga mediante imágenes satelitales.
+	\item Identificación del grado de infección de las palmeras.
+    \item La gestión de recursos de otras áreas de la IM.
+    \item Las posibles extensiones de la plataforma.
+    \item La mejora continua de los modelos de detección.
+\end{itemize}
 
 \section{5. Supuestos del proyecto}
 \label{sec:supuestos}
 
-\begin{consigna}{red} % ELIMINAR \begin{consigna}{red} y \end{consigna}{red} en las secciones que vayan completando para cada entrega parcial.
-``Para el desarrollo del presente proyecto se supone que: ...''
+
+Para el desarrollo del presente proyecto se supone que:
 
 \begin{itemize}
-	\item Supuesto 1.
-	\item Supuesto 2.
-	\item ...
+
+	\item Se cuenta con disponibilidad horaria de al menos 20 horas semanales para realizar el proyecto.
+	\item Se cuenta con imágenes de drones.
+	\item Se cuenta con voluntad del cliente para realizar el etiquetado de las imágenes.
+    \item Se cuenta con la infraestructura necesaria para el despliegue de los componentes de software.
+    \item Se cuenta con el apoyo de la IM para la ejecución del proyecto.
+    \item Se cuenta con que se pueda detectar la plaga mediante imágnes RGB o infrarrojas (o combinación de ambas) obtenidas desde drones.
+    \item Se cuenta con imágenes geo-referenciadas.
+    \item Se cuenta con planos ortorectificados.
+    \item Se cuenta con imágenes de resoluciones cercanas a los 4000 píxeles (4K).
 \end{itemize}
-
-Por ejemplo, se podrían incluir supuestos respecto a disponibilidad de tiempo y recursos humanos y materiales, sobre la factibilidad técnica de distintos aspectos del proyecto, sobre otras cuestiones que sean necesarias para el éxito del proyecto como condiciones macroeconómicas o reglamentarias.
-
-\end{consigna} % ELIMINAR \begin{consigna}{red} y \end{consigna}{red} en las secciones que vayan completando para cada entrega parcial.
 
 \section{6. Requerimientos}
 \label{sec:requerimientos}
