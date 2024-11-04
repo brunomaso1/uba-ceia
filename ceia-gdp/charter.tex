@@ -4,10 +4,11 @@
 ]{charter} 
 
 
-% El títulos de la memoria, se usa en la carátula y se puede usar el cualquier lugar del documento con el comando \ttitle
-\titulo{Sistema de monitoreo de rhynchophorus ferrugineus en palmeras de Montevideo} 
+% El títulos de la memoria, se usa en la caratula y se puede usar el cualquier lugar del documento con el comando \ttitle
+\titulo{Sistema de monitoreo de \textit{Rhynchophorus ferrugineus} en palmeras de Montevideo} 
 
-% Nombre del posgrado, se usa en la carátula y se puede usar el cualquier lugar del documento con el comando \degreename
+
+% Nombre del posgrado, se usa en la caratula y se puede usar el cualquier lugar del documento con el comando \degreename
 % \posgrado{Carrera de Especialización en Sistemas Embebidos} 
 %\posgrado{Carrera de Especialización en Internet de las Cosas} 
 \posgrado{Carrera de Especialización en Inteligencia Artificial}
@@ -19,8 +20,8 @@
 \autor{Ing. Bruno Masoller}
 
 % El nombre del director y co-director, se puede usar el cualquier lugar del documento con el comando \supname y \cosupname y \pertesupname y \pertecosupname
-\director{TODO: Competar director}
-\pertenenciaDirector{pertenencia} 
+\director{Ing. Juan Ignacio Cavalieri}
+\pertenenciaDirector{FIUBA} 
 \codirector{} % para que aparezca en la portada se debe descomentar la opción codirector en los parámetros de documentclass
 \pertenenciaCoDirector{FIUBA}
 
@@ -28,9 +29,9 @@
 \cliente{Ing. Agr. Alfonso Arcos}
 \empresaCliente{Intendencia de Montevideo}
  
-\fechaINICIO{01 de octubre de 2024}		%Fecha de inicio de la cursada de GdP \fechaInicioName
-\fechaFINALPlan{01 de diciembre de 2024} 	%Fecha de final de cursada de GdP
-\fechaFINALTrabajo{TODO: Completar fecha final}	%Fecha de defensa pública del trabajo final
+\fechaINICIO{15 de octubre de 2024}		%Fecha de inicio de la cursada de GdP \fechaInicioName
+\fechaFINALPlan{03 de diciembre de 2024} 	%Fecha de final de cursada de GdP
+\fechaFINALTrabajo{junio de 2025}	%Fecha de defensa pública del trabajo final
 
 
 \begin{document}
@@ -85,7 +86,9 @@ Buenos Aires, \fechaInicioName
 
 \vspace{2cm}
 
-Por medio de la presente se acuerda con el \authorname\hspace{1px} que su Trabajo Final de la \degreename\hspace{1px} se titulará ``\ttitle'' y consistirá en la implementación de una prueba de concepto de un sistema de monitoreo de la plaga rhynchophorus ferrugineus en palmeras de Montevideo. El trabajo tendrá un presupuesto preliminar estimado de \textcolor{red}{600} horas y un costo estimado de \textcolor{red}{\$ XXX}, con fecha de inicio el \fechaInicioName\hspace{1px} y fecha de presentación pública el \fechaFinalName.
+% TODO: Completar horas.
+% TODO: Completar presupuesto.
+Por medio de la presente se acuerda con el \authorname\hspace{1px} que su Trabajo Final de la \degreename\hspace{1px} se titulará ``\ttitle'' y consistirá en la presentación de una prueba de concepto de un sistema de monitoreo de la plaga \textit{Rhynchophorus ferrugineus} en palmeras de Montevideo. El trabajo tendrá un presupuesto preliminar estimado de 600 horas y un costo estimado de \$ 900.000, con fecha de inicio el \fechaInicioName\hspace{1px} y fecha de presentación pública en \fechaFinalName.
 
 Se adjunta a esta acta la planificación inicial.
 
@@ -103,38 +106,42 @@ Se adjunta a esta acta la planificación inicial.
 \section{1. Descripción técnica-conceptual del proyecto a realizar}
 \label{sec:descripcion}
 
-En Montevideo, existen aproximadamente 25.000 palmeras, las cuales son parte integral del paisaje urbano y del ecosistema local. Desde el 2010, la plaga del rhynchophorus ferrugineus (también conocido como “picudo rojo”), la cual se puede observar en la figura \ref{fig:picudo-rojo}, ha estado expandiéndose en América, alcanzando Uruguay en 2022. Esta plaga representa una amenaza significativa para las palmeras, ya que las larvas de este escarabajo se alimentan de su tejido interno, lo cual provoca el coplapso estructural en un período de 8 a 10 meses. Los efectos de esta plaga tienen implicancias tanto ecológicas como económicas. La caída de palmeras infectadas puede causar daños a personas o propiedades debido a los fuertes vientos que afectan a Montevideo. Además, la remoción de estos árboles infestados tiene un costo aproximado de 1.000 dólares estadounidenses, lo que hace crucial la detección temprana para tratar la infección con insecticidas antes de que el daño sea irreversible.
+En Montevideo, hay alrededor de 25.000 palmeras, que forman una parte esencial del paisaje urbano y contribuyen al equilibrio del ecosistema local. Desde 2010, la plaga del \textit{Rhynchophorus ferrugineus}, conocido comúnmente como “picudo rojo” (ver figura \ref{fig:picudo-rojo}), ha estado propagándose por América, llegando a Uruguay en 2022. Esta plaga supone una amenaza grave para las palmeras, ya que las larvas de este escarabajo se alimentan de su tejido interno, causando el colapso estructural de los árboles en un período de entre 8 y 10 meses.
+
+La infestación del picudo rojo no solo tiene consecuencias ecológicas, sino también económicas. La caída de palmeras infectadas puede provocar daños a personas y propiedades, especialmente durante los fuertes vientos que afectan a Montevideo. Además, la eliminación de estos árboles infestados implica un costo aproximado de 1.000 dólares estadounidenses por unidad.
 
 \begin{figure}[H]
-\centering 
-\includegraphics[width=.30\textwidth]{./Figuras/picudo-rojo.png}
-\caption{Rhynchophorus Ferrugineus.}
-\label{fig:picudo-rojo}
+  \centering 
+  \includegraphics[width=.30\textwidth]{./Figuras/picudo-rojo.png}
+  \caption{Rhynchophorus ferrugineus.}
+  \label{fig:picudo-rojo}
 \end{figure}
 
-% \vspace{25px}
+Actualmente, el método principal método de detección que utiliza la Intendencia de Montevideo (IM), consiste en la inspección visual presencial en lugares donde se sospecha la presencia de la plaga o se ha reportado por parte de particulares. La IM también tiene otros métodos de detección, como lo son trampas colocadas en puntos claves de la ciudad que permiten observar el desplazamiento de la plaga.
 
-Se propone realizar una prueba de concepto (POC) para la Intendencia de Montevideo (IM) de un sistema de monitoreo basado en dos etapas que utiliza visión por computadora y aprendizaje profundo:
-
-\begin{enumerate}
-
-    \item \textbf{Detección preliminar mediante imágenes aéreas:} En esta etapa inicial, se estudiará la viabilidad  de identificar indicios visuales de infección en imágenes satelitales. Esto permitirá generar una alerta temprana de posibles casos de infestación.
-    
-    \item \textbf{Detección mediante drones:} Una vez detectados indicios de infección (o según demanda), se realizan vuelos de drones en zonas específicas para obtener imágenes de alta resolución que confirmen si la palmera está efectivamente infectada. El uso de drones permitirá una inspección detallada y eficiente, lo que mejorará la precisión en la identificación de la plaga.
-\end{enumerate}
-
-El objetivo principal, es llegar a una POC que cumpla con la detección de imágenes de drones según la demanda, como se puede obaservar el la siguiente figura \ref{fig:bosquejo-inicial-solucion}.
+El servicio de Áreas Verdes es el principal encargado del tratamiento de la plaga del picudo rojo y gestiona sectores clave, como el de arbolado, que representa una de las primeras línea de defensa. Este servicio proporciona diversos datos y colabora estrechamente con otras áreas importantes para la gestión de la plaga, como los servicios de Geomática e Informática. Entre los datos disponibles, se incluye la ubicación de todas las palmeras en el sistema de información geográfica de la IM. Además, el servicio de Geomática cuenta con drones que permiten obtener imágenes de ortomosaicos bajo demanda (ver figura \ref{fig:imagen-dron-y-avion}), las cuales pueden ser solicitadas por el servicio de Áreas Verdes. Estos ortomosaicos alcanzan una resolución espacial de 3 cm por píxel en la banda RGB. Adicionalmente, se realizan vuelos que cubren toda la ciudad de Montevideo, generando ortomosaicos de alta resolución en la misma banda RGB.
 
 \begin{figure}[H]
-\centering 
-\includegraphics[width=.95\textwidth]{./Figuras/bosquejo-inicial-solucion.png}
-\caption{Diagrama de la solución.}
-\label{fig:bosquejo-inicial-solucion}
+  \centering 
+  \includegraphics[width=.95\textwidth]{./Figuras/imagen-dron-y-avion.png}
+  \caption{Fotografías ortorectificadas de un vuelo de avión y dron, respectivamente.}
+  \label{fig:imagen-dron-y-avion}
 \end{figure}
 
-Cabe destacar que el sistema no consta solamente del modelo de detección, sino de toda una plataforma asociada para la implementación de la solución, con la capacidad de extensión a otros ámbitos, siendo un hito para la IM en inovación de este tipo de proyectos.
+Se ha demostrado la viabilidad de detectar la plaga utilizando imágenes a nivel de suelo capturadas con Google Street View (a nivel de suelo) (TODO: Incluir referencia). Además, existen datos que avalan la identificación de palmeras en imágenes obtenidas mediante drones, con resoluciones similares a las del servicio de Geomática de la IM. Sin embargo, la detección directa de la plaga en imágenes aéreas en la banda RGB sigue siendo un desafío, aunque algunos estudios han explorado el uso del índice de vegetación e imágenes en la banda infrarroja para este fin (TODO: incluir referencia).
 
-Este enfoque proporciona beneficios tanto desde el punto de vista económico como ambiental. La identificación temprana, así como la tardía, reduce los costos de inspección presencial y se optimiza el uso de drones dado a su cobertura de grandes áreas. En particular, esta implementación permitirá a la IM optimizar el uso de recursos para el manejo de la plaga del picudo rojo, lo que implica reducir los costos de remoción de palmeras, mejorar la inspección presencial a casos excepcionalmente necesarios, realizar vuelos efectivos y programados de los drones (aumentando su autonomía), así como validar una POC que se puede extender a otros proyectos. Al mismo tiempo, ayudará a preservar el entorno ecológico de la ciudad y mejorar la seguridad de sus habitantes.
+Este proyecto propone un enfoque integral que conecta la información geoespacial gestionada por el servicio de Informática con los recursos de imágenes aéreas del servicio de Geomática. El objetivo es desarrollar una plataforma informática que mejore la eficiencia en el tratamiento de la plaga, especialmente en el proceso de inspección manual, mediante el uso de modelos de vanguardia en visión por computadora y aprendizaje profundo.
+
+Como proyecto en general, se propone una plataforma como el de la siguiente figura \ref{fig:bosquejo-inicial-solucion}.
+
+\begin{figure}[H]
+  \centering 
+  \includegraphics[width=.95\textwidth]{./Figuras/bosquejo-inicial-solucion.png}
+  \caption{Diagrama de la solución.}
+  \label{fig:bosquejo-inicial-solucion}
+\end{figure} 
+
+La implementación de esta plataforma ofrece beneficios tanto económicos como ambientales para la IM. La detección temprana y tardía de la plaga puede reducir los costos de inspección presencial y optimizar el uso de drones, aprovechando su capacidad para cubrir grandes áreas. En particular, esta plataforma permitirá a la IM optimizar sus recursos en el manejo del picudo rojo, disminuyendo los costos asociados a la remoción de palmeras, focalizando las inspecciones presenciales solo en casos excepcionales, y realizando vuelos programados de drones para maximizar su autonomía. Asimismo, validará un prototipo que puede extenderse a otros proyectos. Además, contribuirá a la preservación del entorno ecológico de la ciudad y a la seguridad de sus habitantes. Adicionalmente, se puede incorporar un módulo para la detección automática de palmeras en los vuelos aéreos.
 
 \section{2. Identificación y análisis de los interesados}
 \label{sec:interesados}
@@ -142,45 +149,42 @@ Este enfoque proporciona beneficios tanto desde el punto de vista económico com
 \begin{table}[ht]
 %\caption{Identificación de los interesados}
 %\label{tab:interesados}
-\begin{tabularx}{\linewidth}{@{}|l|X|X|l|@{}}
-\hline
-\rowcolor[HTML]{C0C0C0} 
-Rol           & Nombre y Apellido & Organización 	& Puesto 	\\ \hline
-Cliente       & \clientename      &\empclientename	& Director sector arbolado \\ \hline
-Impulsor      & Msc. Ing. Juan Prada &\empclientename & Director ciudades inteligenes \\ \hline
-Responsable   & \authorname       &\empclientename    & Alumno 	\\ \hline
-Orientador    & \supname	      & \pertesupname 	& Director del Trabajo Final \\ \hline
-Usuario final & Usuarios de áreas verdes &\empclientename &  Administrativo \\ \hline
-\end{tabularx}
+  \begin{tabularx}{\linewidth}{@{}|l|X|X|l|@{}}
+  \hline
+  \rowcolor[HTML]{C0C0C0} 
+  Rol           & Nombre y Apellido & Organización 	& Puesto 	\\ \hline
+  Cliente       & \clientename      &\empclientename	& Director sector arbolado \\ \hline
+  Impulsor      & Msc. Ing. Juan Prada &\empclientename & Director ciudades inteligentes \\ \hline
+  Responsable   & \authorname       &\empclientename    & Alumno 	\\ \hline
+  Orientador    & \supname	      & \pertesupname 	& Director del trabajo final \\ \hline
+  Usuario final & Usuarios de áreas verdes &\empclientename &  Administrativo \\ \hline
+  \end{tabularx}
 \end{table}
 
 \section{3. Propósito del proyecto}
 \label{sec:proposito}
 
-Realizar una POC con dos objetivos:
-\begin{enumerate}
-    \item Reducir los costos para el tratamiento de la plaga.
-    \item Validar una plataforma que resuleva este tipo de proyectos dentro de la organización, con recursos propios (no tercerizados).
-\end{enumerate}
+
+Proveer una herramienta informática que permita mejorar la eficiencia en la detección del \textit{Rhynchophorus ferrugineus} mediante la validación de una plataforma que utiliza técnicas avanzadas de visión por computadora y aprendizaje profundo.
 
 \section{4. Alcance del proyecto}
 \label{sec:alcance}
 
-El proyecto incluye:
+El alcance de la etapa inicial del proyecto incluye:
 \begin{itemize}
-	\item Estudio de la viabilidad de detección de la plaga mediante imágenes satelitales.
-	\item Desarrollo e implementación de una plataforma de soporte para la identificación de la plaga, que comprenda los componentes de software necesarios para la solución.
-	\item Desarrollo e implementación de un modelo de visión por computadora que sea capaz de detectar la presencia de la plaga mediante imágenes de drones.
-    \item Gestionón del etiquetamientodfgg de los datos.
+  \item Investigar la viabilidad de la detección del \textit{Rhynchophorus ferrugineus} mediante técnicas de visión por computadora en dominios multiespectrales.
+	\item Desarrollar un modelo de visión por computadora que permita detectar el \textit{Rhynchophorus ferrugineus} en palmeras de Montevideo.
+  \item Gestionar el proceso de etiquetado de datos.
+  \item Escribir una memoria con los resultados del proyecto.
 \end{itemize}
 
 El proyecto no incluye:
 \begin{itemize}
-	\item La detección de la plaga mediante imágenes satelitales.
-	\item Identificación del grado de infección de las palmeras.
-    \item La gestión de recursos de otras áreas de la IM.
-    \item Las posibles extensiones de la plataforma.
-    \item La mejora continua de los modelos de detección.
+	\item La detección de la plaga y palmeras mediante imágenes de vuelos por aviones.
+	\item Identificación del grado de infección de las palmeras, sino su clasificación binaria en infectadas y no infectadas.
+  \item Otros componentes de la arquitectura presentada que no sea el modelo de visión por computadora.
+  \item Las posibles extensiones de la plataforma.
+  \item La gestión del ciclo de vida del modelo de detección.
 \end{itemize}
 
 \section{5. Supuestos del proyecto}
@@ -192,14 +196,13 @@ Para el desarrollo del presente proyecto se supone que:
 \begin{itemize}
 
 	\item Se cuenta con disponibilidad horaria de al menos 20 horas semanales para realizar el proyecto.
-	\item Se cuenta con imágenes de drones.
+	\item Se cuenta con imágenes de drones con resoluciones espaciales de al menos 3 cm/pixel.
 	\item Se cuenta con voluntad del cliente para realizar el etiquetado de las imágenes.
-    \item Se cuenta con la infraestructura necesaria para el despliegue de los componentes de software.
-    \item Se cuenta con el apoyo de la IM para la ejecución del proyecto.
-    \item Se cuenta con que se pueda detectar la plaga mediante imágnes RGB o infrarrojas (o combinación de ambas) obtenidas desde drones.
-    \item Se cuenta con imágenes geo-referenciadas.
-    \item Se cuenta con planos ortorectificados.
-    \item Se cuenta con imágenes de resoluciones cercanas a los 4000 píxeles (4K).
+  \item Se cuenta con la infraestructura necesaria para el despliegue de los componentes de software.
+  \item Se cuenta con el apoyo de la IM para la ejecución del proyecto.
+  \item Se cuenta con que se pueda detectar la plaga mediante imágenes RGB o infrarrojas (o combinación de ambas) obtenidas desde drones.
+  \item Se cuenta con imágenes georeferenciadas.
+  \item Se cuenta con mosaicos ortorectificados.
 \end{itemize}
 
 \section{6. Requerimientos}
