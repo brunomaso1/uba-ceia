@@ -101,6 +101,8 @@
 \usepackage{longtable}
 \usepackage{etoolbox}
 \usepackage{enumitem}
+\usepackage{natbib} % Bibliografía
+
 
 %\usepackage{tikz}
 %\usetikzlibrary{arrows, arrows.meta, calc, positioning, quotes, shapes}
@@ -233,6 +235,8 @@
     
 %\renewcommand{\thesection}{}% Remove section references...
 %\renewcommand{\thesubsection}{\arabic{subsection}}%... from subsections
+
+
 
 % Definir colores personalizados (utilizando el paquete color)
 \definecolor{verde}{RGB}{0, 128, 0} % Verde para "M"
