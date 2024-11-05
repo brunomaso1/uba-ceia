@@ -100,6 +100,7 @@
 \usepackage[labelsep=period]{caption}
 \usepackage{longtable}
 \usepackage{etoolbox}
+\usepackage{enumitem}
 
 %\usepackage{tikz}
 %\usetikzlibrary{arrows, arrows.meta, calc, positioning, quotes, shapes}
@@ -232,6 +233,13 @@
     
 %\renewcommand{\thesection}{}% Remove section references...
 %\renewcommand{\thesubsection}{\arabic{subsection}}%... from subsections
+
+% Definir colores personalizados (utilizando el paquete color)
+\definecolor{verde}{RGB}{0, 128, 0} % Verde para "M"
+\definecolor{celeste}{RGB}{0, 191, 255} % Celeste para "S"
+\definecolor{naranja}{RGB}{255, 165, 0} % Naranja para "C"
+\definecolor{rojo}{RGB}{255, 0, 0} % Rojo para "W"
+
 
 \newenvironment{consigna}[1]{%
     \leavevmode\color{#1}\ignorespaces%
