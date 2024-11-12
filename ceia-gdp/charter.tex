@@ -61,7 +61,7 @@
     0        & Creación del documento                                                                & \fechaInicioName            \\ \hline
     1        & Se completa hasta el punto 5 inclusive                                                & {29} de {octubre} de 2024   \\ \hline
     2        & Se corrige secciones 1, 2, 3, 4 y 5. \newline Se completa hasta el punto 9 inclusive. & {05} de {noviembre} de 2024 \\ \hline
-    %3      & Se completa hasta el punto 12 inclusive                & {día} de {mes} de 202X \\ \hline
+    3        & Se corrige secciones 1, 2, 6 y 9. \newline Se completa hasta el punto 12 inclusive.   & {12} de {noviembre} de 2024 \\ \hline
     %4      & Se completa el plan	                                 & {día} de {mes} de 202X \\ \hline
 
     % Si hay más correcciones pasada la versión 4 también se deben especificar acá
@@ -69,8 +69,6 @@
 \end{table}
 
 \pagebreak
-
-
 
 \section*{Acta de constitución del proyecto}
 \label{sec:acta}
@@ -81,9 +79,7 @@
 
 \vspace{2cm}
 
-% TODO: Completar horas.
-% TODO: Completar presupuesto.
-Por medio de la presente se acuerda con el \authorname\hspace{1px} que su Trabajo Final de la \degreename\hspace{1px} se titulará ``\ttitle'' y consistirá en la presentación de una prueba de concepto de un sistema de monitoreo de la plaga \textit{Rhynchophorus ferrugineus} en palmeras de Montevideo. El trabajo tendrá un presupuesto preliminar estimado de 600 horas y un costo estimado de \$ 900.000, con fecha de inicio el \fechaInicioName\hspace{1px} y fecha de presentación pública en \fechaFinalName.
+Por medio de la presente se acuerda con el \authorname\hspace{1px} que su Trabajo Final de la \degreename\hspace{1px} se titulará ``\ttitle'' y consistirá en la presentación de una prueba de concepto de un sistema de monitoreo de la plaga \textit{Rhynchophorus ferrugineus} en palmeras de Montevideo. El trabajo tendrá un presupuesto preliminar estimado de 600 horas y un costo estimado de USD 28756, con fecha de inicio el \fechaInicioName\hspace{1px} y fecha de presentación pública en \fechaFinalName.
 
 Se adjunta a esta acta la planificación inicial.
 
@@ -114,7 +110,7 @@ La infestación del picudo rojo no solo tiene consecuencias ecológicas, sino ta
 
 Actualmente, el método principal método de detección que utiliza la Intendencia de Montevideo (IM), consiste en la inspección visual presencial en lugares donde se sospecha la presencia de la plaga o se ha reportado por parte de particulares. La IM también tiene otros métodos de detección, como lo son trampas colocadas en puntos claves de la ciudad que permiten observar el desplazamiento de la plaga.
 
-El servicio de Áreas Verdes es el principal encargado del tratamiento de la plaga del picudo rojo y gestiona sectores clave, como el de arbolado, que representa una de las primeras línea de defensa. Este servicio proporciona diversos datos y colabora estrechamente con otras áreas importantes para la gestión de la plaga, como los servicios de Geomática e Informática. Entre los datos disponibles, se incluye la ubicación de todas las palmeras en el sistema de información geográfica de la IM. Además, el servicio de Geomática cuenta con drones que permiten obtener imágenes de ortomosaicos bajo demanda (ver figura \ref{fig:imagen-dron-y-avion}), las cuales pueden ser solicitadas por el servicio de Áreas Verdes. Estos ortomosaicos alcanzan una resolución espacial de 3 cm por píxel en la banda RGB. Adicionalmente, se realizan vuelos que cubren toda la ciudad de Montevideo, generando ortomosaicos de alta resolución en la misma banda RGB.
+El servicio de Áreas Verdes es el principal encargado del tratamiento de la plaga del picudo rojo y gestiona sectores clave, como el de arbolado, que representa una de las primeras líneas de defensa. Este servicio proporciona diversos datos y colabora estrechamente con otras áreas importantes para la gestión de la plaga, como los servicios de Geomática e Informática. Entre los datos disponibles, se incluye la ubicación de todas las palmeras en el sistema de información geográfica de la IM. Además, el servicio de Geomática cuenta con drones que permiten obtener imágenes de ortomosaicos bajo demanda (ver figura \ref{fig:imagen-dron-y-avion}), las cuales pueden ser solicitadas por el servicio de Áreas Verdes. Estos ortomosaicos alcanzan una resolución espacial de 3 cm por píxel en el rango espectral RGB. Adicionalmente, se realizan vuelos que cubren toda la ciudad de Montevideo, lo cual permite la generación de ortomosaicos de alta resolución en dicho rango espectral.
 
 \begin{figure}[H]
   \centering
@@ -123,20 +119,20 @@ El servicio de Áreas Verdes es el principal encargado del tratamiento de la pla
   \label{fig:imagen-dron-y-avion}
 \end{figure}
 
-Se ha demostrado la viabilidad de detectar la plaga utilizando imágenes capturadas con Google Street View (a nivel de suelo)\cite{kagan2024}. Además, existen datos que avalan la identificación de palmeras en imágenes obtenidas mediante drones, con resoluciones similares a las del servicio de Geomática de la IM. Sin embargo, la detección directa de la plaga en imágenes aéreas en la banda RGB sigue siendo un desafío, aunque algunos estudios han explorado el uso del índice de vegetación e imágenes en la banda infrarroja para este fin\cite{delalieux2023}.
+Se ha demostrado la viabilidad de detectar la plaga utilizando imágenes capturadas con Google Street View (a nivel de suelo)\cite{kagan2024}. Además, existen datos que avalan la identificación de palmeras en imágenes obtenidas mediante drones, con resoluciones similares a las del servicio de Geomática de la IM. Sin embargo, la detección directa de la plaga en imágenes aéreas en el rango visible sigue siendo un desafío, aunque algunos estudios han explorado el uso del índice de vegetación e imágenes en la banda infrarroja para este fin\cite{delalieux2023}.
 
 Este proyecto propone un enfoque integral que conecta la información geoespacial gestionada por el servicio de Informática con los recursos de imágenes aéreas del servicio de Geomática. El objetivo es desarrollar una plataforma informática que mejore la eficiencia en el tratamiento de la plaga, especialmente en el proceso de inspección manual, mediante el uso de modelos de vanguardia en visión por computadora y aprendizaje profundo.
 
-Como proyecto en general, se propone una plataforma como el de la siguiente figura \ref{fig:bosquejo-inicial-solucion}.
+Como proyecto en general, se propone una plataforma como el de la siguiente figura \ref{fig:diagrama-inicial-solucion}.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=.95\textwidth]{./Figuras/bosquejo-inicial-solucion.png}
+  \includegraphics[width=.95\textwidth]{./Figuras/diagrama-inicial-solucion.jpg}
   \caption{Diagrama de la solución.}
-  \label{fig:bosquejo-inicial-solucion}
+  \label{fig:diagrama-inicial-solucion}
 \end{figure}
 
-La implementación de esta plataforma ofrece beneficios tanto económicos como ambientales para la IM. La detección temprana y tardía de la plaga puede reducir los costos de inspección presencial y optimizar el uso de drones, aprovechando su capacidad para cubrir grandes áreas. En particular, esta plataforma permitirá a la IM optimizar sus recursos en el manejo del picudo rojo, disminuyendo los costos asociados a la remoción de palmeras, focalizando las inspecciones presenciales solo en casos excepcionales, y realizando vuelos programados de drones para maximizar su autonomía. Asimismo, validará un prototipo que puede extenderse a otros proyectos, que pueden contribuir a la preservación del entorno ecológico de la ciudad y a la seguridad de sus habitantes. Finalmente, se brinda la posibilidad de incorporar un módulo para la detección automática de palmeras en los vuelos aéreos.
+La implementación de esta plataforma ofrece beneficios tanto económicos como ambientales para la IM. La detección temprana y tardía de la plaga puede reducir los costos de inspección presencial y optimizar el uso de drones, aprovechando su capacidad para cubrir grandes áreas. En particular, esta plataforma permitirá a la IM optimizar sus recursos en el manejo del picudo rojo, lo que reducirá los costos asociados a la remoción de palmeras, enfocará las inspecciones presenciales solo en casos excepcionales y permitirá la realización de vuelos programados de drones para maximizar su autonomía. Asimismo, validará un prototipo que puede extenderse a otros proyectos, que pueden contribuir a la preservación del entorno ecológico de la ciudad y a la seguridad de sus habitantes. Finalmente, se brinda la posibilidad de incorporar un módulo para la detección automática de palmeras en los vuelos aéreos.
 
 \section{2. Identificación y análisis de los interesados}
 \label{sec:interesados}
@@ -147,14 +143,25 @@ La implementación de esta plataforma ofrece beneficios tanto económicos como a
   \begin{tabularx}{\linewidth}{@{}|l|X|X|l|@{}}
     \hline
     \rowcolor[HTML]{C0C0C0}
-    Rol           & Nombre y Apellido        & Organización    & Puesto                         \\ \hline
-    Cliente       & \clientename             & \empclientename & Director sector arbolado       \\ \hline
-    Impulsor      & Msc. Ing. Juan Prada     & \empclientename & Director ciudades inteligentes \\ \hline
-    Responsable   & \authorname              & \empclientename & Alumno                         \\ \hline
-    Orientador    & \supname                 & \pertesupname   & Director del trabajo final     \\ \hline
-    Usuario final & Usuarios de áreas verdes & \empclientename & Administrativo                 \\ \hline
+    Rol           & Nombre y Apellido        & Organización    & Puesto                        \\ \hline
+    Cliente       & \clientename             & \empclientename & Director sector arbolado      \\ \hline
+    Impulsor      & Msc. Ing. Juan Prada     & \empclientename & Gerente ciudades inteligentes \\ \hline
+    Responsable   & \authorname              & \empclientename & Alumno                        \\ \hline
+    Orientador    & \supname                 & \pertesupname   & Director del trabajo final    \\ \hline
+    Usuario final & Usuarios de áreas verdes & \empclientename & Administrativo                \\ \hline
   \end{tabularx}
 \end{table}
+
+Descripción de los interesados:
+\begin{itemize}
+  \item Cliente: aunque no cuenta con conocimientos técnicos avanzados en visión por computadora, el cliente es experto en la problemática del picudo rojo y posee habilidades en gestión e implementación de soluciones diversas. Es uno de los principales promotores del proyecto y tiene un alto interés en su éxito.
+
+  \item Impulsor: el Gerente de Ciudades Inteligentes cuenta con conocimientos sólidos tanto en inteligencia artificial como en gestión de proyectos. Es un impulsor clave de estas iniciativas, que se alinean con la visión estratégica de la organización.
+
+  \item Orientador: el \supname tiene un conocimiento profundo en visión por computadora, particularmente en el contexto de esta problemática. Además, es profesor de \pertesupname en la asignatura de Visión por Computadora II, brindando apoyo técnico y conceptual al proyecto.
+
+  \item Usuario final: los usuarios finales son técnicos de áreas verdes capacitados para identificar visualmente la plaga en las palmeras. Realizan el análisis de datos, gestionan la georreferenciación de las palmeras y, cuando es necesario, llevan a cabo inspecciones de campo.
+\end{itemize}
 
 \section{3. Propósito del proyecto}
 \label{sec:proposito}
@@ -201,8 +208,8 @@ Para el desarrollo del presente proyecto se supone que:
 
 \end{itemize}
 
-\section{6. Requisitos específicos}
-\label{sec:requisitos}
+\section{6. Requerimientos}
+\label{sec:requerimientos}
 
 Para una mejor organización los requisitos se expresan utilizando una metodología de rotulado contextual, donde cada uno se identifica según su nivel de afinidad y jerárquico.
 
@@ -216,112 +223,112 @@ Finalmente, se priorizan utilizando el método \textit{MoSCoW}\cite{moscowMethod
   \item Requisitos de interfaces internas:
         \begin{enumerate}
           \item Modelo de visión por computadora
-                \begin{enumerate}[label={\textbf{[RII-ModeloVPC-\arabic*]}}, leftmargin=*]
-                  \item (\textcolor{celeste}{\textbf{S}}) El modelo de visión por computadora debe proporcionar un servicio web que reciba una imagen y devuelva una estructura de datos con las detecciones y sus coordenadas.
+                \begin{enumerate}[label={[RII-ModeloVPC-\arabic*]}, leftmargin=*]
+                  \item (S) El modelo de visión por computadora debe proporcionar un servicio web que reciba una imagen y devuelva una estructura de datos con las detecciones y sus coordenadas.
                 \end{enumerate}
           \item Visualizador de detecciones
-                \begin{enumerate}[label={\textbf{[RII-VisDetecciones-\arabic*]}}, leftmargin=*]
-                  \item (\textcolor{celeste}{\textbf{S}}) El visualizador de detecciones debe aceptar una imagen y la estructura de datos de las detecciones, mostrando la imagen compuesta con las detecciones realizadas.
+                \begin{enumerate}[label={[RII-VisDetecciones-\arabic*]}, leftmargin=*]
+                  \item (S) El visualizador de detecciones debe aceptar una imagen y la estructura de datos de las detecciones, mostrando la imagen compuesta con las detecciones realizadas.
                 \end{enumerate}
         \end{enumerate}
 
   \item Requisitos de interfaces externas:
         \begin{enumerate}
           \item Gestor de datos
-                \begin{enumerate}[label={\textbf{[RF-GestorDatos-\arabic*]}}, leftmargin=*]
-                  \item (\textcolor{celeste}{\textbf{S}}) El gestor de datos debe ser accesible desde internet por los usuarios de áreas verdes.
+                \begin{enumerate}[label={[RF-GestorDatos-\arabic*]}, leftmargin=*]
+                  \item (S) El gestor de datos debe ser accesible desde internet por los usuarios de áreas verdes.
                 \end{enumerate}
           \item Visualizador de detecciones
-                \begin{enumerate}[label={\textbf{[RII-VisDetecciones-\arabic*]}}, leftmargin=*]
-                  \item (\textcolor{celeste}{\textbf{S}}) El visualizador de detecciones debe ser accesible desde internet por los usuarios de áreas verdes.
+                \begin{enumerate}[label={[RII-VisDetecciones-\arabic*]}, leftmargin=*]
+                  \item (S) El visualizador de detecciones debe ser accesible desde internet por los usuarios de áreas verdes.
                 \end{enumerate}
         \end{enumerate}
 
   \item Requisitos funcionales:
         \begin{enumerate}
           \item Modelo de visión por computadora
-                \begin{enumerate}[label={\textbf{[RF-ModeloVPC-\arabic*]}}, leftmargin=*]
-                  \item (\textcolor{verde}{\textbf{M}}) El modelo de visión debe ser capaz de generar predicciones a partir de una imagen proporcionada.
-                  \item (\textcolor{verde}{\textbf{M}}) El modelo de visión debe identificar palmeras en imágenes aéreas de forma precisa.
-                  \item (\textcolor{verde}{\textbf{M}}) El modelo de visión debe clasificar automáticamente las palmeras en dos categorías: infectadas y no infectadas.
+                \begin{enumerate}[label={[RF-ModeloVPC-\arabic*]}, leftmargin=*]
+                  \item (M) El modelo de visión debe ser capaz de generar predicciones a partir de una imagen proporcionada.
+                  \item (M) El modelo de visión debe identificar palmeras en imágenes aéreas de forma precisa.
+                  \item (M) El modelo de visión debe clasificar automáticamente las palmeras en dos categorías: infectadas y no infectadas.
                 \end{enumerate}
           \item Visualizador de detecciones
-                \begin{enumerate}[label={\textbf{[RF-VisDetecciones-\arabic*]}}, leftmargin=*]
-                  \item (\textcolor{naranja}{\textbf{C}}) El visualizador de detecciones debe permitir la visualización de una imagen junto con sus detecciones.
+                \begin{enumerate}[label={[RF-VisDetecciones-\arabic*]}, leftmargin=*]
+                  \item (C) El visualizador de detecciones debe permitir la visualización de una imagen junto con sus detecciones.
                 \end{enumerate}
           \item Gestor de datos
-                \begin{enumerate}[label={\textbf{[RF-GestorDatos-\arabic*]}}, leftmargin=*]
-                  \item (\textcolor{celeste}{\textbf{S}}) El gestor de datos debe incluir una herramienta para el etiquetado de datos que permita al cliente etiquetar imágenes de drones.
-                  \item (\textcolor{naranja}{\textbf{C}}) El gestor de datos debe almacenar los datos etiquetados en el repositorio de la Intendencia Municipal (IMNube).
+                \begin{enumerate}[label={[RF-GestorDatos-\arabic*]}, leftmargin=*]
+                  \item (S) El gestor de datos debe incluir una herramienta para el etiquetado de datos que permita al cliente etiquetar imágenes de drones.
+                  \item (C) El gestor de datos debe almacenar los datos etiquetados en el repositorio de la Intendencia Municipal (IMNube).
                 \end{enumerate}
         \end{enumerate}
 
   \item Requisitos del proceso:
         \begin{enumerate}
           \item Modelo de visión por computadora
-                \begin{enumerate}[label={\textbf{[RP-ModeloVPC-\arabic*]}}, leftmargin=*]
-                  \item (\textcolor{celeste}{\textbf{S}}) Se debe investigar el estado del arte en modelos de visión por computadora para la detección de la plaga.
-                  \item (\textcolor{naranja}{\textbf{C}}) Se debe realizar una investigación sobre enfoques de detección de plagas mediante imágenes multiespectrales.
+                \begin{enumerate}[label={[RP-ModeloVPC-\arabic*]}, leftmargin=*]
+                  \item (S) Se debe investigar el estado del arte en modelos de visión por computadora para la detección de la plaga.
+                  \item (C) Se debe realizar una investigación sobre enfoques de detección de plagas mediante imágenes multiespectrales.
                 \end{enumerate}
           \item Gestor de datos
-                \begin{enumerate}[label={\textbf{[RP-GestorDatos-\arabic*]}}, leftmargin=*]
-                  \item (\textcolor{naranja}{\textbf{C}}) Se deben investigar herramientas adecuadas para el etiquetado de datos.
+                \begin{enumerate}[label={[RP-GestorDatos-\arabic*]}, leftmargin=*]
+                  \item (C) Se deben investigar herramientas adecuadas para el etiquetado de datos.
                 \end{enumerate}
         \end{enumerate}
 
   \item Requisitos de datos:
         \begin{enumerate}
           \item Gestor de datos
-                \begin{enumerate}[label={\textbf{[RDATA-GestorDatos-\arabic*]}}, leftmargin=*]
-                  \item (\textcolor{naranja}{\textbf{C}}) El sistema debe permitir al cliente etiquetar al menos 100 imágenes, asegurando un equilibrio entre las clases de palmeras infectadas y no infectadas.
+                \begin{enumerate}[label={[RDATA-GestorDatos-\arabic*]}, leftmargin=*]
+                  \item (C) El sistema debe permitir al cliente etiquetar al menos 100 imágenes, asegurando un equilibrio entre las clases de palmeras infectadas y no infectadas.
                 \end{enumerate}
         \end{enumerate}
 
   \item Requisitos de documentación:
         \begin{enumerate}
           \item Informe final
-                \begin{enumerate}[label={\textbf{[RDOC-InformeFinal-\arabic*]}}, leftmargin=*]
-                  \item (\textcolor{verde}{\textbf{M}}) Se debe elaborar un informe final que incluya una presentación completa del proyecto y sus resultados.
-                  \item (\textcolor{naranja}{\textbf{C}}) Se debe elaborar un informe de avance a mitad del tiempo asignado para el proyecto, detallando los progresos realizados.
+                \begin{enumerate}[label={[RDOC-InformeFinal-\arabic*]}, leftmargin=*]
+                  \item (M) Se debe elaborar un informe final que incluya una presentación completa del proyecto y sus resultados.
+                  \item (C) Se debe elaborar un informe de avance a mitad del tiempo asignado para el proyecto, detallando los progresos realizados.
                 \end{enumerate}
         \end{enumerate}
 
   \item Requisitos de rendimiento:
         \begin{enumerate}
           \item Modelo de visión por computadora
-                \begin{enumerate}[label={\textbf{[RR-ModeloVPC-\arabic*]}}, leftmargin=*]
-                  \item (\textcolor{naranja}{\textbf{C}}) El modelo de visión por computadora debe mantener una precisión mínima del 90\% en la identificación de palmeras y un 80\% en la clasificación de infestación.
-                  \item (\textcolor{naranja}{\textbf{C}}) El modelo de visión por computadora debe ser capaz de procesar imágenes capturadas en condiciones de iluminación variables.
+                \begin{enumerate}[label={[RR-ModeloVPC-\arabic*]}, leftmargin=*]
+                  \item (C) El modelo de visión por computadora debe mantener una precisión mínima del 90\% en la identificación de palmeras y un 80\% en la clasificación de infestación.
+                  \item (C) El modelo de visión por computadora debe ser capaz de procesar imágenes capturadas en condiciones de iluminación variables.
                 \end{enumerate}
         \end{enumerate}
 
   \item Requisitos de interfaces gráficas:
         \begin{enumerate}
           \item Visualizador de detecciones
-                \begin{enumerate}[label={\textbf{[RII-VisDetecciones-\arabic*]}}, leftmargin=*]
-                  \item (\textcolor{naranja}{\textbf{C}}) El visualizador de detecciones debe brindar un criterio de satisfacción de usabilidad mayor al 80\% para los usuarios.
+                \begin{enumerate}[label={[RII-VisDetecciones-\arabic*]}, leftmargin=*]
+                  \item (C) El visualizador de detecciones debe brindar un criterio de satisfacción de usabilidad mayor al 80\% para los usuarios.
                 \end{enumerate}
         \end{enumerate}
 
   \item Requisitos de seguridad (\textit{security}):
         \begin{enumerate}
           \item Gestor de datos
-                \begin{enumerate}[label={\textbf{[RF-GestorDatos-\arabic*]}}, leftmargin=*]
-                  \item (\textcolor{celeste}{\textbf{S}}) El gestor de datos debe estar bajo un mecanismo de autorización de usuarios.
+                \begin{enumerate}[label={[RF-GestorDatos-\arabic*]}, leftmargin=*]
+                  \item (S) El gestor de datos debe estar bajo un mecanismo de autorización de usuarios.
                 \end{enumerate}
           \item Visualizador de detecciones
-                \begin{enumerate}[label={\textbf{[RII-VisDetecciones-\arabic*]}}, leftmargin=*]
-                  \item (\textcolor{celeste}{\textbf{S}}) El visualizador de datos debe estar bajo un mecanismo de autorización de usuarios.
+                \begin{enumerate}[label={[RII-VisDetecciones-\arabic*]}, leftmargin=*]
+                  \item (S) El visualizador de datos debe estar bajo un mecanismo de autorización de usuarios.
                 \end{enumerate}
         \end{enumerate}
 
   \item Requisitos de diseño:
         \begin{enumerate}
           \item Lenguaje
-                \begin{enumerate}[label={\textbf{[RD-ModeloVPC-\arabic*]}}, leftmargin=*]
-                  \item (\textcolor{naranja}{\textbf{C}}) El sistema debe ser implementado utilizando \textit{Python 3} para el procesamiento backend.
-                  \item (\textcolor{naranja}{\textbf{C}}) El sistema debe ser implementado utilizando \textit{Angular} para el procesamiento frontend.
-                  \item (\textcolor{naranja}{\textbf{C}}) El protocolo de comunicación de los servicios debe ser \textit{REST}.
+                \begin{enumerate}[label={[RD-ModeloVPC-\arabic*]}, leftmargin=*]
+                  \item (C) El sistema debe ser implementado utilizando \textit{Python 3} para el procesamiento backend.
+                  \item (C) El sistema debe ser implementado utilizando \textit{Angular} para el procesamiento frontend.
+                  \item (C) El protocolo de comunicación de los servicios debe ser \textit{REST}.
                 \end{enumerate}
         \end{enumerate}
 \end{enumerate}
@@ -330,7 +337,7 @@ Finalmente, se priorizan utilizando el método \textit{MoSCoW}\cite{moscowMethod
 \label{sec:backlog}
 
 Las historias de usuario contienen sus criterios de aceptación, y se ponderan según la complejidad, dificultad e incertidumbre.
-El resultado final de puntos de historia, es el número de \textit{Fibonacci} superior más cerca.
+El resultado final de puntos de historia, es el número de \textit{Fibonacci} superior más cercano.
 
 Los actores involucrados son:
 
@@ -346,30 +353,30 @@ Los actores involucrados son:
 \end{table}
 
 \begin{enumerate}
-  \item \underline{Como} usuario técnico de la IM \underline{quiero} identificar palmeras en imágenes de drones ortorectificadas \underline{para} detectar posibles casos de estudio de infestación.
+  \item Como usuario técnico de la IM quiero identificar palmeras en imágenes de drones ortorectificadas para detectar posibles casos de estudio de infestación.
         \begin{itemize}
-          \item \textit{Story points}: \textbf{34} (complejidad: 8, dificultad: 8, incertidumbre: 13)
-          \item \textit{Criterios de aceptación:}
+          \item \textit{Story points}: 34 (complejidad: 8, dificultad: 8, incertidumbre: 13)
+          \item Criterios de aceptación:
                 \begin{itemize}
                   \item El sistema debe procesar imágenes y marcar las palmeras detectadas con sus respectivas coordenadas.
                   \item La detección debe mantener una precisión mínima del 90\%
                 \end{itemize}
         \end{itemize}
 
-  \item \underline{Como} usuario técnico de la IM \underline{quiero} clasificar las palmeras en imágenes de drones ortorectificadas en infectadas y no infectadas \underline{para} detectar posibles casos de infestación.
+  \item Como usuario técnico de la IM quiero clasificar las palmeras en imágenes de drones ortorectificadas en infectadas y no infectadas para detectar posibles casos de infestación.
         \begin{itemize}
-          \item \textit{Story points}: \textbf{55} (complejidad: 13, dificultad: 13, incertidumbre: 13)
-          \item \textit{Criterios de aceptación:}
+          \item \textit{Story points}: 55 (complejidad: 13, dificultad: 13, incertidumbre: 13)
+          \item Criterios de aceptación:
                 \begin{itemize}
                   \item El sistema debe procesar imágenes con palmeras detectadas y marcar clasificarlas en infectadas o no infectadas.
                   \item El sistema debe mantener una precisión mínima del 80\% en el modelo de visión por computadora.
                 \end{itemize}
         \end{itemize}
 
-  \item \underline{Como} usuario técnico de la IM \underline{quiero} acceder e investigar información sobre el estado del arte en detección de plagas en dominios multiespectrales \underline{para} asegurarme que el modelo de visión utilice los enfoques más efectivos.
+  \item Como usuario técnico de la IM quiero acceder e investigar información sobre el estado del arte en detección de plagas en dominios multiespectrales para asegurarme que el modelo de visión utilice los enfoques más efectivos.
         \begin{itemize}
-          \item \textit{Story points}: \textbf{55} (complejidad: 21, dificultad: 13, incertidumbre: 8)
-          \item \textit{Criterios de aceptación:}
+          \item \textit{Story points}: 55 (complejidad: 21, dificultad: 13, incertidumbre: 8)
+          \item Criterios de aceptación:
                 \begin{itemize}
                   \item Se debe documentar una revisión de modelos de visión por computadora avanzados para la detección de plagas en el informe final.
                   \item La revisión debe incluir métodos actuales para detección en imágenes multiespectrales.
@@ -377,20 +384,20 @@ Los actores involucrados son:
                 \end{itemize}
         \end{itemize}
 
-  \item \underline{Como} usuario del servicio de áreas verdes \underline{quiero}, dada una imagen, visualizar las palmeras que están infectadas o no \underline{para} aplicar posibles tratamientos de la plaga.
+  \item Como usuario del servicio de áreas verdes quiero, dada una imagen, visualizar las palmeras que están infectadas o no para aplicar posibles tratamientos de la plaga.
         \begin{itemize}
-          \item \textit{Story points}: \textbf{21} (complejidad: 8, dificultad: 5, incertidumbre: 8)
-          \item \textit{Criterios de aceptación:}
+          \item \textit{Story points}: 21 (complejidad: 8, dificultad: 5, incertidumbre: 8)
+          \item Criterios de aceptación:
                 \begin{itemize}
                   \item El sistema debe mostrar, dada una imagen proporcionada, cuales palmeras están infectadas y cuales no.
                   \item El sistema debe brindar una satisfacción de usabilidad mayor al 80\% en el visualizador de detecciones.
                 \end{itemize}
         \end{itemize}
 
-  \item \underline{Como} usuario del servicio de áreas verdes \underline{quiero} etiquetar las imágenes de los drones \underline{para} brindarle al modelo de visión por computadora una mejor capacidad de predicción.
+  \item Como usuario del servicio de áreas verdes quiero etiquetar las imágenes de los drones para brindarle al modelo de visión por computadora una mejor capacidad de predicción.
         \begin{itemize}
-          \item \textit{Story points}: \textbf{21} (complejidad: 8, dificultad: 5, incertidumbre: 8)
-          \item \textit{Criterios de aceptación:}
+          \item \textit{Story points}: 21 (complejidad: 8, dificultad: 5, incertidumbre: 8)
+          \item Criterios de aceptación:
                 \begin{itemize}
                   \item El sistema debe proporcionar una herramienta que permita la selección y etiquetado de palmeras en imágenes de drones.
                   \item El sistema debe permitir el almacenamiento tanto de las imágenes sin etiquetar como las etiquetadas en la IMNube.
@@ -398,29 +405,29 @@ Los actores involucrados son:
                 \end{itemize}
         \end{itemize}
 
-  \item \underline{Como} usuario responsable del proyecto \underline{quiero} que el sistema cuente con imágenes etiquetadas \underline{para} asegurarme la robustez del modelo.
+  \item Como usuario responsable del proyecto quiero que el sistema cuente con imágenes etiquetadas para asegurarme la robustez del modelo.
         \begin{itemize}
-          \item \textit{Story points}: \textbf{89} (complejidad: 34, dificultad: 5, incertidumbre: 21)
-          \item \textit{Criterios de aceptación:}
+          \item \textit{Story points}: 89 (complejidad: 34, dificultad: 5, incertidumbre: 21)
+          \item Criterios de aceptación:
                 \begin{itemize}
                   \item Se debe etiquetar al menos 100 imágenes.
                   \item El etiquetado debe contener tanto la detección de la palmera como la clasificación en infectada y no infectada.
                 \end{itemize}
         \end{itemize}
 
-  \item \underline{Como} usuario responsable del proyecto \underline{quiero} el modelo de visión por computadora brinde una interfaz que permita consumir una imagen y exponer un servicio con las detecciones de dicha imagen \underline{para} asegurarme de que el sistema sea escalable en otras iteraciones.
+  \item Como usuario responsable del proyecto quiero el modelo de visión por computadora brinde una interfaz que permita consumir una imagen y exponer un servicio con las detecciones de dicha imagen para asegurarme de que el sistema sea escalable en otras iteraciones.
         \begin{itemize}
-          \item \textit{Story points}: \textbf{21} (complejidad: 5, dificultad: 8, incertidumbre: 5)
-          \item \textit{Criterios de aceptación:}
+          \item \textit{Story points}: 21 (complejidad: 5, dificultad: 8, incertidumbre: 5)
+          \item Criterios de aceptación:
                 \begin{itemize}
                   \item El protocolo de comunicación debe ser \textit{REST}.
                 \end{itemize}
         \end{itemize}
 
-  \item \underline{Como} usuario responsable del proyecto \underline{quiero} acceder a un informe final con los resultados del proyecto \underline{para} presentarlo ante los responsables de la IM y FIUBA.
+  \item Como usuario responsable del proyecto quiero acceder a un informe final con los resultados del proyecto para presentarlo ante los responsables de la IM y FIUBA.
         \begin{itemize}
-          \item \textit{Story points}: \textbf{55} (complejidad: 34, dificultad: 5, incertidumbre: 5)
-          \item \textit{Criterios de aceptación:}
+          \item \textit{Story points}: 55 (complejidad: 34, dificultad: 5, incertidumbre: 5)
+          \item Criterios de aceptación:
                 \begin{itemize}
                   \item El informe final debe incluir la presentación completa del proyecto, resultados obtenidos y conclusiones.
                   \item Debe estar estructurado y listo para presentación en el formato provisto por la FIUBA.
@@ -446,7 +453,7 @@ Los entregables para esta etapa del proyecto son:
 \label{sec:wbs}
 
 \begin{enumerate}
-  \item \textit{Análisis e investigación} (\textbf{100 h})
+  \item Análisis e investigación (100 h)
         \begin{enumerate}
           \item Análisis de tecnologías para el gestor de datos (20 h).
           \item Análisis de tecnologías para el visualizador de detecciones (20 h).
@@ -454,7 +461,7 @@ Los entregables para esta etapa del proyecto son:
           \item Investigación específica para detección en imágenes multiespectrales (30 h).
         \end{enumerate}
 
-  \item \textit{Diseño del sistema} (\textbf{50 h})
+  \item Diseño del sistema (50 h)
         \begin{enumerate}
           \item Diseño de arquitectura en general (10 h)
           \item Diseño de pruebas (5 h)
@@ -463,20 +470,20 @@ Los entregables para esta etapa del proyecto son:
           \item Diseño del modelo de visión por computadora (20 h)
         \end{enumerate}
 
-  \item \textit{Construcción del sistema} (\textbf{200 h})
+  \item Construcción del sistema (180 h)
         \begin{enumerate}
-          \item Construcción del sistema en general (40 h)
+          \item Construcción del sistema en general (20 h)
           \item Construcción del gestor de datos (40 h)
           \item Construcción del visualizador de detecciones (20 h)
           \item Construcción del modelo de visión por computadora (100 h)
-                \begin{enumerate}
+                \begin{enumerate}[label*=\arabic*.]
                   \item Construcción del modelo (40 h)
                   \item Entrenamiento del modelo (40 h)
                   \item Adaptación del modelo (20 h)
                 \end{enumerate}
         \end{enumerate}
 
-  \item \textit{Validación y verificación del sistema} (\textbf{50 h})
+  \item Validación y verificación del sistema (50 h)
         \begin{enumerate}
           \item Validación y verificación del gestor de datos (5 h)
           \item Validación y verificación del visualizador de detecciones (5 h)
@@ -484,7 +491,7 @@ Los entregables para esta etapa del proyecto son:
           \item Validación y verificación de la integración de aplicaciones (10 h)
         \end{enumerate}
 
-  \item \textit{Implantación del sistema} (\textbf{50 h})
+  \item Implantación del sistema (50 h)
         \begin{enumerate}
           \item Configuración inicial (10 h)
           \item Implantación del gestor de datos (10 h)
@@ -492,7 +499,7 @@ Los entregables para esta etapa del proyecto son:
           \item Implantación del modelo de visión por computadora (20 h)
         \end{enumerate}
 
-  \item \textit{Gestión del proyecto} (\textbf{50 h})
+  \item Gestión del proyecto (50 h)
         \begin{enumerate}
           \item Planificación (10 h)
           \item Refinar planes (10 h)
@@ -501,40 +508,42 @@ Los entregables para esta etapa del proyecto son:
           \item Gestión del etiquetado de datos (10 h)
         \end{enumerate}
 
-  \item \textit{Gestión de la documentación} (\textbf{100 h})
+  \item Gestión de la documentación (120 h)
         \begin{enumerate}
-          \item Informe final (40 h)
-          \item Informe de avance (40 h)
-          \item Presentación del proyecto (20 h)
+          \item Escritura memoria en taller de trabajo final A (40 h)
+          \item Escritura memoria en taller de trabajo final B (40 h)
+          \item Escritura del informe de avance (20 h)
+          \item Preparación de presentación del proyecto (20 h)
         \end{enumerate}
 
 \end{enumerate}
 
-\underline{Cantidad total de horas:} 600 h
+Cantidad total de horas: 600 h
 
 \section{10. Diagrama de Activity On Node}
 \label{sec:AoN}
 
 En la figura \ref{fig:AoN} se muestra el diagrama de precedencia de actividades. En color rojo, se muestra el camino crítico, que está definido por las siguientes tareas secuenciales:
 
-\textcolor{red}{$\rightarrow$} 1.3. Investigación del estado del arte en modelos de visión por computadora (30 h).\newline
-\textcolor{red}{$\rightarrow$} 1.4. Investigación específica para detección en imágenes multiespectrales (30 h).\newline
-\textcolor{red}{$\rightarrow$} 2.1. Diseño de arquitectura en general (10 h).\newline
-\textcolor{red}{$\rightarrow$} 2.5. Diseño del modelo de visión por computadora (20 h).\newline
-\textcolor{red}{$\rightarrow$} 3.1. Construcción del sistema en general (40 h).\newline
-\textcolor{red}{$\rightarrow$} 3.4.1. Construcción del modelo (40 h).\newline
-\textcolor{red}{$\rightarrow$} 3.4.1. Entrenamiento del modelo (40 h).\newline
-\textcolor{red}{$\rightarrow$} 3.4.1. Adaptación del modelo (20 h).\newline
-\textcolor{red}{$\rightarrow$} 4.3. Validación y verificación del modelo de visión por computadora (30 h).\newline
-\textcolor{red}{$\rightarrow$} 4.4. Validación y verificación de la integración de aplicaciones (10 h).\newline
-\textcolor{red}{$\rightarrow$} 5.1. Configuración inicial (10 h).\newline
-\textcolor{red}{$\rightarrow$} 5.4. Implantación del modelo de visión por computadora (20 h).\newline
-\textcolor{red}{$\rightarrow$} 7.2. Informe de avance (40 h).\newline
-\textcolor{red}{$\rightarrow$} 7.1. Informe final (40 h).\newline
-\textcolor{red}{$\rightarrow$} 7.3. Presentación del proyecto (20 h).\newline
+$\rightarrow$ 1.3. Investigación del estado del arte en modelos de visión por computadora (30 h). \newline
+$\rightarrow$ 1.4. Investigación específica para detección en imágenes multiespectrales (30 h). \newline
+$\rightarrow$ 2.1. Diseño de arquitectura en general (10 h). \newline
+$\rightarrow$ 2.5. Diseño del modelo de visión por computadora (20 h). \newline
+$\rightarrow$ 3.1. Construcción del sistema en general (20 h). \newline
+$\rightarrow$ 3.4.1. Construcción del modelo (40 h). \newline
+$\rightarrow$ 3.4.1. Entrenamiento del modelo (40 h). \newline
+$\rightarrow$ 3.4.1. Adaptación del modelo (20 h). \newline
+$\rightarrow$ 4.3. Validación y verificación del modelo de visión por computadora (30 h). \newline
+$\rightarrow$ 4.4. Validación y verificación de la integración de aplicaciones (10 h). \newline
+$\rightarrow$ 5.1. Configuración inicial (10 h). \newline
+$\rightarrow$ 5.4. Implantación del modelo de visión por computadora (20 h). \newline
+$\rightarrow$ 7.3. Escritura del informe de avance (20 h). \newline
+$\rightarrow$ 7.1. Escritura memoria en taller de trabajo final A (40 h). \newline
+$\rightarrow$ 7.2. Escritura memoria en taller de trabajo final B (40 h). \newline
+$\rightarrow$ 7.4. Preparación de presentación del proyecto (20 h). \newline
 
 
-El camino crítico indica que el proyecto puede hacerse en un mínimo de \textbf{400 horas}.
+El camino crítico indica que el proyecto puede hacerse en un mínimo de 400 horas.
 
 \begin{figure}[htpb]
   \centering
@@ -550,7 +559,7 @@ En la figura \ref{fig:diagGanttAct} se puede observar la lista de actividades, y
 
 \begin{figure}[htpb]
   \centering
-  \includegraphics[height=.50\textheight]{./Figuras/lista-actividades.png}
+  \includegraphics[height=.7\textheight]{./Figuras/lista-actividades.png}
   \caption{Lista de tareas para el Diagrama Gantt.}
   \label{fig:diagGanttAct}
 \end{figure}
@@ -615,9 +624,9 @@ Los principales costos asociados de este proyecto se encuentran en las horas de 
     \multicolumn{1}{c|}{USD 25}                                 &
     \multicolumn{1}{c|}{USD 1000}                                   \\ \hline
 
-    Vuelos de drones                                         &
-    \multicolumn{1}{c|}{5 U}                                   &
-    \multicolumn{1}{c|}{USD 500}                                 &
+    Vuelos de drones                                            &
+    \multicolumn{1}{c|}{5 U}                                    &
+    \multicolumn{1}{c|}{USD 500}                                &
     \multicolumn{1}{c|}{USD 2500}                                   \\ \hline
 
     Imprevistos (40\% costos directos)                          &
@@ -626,7 +635,7 @@ Los principales costos asociados de este proyecto se encuentran en las horas de 
     \multicolumn{1}{c|}{USD 7216}                                   \\ \hline
 
     \multicolumn{3}{|c|}{SUBTOTAL}                              &
-    \multicolumn{1}{c|}{USD 10716}                                   \\ \hline
+    \multicolumn{1}{c|}{USD 10716}                                  \\ \hline
     \rowcolor[HTML]{C0C0C0}
     \multicolumn{3}{|c|}{TOTAL}                                 &
 
@@ -747,7 +756,7 @@ Los principales costos asociados de este proyecto se encuentran en las horas de 
 
 \end{consigna}
 
-\bibliographystyle{plain} % Elige el estilo de cita (plain, alpha, apa, etc.)
+\bibliographystyle{unsrt} % Elige el estilo de cita (plain, alpha, apa, etc.)
 \bibliography{charter} % Nombre del archivo .bib sin extensión
 
 \end{document}
