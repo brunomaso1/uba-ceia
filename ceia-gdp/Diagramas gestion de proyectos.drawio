@@ -338,7 +338,7 @@
     </mxGraphModel>
   </diagram>
   <diagram name="Diagrama de actividades - Visualizacion" id="GTMApp1Xhj-aCyUcMnvB">
-    <mxGraphModel dx="1050" dy="621" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" background="none" math="0" shadow="1">
+    <mxGraphModel dx="1434" dy="836" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" background="none" math="0" shadow="1">
       <root>
         <mxCell id="pa2s6Kx3N8daHTj6Uscy-0" />
         <mxCell id="pa2s6Kx3N8daHTj6Uscy-1" parent="pa2s6Kx3N8daHTj6Uscy-0" />
@@ -542,19 +542,19 @@
         <mxCell id="pa2s6Kx3N8daHTj6Uscy-67" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;orthogonal=1;shadow=1;strokeColor=#FF0000;" parent="pa2s6Kx3N8daHTj6Uscy-1" source="pa2s6Kx3N8daHTj6Uscy-68" target="pa2s6Kx3N8daHTj6Uscy-70" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="pa2s6Kx3N8daHTj6Uscy-68" value="Actividad &lt;b&gt;7.3&lt;/b&gt;&lt;div&gt;t&amp;nbsp; = 20 h&lt;/div&gt;" style="html=1;dashed=0;whiteSpace=wrap;fillColor=#f8cecc;strokeColor=#FF0000;shadow=1;" parent="pa2s6Kx3N8daHTj6Uscy-1" vertex="1">
+        <mxCell id="pa2s6Kx3N8daHTj6Uscy-68" value="Actividad &lt;b&gt;7.1&lt;/b&gt;&lt;div&gt;t&amp;nbsp; = 20 h&lt;/div&gt;" style="html=1;dashed=0;whiteSpace=wrap;fillColor=#f8cecc;strokeColor=#FF0000;shadow=1;" parent="pa2s6Kx3N8daHTj6Uscy-1" vertex="1">
           <mxGeometry x="30" y="620" width="80" height="40" as="geometry" />
         </mxCell>
         <mxCell id="pa2s6Kx3N8daHTj6Uscy-69" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;orthogonal=1;shadow=1;strokeColor=#FF0000;" parent="pa2s6Kx3N8daHTj6Uscy-1" source="pa2s6Kx3N8daHTj6Uscy-70" target="pa2s6Kx3N8daHTj6Uscy-72" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="pa2s6Kx3N8daHTj6Uscy-70" value="Actividad &lt;b&gt;7.1&lt;/b&gt;&lt;div&gt;t&amp;nbsp; = 40 h&lt;/div&gt;" style="html=1;dashed=0;whiteSpace=wrap;fillColor=#f8cecc;strokeColor=#FF0000;shadow=1;" parent="pa2s6Kx3N8daHTj6Uscy-1" vertex="1">
+        <mxCell id="pa2s6Kx3N8daHTj6Uscy-70" value="Actividad &lt;b&gt;7.2&lt;/b&gt;&lt;div&gt;t&amp;nbsp; = 40 h&lt;/div&gt;" style="html=1;dashed=0;whiteSpace=wrap;fillColor=#f8cecc;strokeColor=#FF0000;shadow=1;" parent="pa2s6Kx3N8daHTj6Uscy-1" vertex="1">
           <mxGeometry x="23.329999999999984" y="210" width="80" height="40" as="geometry" />
         </mxCell>
         <mxCell id="pa2s6Kx3N8daHTj6Uscy-71" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;orthogonal=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;shadow=1;strokeColor=#FF0000;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="pa2s6Kx3N8daHTj6Uscy-1" source="pa2s6Kx3N8daHTj6Uscy-72" target="HtSylTGzw_gOF4rSugB7-0" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="pa2s6Kx3N8daHTj6Uscy-72" value="Actividad &lt;b&gt;7.2&lt;/b&gt;&lt;div&gt;t&amp;nbsp; = 40 h&lt;/div&gt;" style="html=1;dashed=0;whiteSpace=wrap;fillColor=#f8cecc;strokeColor=#FF0000;shadow=1;" parent="pa2s6Kx3N8daHTj6Uscy-1" vertex="1">
+        <mxCell id="pa2s6Kx3N8daHTj6Uscy-72" value="Actividad &lt;b&gt;7.3&lt;/b&gt;&lt;div&gt;t&amp;nbsp; = 40 h&lt;/div&gt;" style="html=1;dashed=0;whiteSpace=wrap;fillColor=#f8cecc;strokeColor=#FF0000;shadow=1;" parent="pa2s6Kx3N8daHTj6Uscy-1" vertex="1">
           <mxGeometry x="133.32999999999998" y="210" width="80" height="40" as="geometry" />
         </mxCell>
         <mxCell id="pa2s6Kx3N8daHTj6Uscy-73" value="Fin" style="ellipse;fontStyle=1;strokeColor=#FF0000;" parent="pa2s6Kx3N8daHTj6Uscy-1" vertex="1">
@@ -614,10 +614,10 @@
         <mxCell id="iROkz94Ru94ba2oJ3RzW-0" value="Actividad&lt;b&gt; 1.4&lt;/b&gt;&lt;div&gt;t&amp;nbsp; = 30 h&lt;/div&gt;" style="html=1;dashed=0;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#FF0000;shadow=1;" parent="pa2s6Kx3N8daHTj6Uscy-1" vertex="1">
           <mxGeometry x="343.33" y="140" width="80" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="HtSylTGzw_gOF4rSugB7-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#FF0000;" edge="1" parent="pa2s6Kx3N8daHTj6Uscy-1" source="HtSylTGzw_gOF4rSugB7-0" target="pa2s6Kx3N8daHTj6Uscy-73">
+        <mxCell id="HtSylTGzw_gOF4rSugB7-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#FF0000;" parent="pa2s6Kx3N8daHTj6Uscy-1" source="HtSylTGzw_gOF4rSugB7-0" target="pa2s6Kx3N8daHTj6Uscy-73" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="HtSylTGzw_gOF4rSugB7-0" value="Actividad &lt;b&gt;7.4&lt;/b&gt;&lt;div&gt;t&amp;nbsp; = 20 h&lt;/div&gt;" style="html=1;dashed=0;whiteSpace=wrap;fillColor=#f8cecc;strokeColor=#FF0000;shadow=1;" vertex="1" parent="pa2s6Kx3N8daHTj6Uscy-1">
+        <mxCell id="HtSylTGzw_gOF4rSugB7-0" value="Actividad &lt;b&gt;7.4&lt;/b&gt;&lt;div&gt;t&amp;nbsp; = 20 h&lt;/div&gt;" style="html=1;dashed=0;whiteSpace=wrap;fillColor=#f8cecc;strokeColor=#FF0000;shadow=1;" parent="pa2s6Kx3N8daHTj6Uscy-1" vertex="1">
           <mxGeometry x="133.32999999999998" y="280" width="80" height="40" as="geometry" />
         </mxCell>
       </root>
