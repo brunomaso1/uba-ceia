@@ -62,7 +62,7 @@
     1        & Se completa hasta el punto 5 inclusive                                                & {29} de {octubre} de 2024   \\ \hline
     2        & Se corrige secciones 1, 2, 3, 4 y 5. \newline Se completa hasta el punto 9 inclusive. & {05} de {noviembre} de 2024 \\ \hline
     3        & Se corrige secciones 1, 2, 6 y 9. \newline Se completa hasta el punto 12 inclusive.   & {12} de {noviembre} de 2024 \\ \hline
-    %4      & Se completa el plan	                                 & {día} de {mes} de 202X \\ \hline
+    4        & Se corrige secciones 1, 9 y 12. \newline Se completa el plan.                         & {19} de {noviembre} de 2024 \\ \hline
 
     % Si hay más correcciones pasada la versión 4 también se deben especificar acá
   \end{tabularx}
@@ -235,11 +235,11 @@ Finalmente, se priorizan utilizando el método \textit{MoSCoW} \cite{moscowMetho
   \item Requisitos de interfaces externas:
         \begin{enumerate}
           \item Gestor de datos
-                \begin{enumerate}[label={[RF-GestorDatos-\arabic*]}, leftmargin=*]
+                \begin{enumerate}[label={[RIF-GestorDatos-\arabic*]}, leftmargin=*]
                   \item (S) El gestor de datos debe ser accesible desde internet por los usuarios de áreas verdes.
                 \end{enumerate}
           \item Visualizador de detecciones
-                \begin{enumerate}[label={[RII-VisDetecciones-\arabic*]}, leftmargin=*]
+                \begin{enumerate}[label={[RIF-VisDetecciones-\arabic*]}, leftmargin=*]
                   \item (S) El visualizador de detecciones debe ser accesible desde internet por los usuarios de áreas verdes.
                 \end{enumerate}
         \end{enumerate}
@@ -279,7 +279,7 @@ Finalmente, se priorizan utilizando el método \textit{MoSCoW} \cite{moscowMetho
   \item Requisitos de datos:
         \begin{enumerate}
           \item Gestor de datos
-                \begin{enumerate}[label={[RDATA-GestorDatos-\arabic*]}, leftmargin=*]
+                \begin{enumerate}[label={[RDATOS-GestorDatos-\arabic*]}, leftmargin=*]
                   \item (C) El sistema debe permitir al cliente etiquetar al menos 100 imágenes, asegurando un equilibrio entre las clases de palmeras infectadas y no infectadas.
                 \end{enumerate}
         \end{enumerate}
@@ -305,7 +305,7 @@ Finalmente, se priorizan utilizando el método \textit{MoSCoW} \cite{moscowMetho
   \item Requisitos de interfaces gráficas:
         \begin{enumerate}
           \item Visualizador de detecciones
-                \begin{enumerate}[label={[RII-VisDetecciones-\arabic*]}, leftmargin=*]
+                \begin{enumerate}[label={[RIG-VisDetecciones-\arabic*]}, leftmargin=*]
                   \item (C) El visualizador de detecciones debe brindar un criterio de satisfacción de usabilidad mayor al 80\% para los usuarios.
                 \end{enumerate}
         \end{enumerate}
@@ -313,11 +313,11 @@ Finalmente, se priorizan utilizando el método \textit{MoSCoW} \cite{moscowMetho
   \item Requisitos de seguridad (\textit{security}):
         \begin{enumerate}
           \item Gestor de datos
-                \begin{enumerate}[label={[RF-GestorDatos-\arabic*]}, leftmargin=*]
+                \begin{enumerate}[label={[RS-GestorDatos-\arabic*]}, leftmargin=*]
                   \item (S) El gestor de datos debe estar bajo un mecanismo de autorización de usuarios.
                 \end{enumerate}
           \item Visualizador de detecciones
-                \begin{enumerate}[label={[RII-VisDetecciones-\arabic*]}, leftmargin=*]
+                \begin{enumerate}[label={[RS-VisDetecciones-\arabic*]}, leftmargin=*]
                   \item (S) El visualizador de datos debe estar bajo un mecanismo de autorización de usuarios.
                 \end{enumerate}
         \end{enumerate}
@@ -647,116 +647,351 @@ Los principales costos asociados de este proyecto se encuentran en las horas de 
 \section{13. Gestión de riesgos}
 \label{sec:riesgos}
 
-\begin{consigna}{red}
-  a) Identificación de los riesgos (al menos cinco) y estimación de sus consecuencias:
+En esta sección se identifican riesgos puntuales del proyecto, sus posibles mitigaciones y una matriz que permite observar los $RPN$ resultantes.
 
-  Riesgo 1: detallar el riesgo (riesgo es algo que si ocurre altera los planes previstos de forma negativa)
-  \begin{itemize}
-    \item Severidad (S): mientras más severo, más alto es el número (usar números del 1 al 10).\\
-          Justificar el motivo por el cual se asigna determinado número de severidad (S).
-    \item Probabilidad de ocurrencia (O): mientras más probable, más alto es el número (usar del 1 al 10).\\
-          Justificar el motivo por el cual se asigna determinado número de (O).
-  \end{itemize}
+a) Identificación de los riesgos y estimación de sus consecuencias:
 
-  Riesgo 2:
-  \begin{itemize}
-    \item Severidad (S): X.\\
-          Justificación...
-    \item Ocurrencia (O): Y.\\
-          Justificación...
-  \end{itemize}
+Riesgo 1: retrasos en el etiquetado de imágenes por parte del cliente.
+\begin{itemize}
+  \item Severidad ($S$): 8. El etiquetado de las imágenes es esencial para entrenar los modelos de aprendizaje profundo. Un retraso significativo podría comprometer los plazos del proyecto y la calidad de los resultados. \item Probabilidad de ocurrencia ($O$): 6. Aunque el cliente muestra voluntad, la tarea de etiquetado puede ser más demandante de lo inicialmente previsto, afectando su disponibilidad.
+\end{itemize}
 
-  Riesgo 3:
-  \begin{itemize}
-    \item Severidad (S):  X.\\
-          Justificación...
-    \item Ocurrencia (O): Y.\\
-          Justificación...
-  \end{itemize}
+Riesgo 2: limitaciones en la calidad de las imágenes capturadas por los drones.
+\begin{itemize}
+  \item Severidad ($S$): 9. La calidad de las imágenes (resolución espacial, georreferenciación, ausencia de ruido) es crítica para la detección precisa de la plaga. Imágenes de baja calidad dificultarían el entrenamiento y la inferencia del modelo.
+  \item Probabilidad de ocurrencia ($O$): 5. Aunque se cuenta con imágenes de alta resolución, factores como las condiciones climáticas o fallos técnicos en los drones podrían afectar su calidad.
+\end{itemize}
 
+Riesgo 3: limitaciones en la infraestructura para el procesamiento de datos.
+\begin{itemize}
+  \item Severidad ($S$): 7. El procesamiento de imágenes y el entrenamiento de modelos requieren infraestructura computacional robusta. Limitaciones en esta área podrían generar cuellos de botella.
+  \item Probabilidad de ocurrencia ($O$): 4. Se supone que la infraestructura necesaria está disponible, pero problemas de configuración o recursos insuficientes podrían surgir durante el proyecto.
+\end{itemize}
 
-  b) Tabla de gestión de riesgos:      (El RPN se calcula como RPN=SxO)
+Riesgo 4: dificultades para detectar la plaga mediante las imágenes disponibles.
+\begin{itemize}
+  \item Severidad ($S$): 10. Si las imágenes (RGB, infrarrojas o combinadas) no permiten identificar de manera confiable la plaga, el objetivo principal del proyecto estaría en riesgo.
+  \item Probabilidad de ocurrencia ($O$): 5. Estudios previos sugieren que estas técnicas son viables, pero no se puede descartar que ciertas características de la plaga sean difíciles de detectar en las condiciones del entorno, principalmente aquellas características que permitan una detección temprana.
+\end{itemize}
 
-  \begin{table}[htpb]
-    \centering
-    \begin{tabularx}{\linewidth}{@{}|X|c|c|c|c|c|c|@{}}
-      \hline
-      \rowcolor[HTML]{C0C0C0}
-      Riesgo & S & O & RPN & S* & O* & RPN* \\ \hline
-             &   &   &     &    &    &      \\ \hline
-             &   &   &     &    &    &      \\ \hline
-             &   &   &     &    &    &      \\ \hline
-             &   &   &     &    &    &      \\ \hline
-             &   &   &     &    &    &      \\ \hline
-    \end{tabularx}%
-  \end{table}
+Riesgo 5: pérdida de apoyo por parte de la IM.
+\begin{itemize}
+  \item Severidad ($S$): 8. La IM es un actor clave para el éxito del proyecto, tanto en términos de apoyo logístico como en la visión estratégica. Su pérdida implicaría una reestructuración importante.
+  \item Probabilidad de ocurrencia ($O$): 2. Hasta ahora, la IM ha mostrado disposición, pero eventos políticos o administrativos podrían modificar su nivel de apoyo.
+\end{itemize}
 
-  Criterio adoptado:
+Riesgo 6: errores en la georreferenciación de las imágenes.
+\begin{itemize}
+  \item Severidad ($S$): 8. La georreferenciación precisa es esencial para analizar la distribución espacial de la plaga y para generar mapas de acción. Errores en esta etapa pueden comprometer la utilidad del sistema final.
+  \item Probabilidad de ocurrencia ($O$): 3. Aunque las imágenes se supone que están georreferenciadas, problemas técnicos durante la captura o el procesamiento pueden introducir errores. Sin embargo, la IM cuenta con infraestructura y \textit{software} especial para trabajar con información geográfica.
+\end{itemize}
 
-  Se tomarán medidas de mitigación en los riesgos cuyos números de RPN sean mayores a...
+Riesgo 7: falta de representatividad en el conjunto de datos.
+\begin{itemize}
+  \item Severidad ($S$): 9. Si el conjunto de datos no incluye suficientes ejemplos de las condiciones reales del entorno (iluminación, vegetación, diferentes estados de infestación), el modelo podría tener un bajo desempeño en escenarios reales.
+  \item Probabilidad de ocurrencia ($O$): 6. La recopilación de datos representativos puede ser difícil debido a la variabilidad de las condiciones ambientales y la distribución de la plaga.
+\end{itemize}
 
-  Nota: los valores marcados con (*) en la tabla corresponden luego de haber aplicado la mitigación.
+Riesgo 8: escalabilidad limitada del sistema.
+\begin{itemize}
+  \item Severidad ($S$): 7. Si el sistema no puede manejar un volumen creciente de imágenes o áreas a analizar, su utilidad para el cliente será limitada.
+  \item Probabilidad de ocurrencia ($O$): 4. Esto dependerá de la eficiencia de la implementación del sistema, así como de la infraestructura disponible en ese momento.
+\end{itemize}
 
-  c) Plan de mitigación de los riesgos que originalmente excedían el RPN máximo establecido:
+Riesgo 9: problemas legales o de privacidad relacionados con el uso de drones.
+\begin{itemize}
+  \item Severidad ($S$): 8. Restricciones legales o preocupaciones de privacidad sobre el uso de drones pueden limitar las áreas en las que se permite la captura de imágenes.
+  \item Probabilidad de ocurrencia ($O$): 2. Aunque se supone que se cuenta con apoyo de la IM, los permisos específicos para ciertos vuelos podrían enfrentar retrasos o restricciones imprevistas.
+\end{itemize}
 
-  Riesgo 1: plan de mitigación (si por el RPN fuera necesario elaborar un plan de mitigación).
-  Nueva asignación de S y O, con su respectiva justificación:
-  \begin{itemize}
-    \item Severidad (S*): mientras más severo, más alto es el número (usar números del 1 al 10).
-          Justificar el motivo por el cual se asigna determinado número de severidad (S).
-    \item Probabilidad de ocurrencia (O*): mientras más probable, más alto es el número (usar del 1 al 10).
-          Justificar el motivo por el cual se asigna determinado número de (O).
-  \end{itemize}
+Riesgo 10: sobreajuste del modelo a los datos de entrenamiento.
+\begin{itemize}
+  \item Severidad ($S$): 6. Si el modelo se adapta demasiado a los datos de entrenamiento, su capacidad para generalizar a nuevas imágenes será limitada, afectando su utilidad en el campo.
+  \item Probabilidad de ocurrencia ($O$): 6. Es un riesgo inherente en proyectos de aprendizaje profundo, pero puede mitigarse con técnicas adecuadas de regularización y validación.
+\end{itemize}
 
-  Riesgo 2: plan de mitigación (si por el RPN fuera necesario elaborar un plan de mitigación).
+Riesgo 11: cambios en las prioridades del cliente.
+\begin{itemize}
+  \item Severidad ($S$): 6. Si el cliente modifica las prioridades del proyecto, los objetivos iniciales podrían ser redefinidos, generando retrabajos o desviaciones en el cronograma.
+  \item Probabilidad de ocurrencia ($O$): 2. Aunque se cuenta con apoyo inicial del cliente, factores externos o cambios internos en su organización podrían alterar sus prioridades.
+\end{itemize}
 
-  Riesgo 3: plan de mitigación (si por el RPN fuera necesario elaborar un plan de mitigación).
+Riesgo 12: Insuficiencia de imágenes etiquetadas.
+\begin{itemize}
+  \item Severidad ($S$): 8. Un número insuficiente de imágenes etiquetadas reduce la capacidad del modelo para generalizar, afectando su precisión y desempeño.
+  \item Probabilidad de ocurrencia ($O$): 6. El etiquetado es una tarea laboriosa y puede no completarse en el tiempo previsto.
+\end{itemize}
 
-\end{consigna}
+b) Tabla de gestión de riesgos (el $RPN$ se calcula como $RPN=S*O$):
 
+\begin{table}[H]
+  \centering
+  \begin{tabularx}{\linewidth}{@{}|X|c|c|c|c|c|c|@{}}
+    \hline
+    \rowcolor[HTML]{C0C0C0}
+    Riesgo                                                                   & $S$ & $O$ & $RPN$ & $S^*$ & $O^*$ & $RPN^*$ \\ \hline
+    1. Retrasos en el etiquetado de imágenes por parte del cliente           & 8   & 6   & 48    & 8     & 3     & 24      \\ \hline
+    2. Limitaciones en la calidad de las imágenes capturadas por los drones  & 9   & 5   & 45    & 6     & 2     & 12      \\ \hline
+    3. Limitaciones en la infraestructura para el procesamiento de datos     & 7   & 4   & 28    & -     & -     & -       \\ \hline
+    4. Dificultades para detectar la plaga mediante las imágenes disponibles & 10  & 5   & 50    & 10    & 3     & 30      \\ \hline
+    5. Pérdida de apoyo por parte de la IM                                   & 8   & 2   & 16    & -     & -     & -       \\ \hline
+    6. Errores en la georreferenciación de las imágenes                      & 8   & 3   & 24    & -     & -     & -       \\ \hline
+    7. Falta de representatividad en el conjunto de datos                    & 9   & 6   & 54    & 8     & 3     & 24      \\ \hline
+    8. Escalabilidad limitada del sistema                                    & 7   & 4   & 28    & -     & -     & -       \\ \hline
+    9. Problemas legales o de privacidad relacionados con el uso de drones   & 8   & 2   & 16    & -     & -     & -       \\ \hline
+    10. Sobreajuste del modelo a los datos de entrenamiento                  & 6   & 6   & 36    & 5     & 2     & 10      \\ \hline
+    11. Cambios en las prioridades del cliente                               & 6   & 2   & 12    & -     & -     & -       \\ \hline
+    12. Insuficiencia de imágenes etiquetadas                                & 8   & 6   & 48    & 7     & 3     & 21      \\ \hline
+  \end{tabularx}%
+  \caption{Matriz de riesgos del proyecto.}
+\end{table}
+
+Como criterio adoptado para la mitigación de los riesgos, se tomarán medidas donde los números de $RPN$ sean mayores a 30.
+
+Nota: los valores marcados con ($^*$) en la tabla corresponden luego de haber aplicado la mitigación.
+
+c) Plan de mitigación de los riesgos que originalmente excedían el $RPN$ máximo establecido:
+
+Riesgo 1: retrasos en el etiquetado de imágenes por parte del cliente.
+\begin{itemize}
+  \item Plan de mitigación: implementar un sistema de etiquetado semiautomático utilizando algoritmos de visión por computadora para reducir la carga de trabajo manual, aprovechando la información geográfica disponible (es posible detectar palmeras mediante aprendizaje por transferencia y luego utilizando la ubicación clasificarlas como infectadas o no). Además, establecer hitos intermedios para monitorear el avance del etiquetado y ofrecer apoyo al cliente.
+  \item Nueva asignación de $S$ y $O$ ($S^*$, $O^*$):
+        \begin{itemize}
+          \item Severidad ($S^*$): 8. La severidad se mantiene, ya que el etiquetado sigue siendo esencial para el proyecto.
+          \item Probabilidad de ocurrencia ($O^*$): 3. Con el sistema semiautomático y la supervisión del progreso, la probabilidad de retrasos disminuye significativamente.
+        \end{itemize}
+\end{itemize}
+
+Riesgo 2: limitaciones en la calidad de las imágenes capturadas por los drones.
+\begin{itemize}
+  \item Plan de mitigación: establecer protocolos para revisar la calidad de las imágenes inmediatamente después de la captura. En caso de problemas, se realizarán vuelos adicionales en las áreas afectadas. Además, preparar algoritmos que puedan manejar ciertas imperfecciones en las imágenes.
+  \item Nueva asignación de $S^*$ y $O^*$:
+        \begin{itemize}
+          \item Severidad ($S^*$): 6. La severidad se reduce, ya que el impacto de imágenes de baja calidad puede ser mitigado parcialmente con algoritmos robustos, así como una buena comunicación con el Departamento de Geomática.
+          \item Probabilidad de ocurrencia ($O^*$): 2. Con los protocolos de control de calidad y la posibilidad de vuelos adicionales, es menos probable que las imágenes finales sean inadecuadas.
+        \end{itemize}
+\end{itemize}
+
+Riesgo 4: dificultades para detectar la plaga mediante las imágenes disponibles.
+\begin{itemize}
+  \item Plan de mitigación: utilizar enfoques actuales del estado del arte, que incluyen modelos de última generación como \textit{vision transformers}.
+  \item Nueva asignación de $S^*$ y $O^*$:
+        \begin{itemize}
+          \item Severidad ($S^*$): 10. Se mantiene la severidad, ya que el objetivo del proyecto depende de una buena detección de la plaga.
+          \item Probabilidad de ocurrencia ($O^*$): 3. Utilizando modelos y técnicas de última generación, aumenta la posibilidad de detectar la plaga.
+        \end{itemize}
+\end{itemize}
+
+Riesgo 7: falta de representatividad en el conjunto de datos.
+\begin{itemize}
+  \item Plan de mitigación: asegurar la diversidad del conjunto de datos recopilando imágenes de diferentes zonas, condiciones climáticas y estados de infestación. Además, utilizar técnicas de aumento de datos (\textit{data augmentation}) para simular escenarios diversos.
+  \item Nueva asignación de $S^*$ y $O^*$:
+        \begin{itemize}
+          \item Severidad ($S^*$): 8. Aunque el impacto sigue siendo alto, la representatividad se mejora significativamente con un conjunto de datos diverso y técnicas de aumento. \item Probabilidad de ocurrencia ($O^*$): 3. Con un enfoque proactivo en la recopilación de datos y el uso de \textit{data augmentation}, se reduce la probabilidad de falta de representatividad. \end{itemize}
+\end{itemize}
+
+Riesgo 10: sobreajuste del modelo a los datos de entrenamiento.
+\begin{itemize}
+  \item Plan de mitigación: aplicar regularización adecuada (\textit{Dropout}, \textit{L2}) y realizar una validación cruzada exhaustiva para garantizar la generalización del modelo. Incorporar nuevos datos en el entrenamiento si es posible.
+  \item Nueva asignación de $S^*$ y $O^*$:
+        \begin{itemize}
+          \item Severidad ($S^*$): 5. Con una adecuada validación y regularización, el impacto del sobreajuste disminuye significativamente.
+          \item Probabilidad de ocurrencia ($O^*$): 2. La probabilidad se reduce drásticamente con las técnicas mencionadas, asegurando un modelo más generalizable.
+        \end{itemize}
+\end{itemize}
+
+Riesgo 12: insuficiencia de imágenes etiquetadas.
+\begin{itemize}
+  \item Plan de mitigación: ampliar el equipo encargado del etiquetado para incluir colaboradores adicionales en caso de necesidad. Además, priorizar el etiquetado de las áreas más críticas y utilizar técnicas de aprendizaje semisupervisado para trabajar con datos parcialmente etiquetados.
+  \item Nueva asignación de $S^*$ y $O^*$:
+        \begin{itemize}
+          \item Severidad ($S^*$): 7. Aunque sigue siendo crítico, el impacto se reduce al priorizar áreas clave y utilizar técnicas semisupervisadas.
+          \item Probabilidad de ocurrencia ($O^*$): 3. Con un equipo ampliado y estrategias adicionales, la probabilidad de insuficiencia de datos etiquetados se reduce significativamente.
+        \end{itemize}
+\end{itemize}
 
 \section{14. Gestión de la calidad}
 \label{sec:calidad}
 
-\begin{consigna}{red}
-  Elija al menos diez Requisitos que a su criterio sean los más importantes/críticos/que aportan más valor y para cada uno de ellos indique las acciones de verificación y validación que permitan asegurar su cumplimiento.
+La gestión de la calidad de incluye actividades de conformidad y no conformidad con los diez requerimientos más importantes:
+\begin{itemize}[label={}]
+  \item {[}RF-ModeloVPC-3{]} El modelo de visión debe clasificar automáticamente las palmeras en dos categorías: infectadas y no infectadas.
+        \begin{itemize}
+          \item Verificación:
+                \begin{itemize}
+                  \item Implementar un conjunto de pruebas unitarias con imágenes previamente etiquetadas para medir la precisión del modelo en la clasificación.
+                  \item Realizar una prueba de estrés con al menos 100 imágenes con distintas condiciones de iluminación y perspectivas.
+                  \item Revisar los resultados comparándolos con las etiquetas originales y asegurar que la tasa de clasificación correcta sea al menos 80\%.
+                \end{itemize}
+          \item Validación:
+                \begin{itemize}
+                  \item Presentar un informe al cliente con las métricas de clasificación obtenidas, incluyendo precisión, \textit{recall} y \textit{F1-score}.
+                  \item Organizar una demostración con el cliente donde pueda verificar los resultados usando imágenes propias.
+                \end{itemize}
+        \end{itemize}
 
-  \begin{itemize}
-    \item Req \#1: copiar acá el requerimiento con su correspondiente número.
+  \item {[}RII-ModeloVPC-1{]} El modelo de visión por computadora debe proporcionar un servicio web que reciba una imagen y devuelva una estructura de datos con las detecciones y sus coordenadas.
+        \begin{itemize}
+          \item Verificación:
+                \begin{itemize}
+                  \item Realizar pruebas unitarias con solicitudes HTTP simuladas para verificar que el servicio web responde correctamente.
+                  \item Inspeccionar que la estructura de datos devuelta sea conforme al formato especificado (\textit{JSON} con coordenadas precisas).
+                  \item Revisar los logs del servidor para garantizar que no existen errores o tiempos de respuesta excesivos.
+                \end{itemize}
+          \item Validación:
+                \begin{itemize}
+                  \item Proporcionar al cliente una herramienta que permita enviar imágenes y recibir resultados, verificando que los resultados son útiles y correctos según su criterio.
+                  \item Realizar una sesión con el cliente para probar el servicio con casos reales.
+                \end{itemize}
+        \end{itemize}
 
-          \begin{itemize}
-            \item Verificación para confirmar si se cumplió con lo requerido antes de mostrar el sistema al cliente. Detallar.
-            \item Validación con el cliente para confirmar que está de acuerdo en que se cumplió con lo requerido. Detallar.
-          \end{itemize}
+  \item {[}RF-VisDetecciones-1{]} El visualizador de detecciones debe permitir la visualización de una imagen junto con sus detecciones.
+        \begin{itemize}
+          \item Verificación:
+                \begin{itemize}
+                  \item Probar el sistema con diferentes conjuntos de imágenes para garantizar que las detecciones se muestran correctamente sobre las imágenes originales.
+                  \item Evaluar que los \textit{bounding boxes} son precisos y corresponden a las coordenadas devueltas por el modelo.
+                \end{itemize}
+          \item Validación:
+                \begin{itemize}
+                  \item Realizar una sesión con el cliente para mostrar el funcionamiento del visualizador con imágenes reales y recibir retroalimentación sobre la presentación de los resultados.
+                  \item Proveer una interfaz al cliente para probar el visualizador con sus propias imágenes.
+                \end{itemize}
+        \end{itemize}
 
-  \end{itemize}
+  \item {[}RR-ModeloVPC-1{]} El modelo de visión por computadora debe mantener una precisión mínima del 90\% en la identificación de palmeras y un 80\% en la clasificación de infestación.
+        \begin{itemize}
+          \item Verificación:
+                \begin{itemize}
+                  \item Entrenar el modelo utilizando un conjunto de validación y evaluar las métricas de desempeño (precisión y \textit{recall}).
+                  \item Documentar los resultados con gráficos \textit{ROC} y matrices de confusión para cada categoría.
+                \end{itemize}
+          \item Validación:
+                \begin{itemize}
+                  \item Presentar al cliente los resultados obtenidos y explicar las métricas en términos no técnicos.
+                \end{itemize}
+        \end{itemize}
 
-  Tener en cuenta que en este contexto se pueden mencionar simulaciones, cálculos, revisión de hojas de datos, consulta con expertos, mediciones, etc.
+  \item {[}RDATOS-GestorDatos-1{]} El sistema debe permitir al cliente etiquetar al menos 100 imágenes, asegurando un equilibrio entre las clases de palmeras infectadas y no infectadas.
+        \begin{itemize}
+          \item Verificación:
+                \begin{itemize}
+                  \item Probar la herramienta de etiquetado asegurando que puede cargar, procesar y guardar imágenes etiquetadas sin errores.
+                  \item Realizar pruebas con imágenes de cada clase para garantizar el equilibrio en los datos generados.
+                  \item Ejecutar pruebas de integración entre la herramienta y la infraestructura (base de datos).
+                  \item Realizar una prueba para verificar que la herramienta esté accesible desde internet.
+                \end{itemize}
+          \item Validación:
+                \begin{itemize}
+                  \item Organizar una sesión con el cliente para utilizar la herramienta y verificar que puede etiquetar imágenes de forma intuitiva y eficiente.
+                  \item Solicitar retroalimentación directa del cliente para ajustes.
+                \end{itemize}
+        \end{itemize}
 
-  Las acciones de verificación suelen considerar al entregable como ``caja blanca'', es decir se conoce en profundidad su funcionamiento interno.
+  \item {[}RP-ModeloVPC-1{]} Se debe investigar el estado del arte en modelos de visión por computadora para la detección de la plaga.
+        \begin{itemize}
+          \item Verificación:
+                \begin{itemize}
+                  \item Documentar los modelos investigados, incluyendo sus métricas de desempeño y posibles adaptaciones para el proyecto.
+                  \item Comparar los resultados obtenidos con los modelos seleccionados para justificar la elección final.
+                \end{itemize}
+          \item Validación:
+                \begin{itemize}
+                  \item Revisar el documento de investigación con el cliente y explicar cómo las decisiones tomadas benefician al proyecto.
+                  \item Confirmar que el cliente está de acuerdo con la elección del modelo.
+                \end{itemize}
+        \end{itemize}
 
-  En cambio, las acciones de validación suelen considerar al entregable como ``caja negra'', es decir, que no se conocen los detalles de su funcionamiento interno.
+  \item {[}RF-GestorDatos-2{]} El gestor de datos debe almacenar los datos etiquetados en el repositorio de la Intendencia Municipal (IMNube).
+        \begin{itemize}
+          \item Verificación:
+                \begin{itemize}
+                  \item Realizar pruebas automatizadas para verificar la conexión al repositorio y la correcta subida de los datos etiquetados.
+                  \item Revisar manualmente que los datos almacenados están completos y accesibles.
+                \end{itemize}
+          \item Validación:
+                \begin{itemize}
+                  \item Confirmar que el cliente puede acceder a los datos según lo esperado.
+                \end{itemize}
+        \end{itemize}
 
-\end{consigna}
+  \item {[}RD-ModeloVPC-1{]} El sistema debe ser implementado utilizando Python 3 para el procesamiento backend.
+        \begin{itemize}
+          \item Verificación:
+                \begin{itemize}
+                  \item Inspeccionar los archivos fuente para garantizar que cumplen con la especificación.
+                  \item Realizar auditorías de código para verificar que las librerías utilizadas son compatibles con Python 3.
+                \end{itemize}
+          \item Validación:
+                \begin{itemize}
+                  \item Proporcionar al cliente evidencia de que el sistema se ejecuta correctamente en entornos configurados con Python 3.
+                \end{itemize}
+        \end{itemize}
+
+  \item {[}RII-VisDetecciones-1{]} El visualizador de detecciones debe brindar un criterio de satisfacción de usabilidad mayor al 80\% para los usuarios.
+        \begin{itemize}
+          \item Verificación:
+                \begin{itemize}
+                  \item Realizar pruebas de usabilidad con un grupo piloto, registrando tiempos de interacción y número de errores.
+                  \item Documentar las métricas obtenidas y compararlas contra el objetivo establecido.
+                \end{itemize}
+          \item Validación:
+                \begin{itemize}
+                  \item Organizar una sesión de prueba con el cliente y usuarios finales para recibir retroalimentación sobre la usabilidad del sistema.
+                  \item Ajustar el sistema si la satisfacción está por debajo del 80\%.
+                \end{itemize}
+        \end{itemize}
+
+  \item {[}RF-GestorDatos-1{]} El gestor de datos debe incluir una herramienta para el etiquetado de datos que permita al cliente etiquetar imágenes de drones.
+        \begin{itemize}
+          \item Verificación:
+                \begin{itemize}
+                  \item Probar exhaustivamente la herramienta asegurando que las funcionalidades básicas (carga de imágenes, etiquetado, guardado) funcionan correctamente.
+                  \item Simular escenarios de uso para detectar posibles errores.
+                \end{itemize}
+          \item Validación:
+                \begin{itemize}
+                  \item Entrenar al cliente en el uso de la herramienta y recopilar retroalimentación después de una sesión práctica.
+                  \item Realizar ajustes según sea necesario para cumplir con las expectativas del cliente.
+                \end{itemize}
+        \end{itemize}
+
+  \item {[}RDOC-InformeFinal-1{]} Se debe elaborar un informe final que incluya una presentación completa del proyecto y sus resultados.
+        \begin{itemize}
+          \item Verificación:
+                \begin{itemize}
+                  \item Revisar el informe final asegurando que cumple con los siguientes aspectos:
+                        \begin{itemize}
+                          \item Explicación detallada del objetivo del proyecto.
+                          \item Descripción de la metodología utilizada, incluyendo los modelos seleccionados y su entrenamiento.
+                          \item Análisis de los resultados obtenidos, con métricas claras y gráficos representativos.
+                          \item Conclusiones y recomendaciones futuras.
+                          \item Asegurar que la estructura sea la proporciona por la \pertesupname.
+                          \item Verificar que el informe esté estructurado y redactado en un lenguaje claro y profesional.
+                        \end{itemize}
+                \end{itemize}
+          \item Validación:
+                \begin{itemize}
+                  \item Entregar el informe final a los interesados y realizar una presentación del contenido.
+                \end{itemize}
+        \end{itemize}
+\end{itemize}
 
 \section{15. Procesos de cierre}
 \label{sec:cierre}
 
-\begin{consigna}{red}
-  Establecer las pautas de trabajo para realizar una reunión final de evaluación del proyecto, tal que contemple las siguientes actividades:
+Dentro de los procesos de cierre de este proyecto se llevarán a cabo las siguientes actividades:
 
-  \begin{itemize}
-    \item Pautas de trabajo que se seguirán para analizar si se respetó el Plan de Proyecto original:\\
-          - Indicar quién se ocupará de hacer esto y cuál será el procedimiento a aplicar.
-    \item Identificación de las técnicas y procedimientos útiles e inútiles que se emplearon, los problemas que surgieron y cómo se solucionaron:\\
-          - Indicar quién se ocupará de hacer esto y cuál será el procedimiento para dejar registro.
-    \item Indicar quién organizará el acto de agradecimiento a todos los interesados, y en especial al equipo de trabajo y colaboradores:\\
-          - Indicar esto y quién financiará los gastos correspondientes.
-  \end{itemize}
+\begin{itemize}
+  \item Realización de un análisis comparativo entre el plan inicial y la ejecución real, destacando desviaciones, logros y áreas de mejora.
+  \item Evaluación de los procedimientos, técnicas aplicadas y los principales desafíos enfrentados durante el ciclo de vida del proyecto.
+  \item Elaboración de propuestas concretas de mejora para futuros proyectos similares, basadas en las lecciones aprendidas.
+  \item Presentación de los resultados y entregables del proyecto a los interesados de la Intendencia de Montevideo.
+  \item Organización de una defensa formal del proyecto en el marco de la Facultad de Ingeniería de la Universidad de Buenos Aires, con la participación de los principales interesados.
+  \item Consolidación y archivo de toda la documentación relevante en los repositorios institucionales de la IM y de la FIUBA, garantizando su accesibilidad y conservación.
+\end{itemize}
 
-\end{consigna}
-
-\bibliographystyle{unsrt} % Elige el estilo de cita (plain, alpha, apa, etc.)
+\bibliographystyle{unsrt} % Estilo de la bibliografía.
 \bibliography{charter} % Nombre del archivo .bib sin extensión
 
 \end{document}
