@@ -63,6 +63,7 @@
     2        & Se corrige secciones 1, 2, 3, 4 y 5. \newline Se completa hasta el punto 9 inclusive. & {05} de {noviembre} de 2024 \\ \hline
     3        & Se corrige secciones 1, 2, 6 y 9. \newline Se completa hasta el punto 12 inclusive.   & {12} de {noviembre} de 2024 \\ \hline
     4        & Se corrige secciones 1, 9 y 12. \newline Se completa el plan.                         & {19} de {noviembre} de 2024 \\ \hline
+    4.1      & Se corrige secciones 13 y 14.                                                         & {26} de {noviembre} de 2024 \\ \hline
 
     % Si hay más correcciones pasada la versión 4 también se deben especificar acá
   \end{tabularx}
@@ -140,7 +141,7 @@ La implementación de esta plataforma ofrece beneficios tanto económicos como a
 \begin{table}[ht]
   %\caption{Identificación de los interesados}
   %\label{tab:interesados}
-  \begin{tabularx}{\linewidth}{@{}|l|X|X|l|@{}}
+  \begin{tabularx}{\linewidth} {@{}|l|X|X|l|@{}}
     \hline
     \rowcolor[HTML]{C0C0C0}
     Rol           & Nombre y Apellido        & Organización    & Puesto                        \\ \hline
@@ -203,7 +204,7 @@ Para el desarrollo del presente proyecto se supone que:
   \item Se cuenta con la infraestructura necesaria para el despliegue de los componentes de software.
   \item Se cuenta con el apoyo de la IM para la ejecución del proyecto.
   \item Se cuenta con que se pueda detectar la plaga mediante imágenes RGB o infrarrojas (o combinación de ambas) obtenidas desde drones.
-  \item Se cuenta con imágenes georeferenciadas.
+  \item Se cuenta con imágenes georreferenciadas.
   \item Se cuenta con mosaicos ortorectificados.
 
 \end{itemize}
@@ -540,7 +541,7 @@ $\rightarrow$ 5.4. Implantación del modelo de visión por computadora (20 h). \
 $\rightarrow$ 7.1. Escritura del informe de avance (20 h). \newline
 $\rightarrow$ 7.2. Escritura memoria en taller de trabajo final A (40 h). \newline
 $\rightarrow$ 7.3. Escritura memoria en taller de trabajo final B (40 h). \newline
-$\rightarrow$ 7.4. Preparación de presentación del proyecto (20 h). \newline
+$\rightarrow$ 7.4. Preparación de presentación del proyecto (20 h).
 
 
 El camino crítico indica que el proyecto puede hacerse en un mínimo de 400 horas.
@@ -601,22 +602,22 @@ Los principales costos asociados de este proyecto se encuentran en las horas de 
 
     Horas de cómputo                                            &
     \multicolumn{1}{c|}{100 h}                                  &
-    \multicolumn{1}{c|}{USD 0.1}                                &
+    \multicolumn{1}{c|}{USD 0.1 / h}                            &
     \multicolumn{1}{c|}{USD 10}                                     \\ \hline
 
     Infraestructura y almacenamiento                            &
     \multicolumn{1}{c|}{300 h}                                  &
-    \multicolumn{1}{c|}{USD 0.1}                                &
+    \multicolumn{1}{c|}{USD 0.1 / h}                            &
     \multicolumn{1}{c|}{USD 30}                                     \\ \hline
 
     Horas de etiquetado                                         &
     \multicolumn{1}{c|}{40 h}                                   &
-    \multicolumn{1}{c|}{USD 25}                                 &
+    \multicolumn{1}{c|}{USD 25 / h}                             &
     \multicolumn{1}{c|}{USD 1000}                                   \\ \hline
 
     Vuelos de drones                                            &
     \multicolumn{1}{c|}{5 U}                                    &
-    \multicolumn{1}{c|}{USD 500}                                &
+    \multicolumn{1}{c|}{USD 500 / U}                            &
     \multicolumn{1}{c|}{USD 2500}                                   \\ \hline
 
     \multicolumn{3}{|c|}{SUBTOTAL}                              &
@@ -731,17 +732,17 @@ b) Tabla de gestión de riesgos (el $RPN$ se calcula como $RPN=S*O$):
     \rowcolor[HTML]{C0C0C0}
     Riesgo                                                                   & $S$ & $O$ & $RPN$ & $S^*$ & $O^*$ & $RPN^*$ \\ \hline
     1. Retrasos en el etiquetado de imágenes por parte del cliente           & 8   & 6   & 48    & 8     & 3     & 24      \\ \hline
-    2. Limitaciones en la calidad de las imágenes capturadas por los drones  & 9   & 5   & 45    & 6     & 2     & 12      \\ \hline
+    2. Limitaciones en la calidad de las imágenes capturadas por los drones  & 9   & 5   & 45    & 9     & 2     & 18      \\ \hline
     3. Limitaciones en la infraestructura para el procesamiento de datos     & 7   & 4   & 28    & -     & -     & -       \\ \hline
     4. Dificultades para detectar la plaga mediante las imágenes disponibles & 10  & 5   & 50    & 10    & 3     & 30      \\ \hline
     5. Pérdida de apoyo por parte de la IM                                   & 8   & 2   & 16    & -     & -     & -       \\ \hline
     6. Errores en la georreferenciación de las imágenes                      & 8   & 3   & 24    & -     & -     & -       \\ \hline
-    7. Falta de representatividad en el conjunto de datos                    & 9   & 6   & 54    & 8     & 3     & 24      \\ \hline
+    7. Falta de representatividad en el conjunto de datos                    & 9   & 6   & 54    & 9     & 3     & 27      \\ \hline
     8. Escalabilidad limitada del sistema                                    & 7   & 4   & 28    & -     & -     & -       \\ \hline
     9. Problemas legales o de privacidad relacionados con el uso de drones   & 8   & 2   & 16    & -     & -     & -       \\ \hline
-    10. Sobreajuste del modelo a los datos de entrenamiento                  & 6   & 6   & 36    & 5     & 2     & 10      \\ \hline
+    10. Sobreajuste del modelo a los datos de entrenamiento                  & 6   & 6   & 36    & 6     & 2     & 12      \\ \hline
     11. Cambios en las prioridades del cliente                               & 6   & 2   & 12    & -     & -     & -       \\ \hline
-    12. Insuficiencia de imágenes etiquetadas                                & 8   & 6   & 48    & 7     & 3     & 21      \\ \hline
+    12. Insuficiencia de imágenes etiquetadas                                & 8   & 6   & 48    & 8     & 3     & 24      \\ \hline
   \end{tabularx}%
   \caption{Matriz de riesgos del proyecto.}
 \end{table}
@@ -767,7 +768,7 @@ Riesgo 2: limitaciones en la calidad de las imágenes capturadas por los drones.
   \item Plan de mitigación: establecer protocolos para revisar la calidad de las imágenes inmediatamente después de la captura. En caso de problemas, se realizarán vuelos adicionales en las áreas afectadas. Además, preparar algoritmos que puedan manejar ciertas imperfecciones en las imágenes.
   \item Nueva asignación de $S^*$ y $O^*$:
         \begin{itemize}
-          \item Severidad ($S^*$): 6. La severidad se reduce, ya que el impacto de imágenes de baja calidad puede ser mitigado parcialmente con algoritmos robustos, así como una buena comunicación con el Departamento de Geomática.
+          \item Severidad ($S^*$): 9. Se mantiene la severidad, dado que las imágenes aún pueden ser de baja calidad.
           \item Probabilidad de ocurrencia ($O^*$): 2. Con los protocolos de control de calidad y la posibilidad de vuelos adicionales, es menos probable que las imágenes finales sean inadecuadas.
         \end{itemize}
 \end{itemize}
@@ -787,7 +788,7 @@ Riesgo 7: falta de representatividad en el conjunto de datos.
   \item Plan de mitigación: asegurar la diversidad del conjunto de datos recopilando imágenes de diferentes zonas, condiciones climáticas y estados de infestación. Además, utilizar técnicas de aumento de datos (\textit{data augmentation}) para simular escenarios diversos.
   \item Nueva asignación de $S^*$ y $O^*$:
         \begin{itemize}
-          \item Severidad ($S^*$): 8. Aunque el impacto sigue siendo alto, la representatividad se mejora significativamente con un conjunto de datos diverso y técnicas de aumento. \item Probabilidad de ocurrencia ($O^*$): 3. Con un enfoque proactivo en la recopilación de datos y el uso de \textit{data augmentation}, se reduce la probabilidad de falta de representatividad. \end{itemize}
+          \item Severidad ($S^*$): 9. Aunque el impacto sigue siendo el mismo, la representatividad se mejora significativamente con un conjunto de datos diverso y técnicas de aumento. \item Probabilidad de ocurrencia ($O^*$): 3. Con un enfoque proactivo en la recopilación de datos y el uso de \textit{data augmentation}, se reduce la probabilidad de falta de representatividad. \end{itemize}
 \end{itemize}
 
 Riesgo 10: sobreajuste del modelo a los datos de entrenamiento.
@@ -795,7 +796,7 @@ Riesgo 10: sobreajuste del modelo a los datos de entrenamiento.
   \item Plan de mitigación: aplicar regularización adecuada (\textit{Dropout}, \textit{L2}) y realizar una validación cruzada exhaustiva para garantizar la generalización del modelo. Incorporar nuevos datos en el entrenamiento si es posible.
   \item Nueva asignación de $S^*$ y $O^*$:
         \begin{itemize}
-          \item Severidad ($S^*$): 5. Con una adecuada validación y regularización, el impacto del sobreajuste disminuye significativamente.
+          \item Severidad ($S^*$): 6. El impacto del sobreajuste es el mismo al aplicar estas técnicas.
           \item Probabilidad de ocurrencia ($O^*$): 2. La probabilidad se reduce drásticamente con las técnicas mencionadas, asegurando un modelo más generalizable.
         \end{itemize}
 \end{itemize}
@@ -805,7 +806,7 @@ Riesgo 12: insuficiencia de imágenes etiquetadas.
   \item Plan de mitigación: ampliar el equipo encargado del etiquetado para incluir colaboradores adicionales en caso de necesidad. Además, priorizar el etiquetado de las áreas más críticas y utilizar técnicas de aprendizaje semisupervisado para trabajar con datos parcialmente etiquetados.
   \item Nueva asignación de $S^*$ y $O^*$:
         \begin{itemize}
-          \item Severidad ($S^*$): 7. Aunque sigue siendo crítico, el impacto se reduce al priorizar áreas clave y utilizar técnicas semisupervisadas.
+          \item Severidad ($S^*$): 8. Este riesgo sigue siendo crítico, por la naturaleza de la necesidad de datos de los modelos de visión por computadora.
           \item Probabilidad de ocurrencia ($O^*$): 3. Con un equipo ampliado y estrategias adicionales, la probabilidad de insuficiencia de datos etiquetados se reduce significativamente.
         \end{itemize}
 \end{itemize}
@@ -966,7 +967,7 @@ La gestión de la calidad de incluye actividades de conformidad y no conformidad
                           \item Descripción de la metodología utilizada, incluyendo los modelos seleccionados y su entrenamiento.
                           \item Análisis de los resultados obtenidos, con métricas claras y gráficos representativos.
                           \item Conclusiones y recomendaciones futuras.
-                          \item Asegurar que la estructura sea la proporciona por la \pertesupname.
+                          \item Asegurar que la estructura sea la proporcionada por la \pertesupname.
                           \item Verificar que el informe esté estructurado y redactado en un lenguaje claro y profesional.
                         \end{itemize}
                 \end{itemize}
