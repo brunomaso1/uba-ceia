@@ -1,0 +1,77 @@
+# Este docker-compose.ngrok.yml permite definir los servicios de CVAT que se ejecutarán en el entorno de ngrok.
+# Se ejecuta con el comando:
+#   - docker compose --env-file .env.ngrok -f docker-compose.yml -f docker-compose.ngrok.yml up.
+# Cambios:
+#   - Se agrega el nombre del proyecto, para que todos los servicios de CVAT tengan un prefijo.
+#   - Se sustituye la red cvat por la red main en todos los servicios.
+#   - Se agrega CSRF_TRUSTED_ORIGINS para permitir el acceso desde el dominio de ngrok. Esto se hace mediante un workaround, en donde se extiende la configuración de "settings" de Django y se agrega la variable de entorno CSRF_TRUSTED_ORIGINS. Esto es porque en el archivo cvat/cvat/settings/base.py ni en el production.py se le pasa la variable de entorno CSRF_TRUSTED_ORIGINS que es necesario para que Django permita el acceso desde el dominio de ngrok. El workaround consiste en importar esta configuración, agregar la variable de entorno y configurar el docker-compose.yml para que apunte a este archivo.
+
+name: picudo-rojo-project
+
+x-default_services_properties: &default_services_properties
+  networks: !override
+    - main
+
+services:
+  cvat_db: *default_services_properties
+
+  cvat_redis_inmem: *default_services_properties
+
+  cvat_redis_ondisk: *default_services_properties
+
+  cvat_server:
+    environment:
+      DJANGO_SETTINGS_MODULE: settings
+    volumes:
+      - ./csrf-ngrok-settings.py:/home/django/settings.py:ro
+    networks: !override
+      main:
+        aliases:
+          - cvat-server
+
+  cvat_utils: *default_services_properties
+
+  cvat_worker_import: *default_services_properties
+
+  cvat_worker_export: *default_services_properties
+
+  cvat_worker_annotation: *default_services_properties
+
+  cvat_worker_webhooks: *default_services_properties
+
+  cvat_worker_quality_reports: *default_services_properties
+
+  cvat_worker_analytics_reports: *default_services_properties
+
+  cvat_worker_chunks: *default_services_properties
+
+  cvat_ui: *default_services_properties
+
+  traefik: *default_services_properties
+
+  cvat_opa:
+    networks: !override
+      main:
+        aliases:
+          - opa
+
+  cvat_clickhouse:
+    networks: !override
+      main:
+        aliases:
+          - clickhouse
+
+  cvat_vector:
+    networks: !override
+      main:
+        aliases:
+          - vector
+
+  cvat_grafana:
+    networks: !override
+      main:
+        aliases:
+          - grafana
+
+networks:
+  main:

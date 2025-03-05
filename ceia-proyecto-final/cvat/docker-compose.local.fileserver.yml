@@ -1,0 +1,18 @@
+# Este docker-compose.local.fileserver.yml permite montar un directorio compartido para almacenar las imágenes (local fileserver).
+# Se ejecuta con el comando:
+#   - docker compose --env-file .env.local -f docker-compose.yml -f docker-compose.local.yml -f docker-compose.local.fileserver.yml up.
+#   - docker compose --env-file .env.ngrok -f docker-compose.yml -f docker-compose.ngrok.yml -f docker-compose.local.fileserver.yml up.
+# Cambios:
+#   - Se extiende agregando un volumen a servicios específicos.
+
+x-default_services_properties: &default_services_properties
+  volumes:
+    - E:/Documentos/Proyectos/local-storage:/home/django/share:rw
+
+services:
+  cvat_worker_import:
+    << : *default_services_properties
+  cvat_server:
+    << : *default_services_properties
+  cvat_worker_chunks:
+    << : *default_services_properties
