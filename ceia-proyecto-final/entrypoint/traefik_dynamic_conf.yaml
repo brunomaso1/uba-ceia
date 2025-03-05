@@ -12,6 +12,12 @@ http:
       entryPoints:
         - web
 
+    landing-page-router:
+      rule: "Host(`picudo-rojo.org`)"       
+      service: landing-page
+      entryPoints:
+        - web
+
   services:
     cvat-service:
       loadBalancer:
@@ -22,3 +28,8 @@ http:
       loadBalancer:
         servers:      
         - url: "http://host.docker.internal:5151"
+
+    landing-page:
+      loadBalancer:
+        servers:
+        - url: "http://host.docker.internal:9100"
