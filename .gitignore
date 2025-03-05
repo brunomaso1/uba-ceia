@@ -285,3 +285,4 @@ ceia-proyecto-final/cvat/**
 !ceia-proyecto-final/cvat/docker-compose.ngrok.yml
 !ceia-proyecto-final/cvat/docker-compose.scaleway.yml
 !ceia-proyecto-final/cvat/example*
+!ceia-proyecto-final/cvat/readme.md
