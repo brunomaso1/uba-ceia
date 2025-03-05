@@ -1,0 +1,69 @@
+name: picudo-rojo-project # Incluir todos las aplicaciones en un mismo proyecto.
+
+# Rotating logs + common network
+x-services_defaults: &services_defaults
+  networks: &default-network
+    - main
+  logging:
+    driver: "local"
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  minio:
+    << : *services_defaults
+    image: quay.io/minio/minio:RELEASE.2025-02-03T21-03-04Z
+    command: server /data --console-address ":9009"
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9009:9009"
+    volumes:
+      - ./minio-data:/data
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minio_admin_do_not_use_in_production}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-minio_admin_do_not_use_in_production}
+      - MINIO_PROMETHEUS_URL=${MINIO_PROMETHEUS_URL:-http://prometheus:9090}
+      - MINIO_PROMETHEUS_AUTH_TYPE=${MINIO_PROMETHEUS_AUTH_TYPE:-public}
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mc:
+    image: minio/mc
+    depends_on:
+      - minio
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - MINIO_INITIAL_BUCKET=${MINIO_INITIAL_BUCKET}
+    entrypoint: >
+      /bin/sh -c "
+      until (/usr/bin/mc alias set myminio http://minio:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD) do sleep 1; done;
+      /usr/bin/mc mb myminio/${MINIO_INITIAL_BUCKET};
+      /usr/bin/mc policy set public myminio/${MINIO_INITIAL_BUCKET};
+      exit 0;
+      "
+    networks: *default-network    
+
+  prometheus:
+    << : *services_defaults
+    image: quay.io/prometheus/prometheus:v3.1.0
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/minio/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus-data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+
+volumes:
+  minio-data:
+  prometheus-data:
+
+networks:
+  main:

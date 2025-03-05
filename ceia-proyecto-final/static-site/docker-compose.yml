@@ -1,0 +1,12 @@
+name: picudo-rojo-project
+services:
+  test-app:
+    image: dockersamples/static-site
+    restart: always
+    ports:
+      - "9100:80"
+    networks:
+      - main
+
+networks:
+  main:

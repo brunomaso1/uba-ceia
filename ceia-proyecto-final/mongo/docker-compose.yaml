@@ -1,0 +1,47 @@
+name: picudo-rojo-project
+
+x-services_defaults: &services_defaults
+  networks:
+    - main
+
+services:
+  mongodb:
+    << : *services_defaults
+    image: mongo:8.0.4
+    container_name: ${MONGODB_CONTAINER_NAME:-mongo}
+    hostname: mongo
+    volumes:
+      - ./mongodb/initdb.d/:/docker-entrypoint-initdb.d/:ro
+      - ./mongodb_data:/data/db/
+      - ./mongodb_log:/var/log/mongodb/
+    environment:
+      - MONGODB_EXPRESS_USERNAME=${MONGODB_EXPRESS_USERNAME}
+      - MONGODB_EXPRESS_PASSWORD=${MONGODB_EXPRESS_PASSWORD}
+      - MONGODB_INITDB_DATABASE=${MONGODB_INITDB_DATABASE}
+      - MONGODB_USER=${MONGODB_USER}
+      - MONGODB_PASSWORD=${MONGODB_PASSWORD}
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_INITDB_ROOT_PASSWORD}
+    ports:
+      - "27017:27017"
+  
+  mongo-express:
+    << : *services_defaults
+    image: mongo-express:1.0.2
+    container_name: mongo_express
+    restart: always
+    hostname: mongo_express
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGODB_INITDB_ROOT_USERNAME}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGODB_INITDB_ROOT_PASSWORD}
+      ME_CONFIG_MONGODB_PORT: 27017
+      ME_CONFIG_MONGODB_SERVER: ${MONGODB_CONTAINER_NAME:-mongo}
+      ME_CONFIG_BASICAUTH_USERNAME: ${MONGODB_EXPRESS_USERNAME}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGODB_EXPRESS_PASSWORD}
+    ports:
+      - 8081:8081
+    depends_on:
+      - mongodb
+
+networks:
+  main:

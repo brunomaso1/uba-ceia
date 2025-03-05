@@ -1,0 +1,22 @@
+name: picudo-rojo-project
+
+services:
+  traefik-entrypoint:
+    image: traefik:v3.3.3
+    container_name: "traefik-entrypoint"
+    restart: always
+    command:
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--providers.file.filename=/etc/traefik/dynamic_conf.yaml"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8100:8080" # Dashboard (api.insecure=true)
+    volumes:
+      - ./traefik_dynamic_conf.yaml:/etc/traefik/dynamic_conf.yaml
+    networks:
+      - main
+
+networks:
+  main:

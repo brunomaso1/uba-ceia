@@ -1,0 +1,24 @@
+http:
+  routers:
+    cvat-router:
+      rule: "Host(`cvat.picudo-rojo.org`)"       
+      service: cvat-service
+      entryPoints:
+        - web
+    
+    fiftyone-router:
+      rule: "Host(`fiftyone.picudo-rojo.org`)"       
+      service: fiftyone-service
+      entryPoints:
+        - web
+
+  services:
+    cvat-service:
+      loadBalancer:
+        servers:      
+        - url: "http://host.docker.internal:8080"
+
+    fiftyone-service:
+      loadBalancer:
+        servers:      
+        - url: "http://host.docker.internal:5151"
