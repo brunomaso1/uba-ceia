@@ -51,3 +51,50 @@ docker compose up
 ```bash
 docker compose logs
 ```
+
+### Backup y restore
+
+Para realizar un backup y restore de la base de datos, se puede simplemente copiar la carpeta mongodb_data:
+
+```bash
+# Generar el nombre de la carpeta de respaldo con formato dinámico
+$backupFolderName = "backup-" + (Get-Date -Format "yyyyMMdd-HHmmss")
+
+# Crear la carpeta de respaldo
+New-Item -Path $backupFolderName -ItemType Directory
+
+# Copiar la carpeta de datos de MongoDB
+Copy-Item -Path "mongodb_data" -Destination $backupFolderName -Recurse
+```
+
+> 📝<font color='Gray'>NOTA:</font> La forma sugerida es utilizar mongodump y mongorestore.
+
+Con mongodump y mongorestore:
+
+`mongodump` $\rightarrow$
+```bash
+# Generar el nombre de la carpeta de respaldo con formato dinámico
+$backupFolderName = "backup-" + (Get-Date -Format "yyyyMMdd-HHmmss")
+
+# Crear la carpeta de respaldo
+New-Item -Path $backupFolderName -ItemType Directory
+
+# Ejecutar un contenedor efímero para hacer el backup
+docker run --rm --network main -v "${PWD}\$backupFolderName:/backup" mongo mongodump --host mongodb --out /backup
+```
+
+`mongorestore` $\rightarrow$
+```bash
+# Solicitar la carpeta de respaldo a restaurar
+$backupFolderName = Read-Host "Ingrese el nombre de la carpeta de backup a restaurar"
+
+# Verificar si la carpeta existe
+if (Test-Path $backupFolderName) {
+    # Ejecutar la restauración
+    docker run --rm --network main -v "${PWD}\$backupFolderName:/backup" mongo mongorestore --host mongodb /backup
+
+    Write-Output "Restauración completada desde: $backupFolderName"
+} else {
+    Write-Output "La carpeta especificada no existe."
+}
+```

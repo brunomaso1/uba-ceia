@@ -271,3 +271,100 @@ docker compose exec app bash
 		"Secret Access Key": "Clave Secreta",
 	}
 	```
+
+### Respaldo
+
+https://docs.cvat.ai/docs/administration/advanced/backup_guide/
+
+Para respaldar los datos de CVAT, hay que respaldar varios volumenes de Docker. Para esto, se puede utilizar `docker-compose` y `docker` para realizar el backup de los datos.
+Con `docker-compose` habría que modificar los volúmenes para que se monten en el fileserver local y ahí realizar la copia.
+
+Con `docker` se puede realizar un backup de los volúmenes de la siguiente forma:
+
+> 📝<font color='Gray'>NOTA:</font> Hay que detener los contenedores antes de realizar el backup: `docker compose stop` (incluir los flags ingresados al iniciar los contenedores)
+
+> 🔮 <em><font color='violet'>Función auxiliar:</font></em>
+> 
+> Ejecución en bash:
+> ```bash
+> mkdir backup
+>
+> docker run --rm --name temp_backup --volumes-from cvat_db -v $(pwd)/backup:/backup ubuntu tar -czvf /backup/cvat_db.tar.gz /var/lib/postgresql/data
+> docker run --rm --name temp_backup --volumes-from cvat_server -v $(pwd)/backup:/backup ubuntu tar -czvf /backup/cvat_data.tar.gz /home/django/data
+> docker run --rm --name temp_backup --volumes-from cvat_clickhouse -v $(pwd)/backup:/backup ubuntu tar -czvf /backup/cvat_events_db.tar.gz /var/lib/clickhouse
+> ```
+
+<details>
+  <summary>Script de Respaldo</summary>
+  <code>
+
+	#!/bin/bash
+
+	# Generar el nombre de la carpeta de respaldo con formato dinámico
+	backupFolderName="backup-$(date +'%Y%m%d-%H%M%S')"
+
+	# Crear la carpeta de respaldo
+	mkdir -p "$backupFolderName"
+
+	# Ejecutar los comandos de Docker
+	docker run --rm --name temp_backup --volumes-from cvat_db -v "$(pwd)/$backupFolderName:/backup" ubuntu tar -czvf /backup/cvat_db.tar.gz /var/lib/postgresql/data
+
+	docker run --rm --name temp_backup --volumes-from cvat_server -v "$(pwd)/$backupFolderName:/backup" ubuntu tar -czvf /backup/cvat_data.tar.gz /home/django/data
+
+	docker run --rm --name temp_backup --volumes-from cvat_clickhouse -v "$(pwd)/$backupFolderName:/backup" ubuntu tar -czvf /backup/cvat_events_db.tar.gz /var/lib/clickhouse
+
+  </code>
+</details>
+
+Ejecución en PowerShell:
+```bash
+# Generar el nombre de la carpeta de respaldo con formato dinámico
+$backupFolderName = "backup-" + (Get-Date -Format "yyyyMMdd-HHmmss")
+
+# Crear la carpeta de respaldo
+New-Item -Path $backupFolderName -ItemType Directory
+
+# Generar la ruta de la carpeta de respaldo
+$backupPath = Join-Path -Path (pwd) -ChildPath $backupFolderName
+
+# Ejecutar los comandos de Docker
+docker run --rm --name temp_backup --volumes-from cvat_db -v "$($backupPath):/backup" ubuntu tar -czvf /backup/cvat_db.tar.gz /var/lib/postgresql/data
+docker run --rm --name temp_backup --volumes-from cvat_server -v "$($backupPath):/backup" ubuntu tar -czvf /backup/cvat_data.tar.gz /home/django/data
+docker run --rm --name temp_backup --volumes-from cvat_clickhouse -v "$($backupPath):/backup" ubuntu tar -czvf /backup/cvat_events_db.tar.gz /var/lib/clickhouse
+```
+
+Restauración de los datos:
+```bash
+cd <path_to_backup_folder>
+docker run --rm --name temp_backup --volumes-from cvat_db -v $(pwd):/backup ubuntu bash -c "cd /var/lib/postgresql/data && tar -xvf /backup/cvat_db.tar.gz --strip 4"
+docker run --rm --name temp_backup --volumes-from cvat_server -v $(pwd):/backup ubuntu bash -c "cd /home/django/data && tar -xvf /backup/cvat_data.tar.gz --strip 3"
+docker run --rm --name temp_backup --volumes-from cvat_clickhouse -v $(pwd):/backup ubuntu bash -c "cd /var/lib/clickhouse && tar -xvf /backup/cvat_events_db.tar.gz --strip 3"
+```
+
+#### Backup de la base de datos
+
+Lo ideal es utilizar `pg_dump` para realizar el backup de la base de datos. Para esto, se puede utilizar el siguiente comando:
+
+`pg_dump` $\rightarrow$
+```bash
+# Ejecutar un contenedor efímero para hacer el backup
+docker run --rm --network picudo-rojo-project_main -v "($backupPath):/backup" postgres:15-alpine pg_dump -h cvat_db -U postgres -d cvat -F c -f /backup/backup.sql
+```
+
+`pg_restore` $\rightarrow$
+```bash
+# Solicitar la carpeta de respaldo a restaurar
+$backupFolderName = Read-Host "Ingrese el nombre de la carpeta de backup a restaurar"
+
+# Verificar si la carpeta existe
+if (Test-Path "$backupFolderName\backup.sql") {
+    # Ejecutar la restauración
+    docker run --rm --network main -v "${PWD}\$backupFolderName:/backup" postgres pg_restore -h cvat_db -U postgres -d postgres -c /backup/backup.sql
+
+    Write-Output "Restauración completada desde: $backupFolderName\backup.sql"
+} else {
+    Write-Output "No se encontró el archivo de backup en la carpeta especificada."
+}
+```
+
+Sin embargo, si se detienen los contendores se puede realizar el backup copiando los archivos del volumen montando con el código anterior.

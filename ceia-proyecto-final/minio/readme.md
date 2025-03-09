@@ -78,3 +78,46 @@ docker compose -f docker-compose.yml -f docker-compose.https.yml up
 Donde este archivo `docker-compose.https.yml` monta los certificados en el contenedor de Minio.
 
 > 📝<font color='Gray'>NOTA:</font> Se puede automatizar este proceso con CertBot y utilizar los certificados de Let's Encrpyt.
+
+### Backup y restore
+
+Para realizar un backup y restore de la base de datos, se puede simplemente copiar la carpeta minio-data.
+Sin embargo, lo recomendado es utilizar `mc mirror` para hacer un backup de los buckets.
+
+Para realizar un backup:
+```bash
+# Generar el nombre de la carpeta de respaldo con formato dinámico
+$backupFolderName = "backup-minio-" + (Get-Date -Format "yyyyMMdd-HHmmss")
+
+# Crear la carpeta de respaldo
+New-Item -Path $backupFolderName -ItemType Directory
+
+# Ejecutar el backup con mc mirror
+docker run --rm --network main -v "${PWD}\$backupFolderName:/backup" minio/mc \
+  /bin/sh -c "
+    mc alias set myminio http://minio:9000 $env:MINIO_ROOT_USER $env:MINIO_ROOT_PASSWORD &&
+    mc mirror --overwrite --preserve myminio /backup
+  "
+
+Write-Output "Backup de MinIO guardado en: $backupFolderName"
+```
+
+Para restaurar:
+```bash
+# Solicitar la carpeta de respaldo a restaurar
+$backupFolderName = Read-Host "Ingrese el nombre de la carpeta de backup de MinIO a restaurar"
+
+# Verificar si la carpeta existe
+if (Test-Path "$backupFolderName") {
+    # Restaurar usando mc mirror
+    docker run --rm --network main -v "${PWD}\$backupFolderName:/backup" minio/mc \
+      /bin/sh -c "
+        mc alias set myminio http://minio:9000 $env:MINIO_ROOT_USER $env:MINIO_ROOT_PASSWORD &&
+        mc mirror --overwrite /backup myminio
+      "
+
+    Write-Output "Restauración completada desde: $backupFolderName"
+} else {
+    Write-Output "La carpeta especificada no existe."
+}
+```
