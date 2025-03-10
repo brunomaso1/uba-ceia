@@ -1,19 +1,55 @@
 http:
+  middlewares:
+    # ldap-auth:
+    #   forwardAuth:
+    #     address: "http://ldap-auth-service:4181" # Dirección del servicio de autenticación LDAP
+    #     trustForwardHeader: true
+
+    # Middleware para redirigir la URL directa de registro
+    redirect-cvat-registration:
+      redirectRegex:
+        regex: "^https?://cvat.picudo-rojo.org/auth/register"
+        replacement: "https://cvat.picudo-rojo.org"
+        permanent: true
+
+    # Middleware para modificar el HTML y eliminar el enlace de registro
+    # Se podría utilizar Traefik para inyectar un JS que elimine el enlace de registro.
+    remove-register-link:
+      plugin:
+        rewritebody:
+          lastModified: "true"
+          rewrites:
+            - regex: "Create an account"
+            - replacement: "ESTO ES UNA PRUEBA"
+
+    # Middleware para bloquear las API de registro
+    block-registration-api:
+      redirectRegex:
+        regex: "^https?://cvat.picudo-rojo.org/api/auth/register"
+        replacement: "https://cvat.picudo-rojo.org"
+        permanent: true
+
   routers:
     cvat-router:
-      rule: "Host(`cvat.picudo-rojo.org`)"       
+      rule: "Host(`cvat.picudo-rojo.org`)"
       service: cvat-service
       entryPoints:
         - web
-    
+      middlewares:
+        - redirect-cvat-registration
+        - remove-register-link
+        - block-registration-api
+
     fiftyone-router:
-      rule: "Host(`fiftyone.picudo-rojo.org`)"       
+      rule: "Host(`fiftyone.picudo-rojo.org`)"
       service: fiftyone-service
       entryPoints:
         - web
+      middlewares:
+        # - ldap-auth
 
     landing-page-router:
-      rule: "Host(`picudo-rojo.org`)"       
+      rule: "Host(`picudo-rojo.org`)"
       service: landing-page
       entryPoints:
         - web
@@ -21,15 +57,15 @@ http:
   services:
     cvat-service:
       loadBalancer:
-        servers:      
-        - url: "http://host.docker.internal:8080"
+        servers:
+          - url: "http://host.docker.internal:8080"
 
     fiftyone-service:
       loadBalancer:
-        servers:      
-        - url: "http://host.docker.internal:5151"
+        servers:
+          - url: "http://host.docker.internal:5151"
 
     landing-page:
       loadBalancer:
         servers:
-        - url: "http://host.docker.internal:9100"
+          - url: "http://host.docker.internal:9100"
