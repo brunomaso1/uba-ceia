@@ -12,16 +12,6 @@ http:
         replacement: "https://cvat.picudo-rojo.org"
         permanent: true
 
-    # Middleware para modificar el HTML y eliminar el enlace de registro
-    # Se podría utilizar Traefik para inyectar un JS que elimine el enlace de registro.
-    remove-register-link:
-      plugin:
-        rewritebody:
-          lastModified: "true"
-          rewrites:
-            - regex: "Create an account"
-            - replacement: "ESTO ES UNA PRUEBA"
-
     # Middleware para bloquear las API de registro
     block-registration-api:
       redirectRegex:
@@ -37,7 +27,6 @@ http:
         - web
       middlewares:
         - redirect-cvat-registration
-        - remove-register-link
         - block-registration-api
 
     fiftyone-router:
