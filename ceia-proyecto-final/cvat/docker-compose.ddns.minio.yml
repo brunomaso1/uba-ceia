@@ -8,7 +8,7 @@
 
 x-allow-minio: &allow-minio
   environment:
-    SMOKESCREEN_OPTS: '--allow-address=172.18.0.21'
+    SMOKESCREEN_OPTS: '--allow-address=172.18.0.3'
 
 services:
   cvat_server: 

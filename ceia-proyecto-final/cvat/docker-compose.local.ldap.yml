@@ -1,0 +1,12 @@
+# Este docker-compose.local.yml permite definir los servicios de CVAT que se ejecutarán en el entorno local.
+# Se ejecuta con el comando:
+#   - docker compose --env-file .env.local -f docker-compose.yml -f docker-compose.local.yml -f docker-compose.local.ldap.yml up.
+
+services:
+  cvat_server:
+    environment:
+      DJANGO_SETTINGS_MODULE: settings
+      CVAT_LDAP_USER: ${CVAT_LDAP_USER}
+      CVAT_LDAP_PASSWORD: ${CVAT_LDAP_PASSWORD}
+    volumes:
+      - ./ldap-local-settings.py:/home/django/settings.py:ro

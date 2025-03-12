@@ -5,19 +5,19 @@ http:
     #     address: "http://ldap-auth-service:4181" # Dirección del servicio de autenticación LDAP
     #     trustForwardHeader: true
 
-    # Middleware para redirigir la URL directa de registro
-    redirect-cvat-registration:
-      redirectRegex:
-        regex: "^https?://cvat.picudo-rojo.org/auth/register"
-        replacement: "https://cvat.picudo-rojo.org"
-        permanent: true
+    # Middleware para redirigir la URL directa de registro (sin LDAP)
+    # redirect-cvat-registration:
+    #   redirectRegex:
+    #     regex: "^https?://cvat.picudo-rojo.org/auth/register"
+    #     replacement: "https://cvat.picudo-rojo.org"
+    #     permanent: true
 
-    # Middleware para bloquear las API de registro
-    block-registration-api:
-      redirectRegex:
-        regex: "^https?://cvat.picudo-rojo.org/api/auth/register"
-        replacement: "https://cvat.picudo-rojo.org"
-        permanent: true
+    # # Middleware para bloquear las API de registro
+    # block-registration-api:
+    #   redirectRegex:
+    #     regex: "^https?://cvat.picudo-rojo.org/api/auth/register"
+    #     replacement: "https://cvat.picudo-rojo.org"
+    #     permanent: true
 
   routers:
     cvat-router:
@@ -25,9 +25,9 @@ http:
       service: cvat-service
       entryPoints:
         - web
-      middlewares:
-        - redirect-cvat-registration
-        - block-registration-api
+      # middlewares:
+      #   - redirect-cvat-registration
+      #   - block-registration-api
 
     fiftyone-router:
       rule: "Host(`fiftyone.picudo-rojo.org`)"
