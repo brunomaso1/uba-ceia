@@ -271,7 +271,7 @@ private.key
 fiftyone-data/
 
 # LLDAP
-# lldap_data/
+lldap_data/
 
 # Vagrant
 # General

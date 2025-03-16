@@ -1,0 +1,29 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "bento/ubuntu-24.04"
+  config.vm.box_version = "202502.21.0"
+  
+  # Configuración de red bridge (eth1)
+  config.vm.network "public_network",
+    bridge: "Intel(R) Wi-Fi 6E AX211 160MHz",
+    use_dhcp_assigned_default_route: true  # Prioriza esta interfaz
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.cpus = 2
+    vb.memory = "8192"
+    # Deshabilita la interfaz NAT (eth0) como ruta predeterminada
+    vb.customize ["modifyvm", :id, "--nic1", "nat"]
+    vb.customize ["modifyvm", :id, "--nicpromisc1", "deny"] 
+  end
+
+  # Ejecuta el script de configuración de red
+  config.vm.provision "shell", path: "vagrant-scripts/01-setup-network.sh"
+
+  # # Install Docker and dependencies
+  config.vm.provision "shell", name: "install-dependencies", path: "vagrant-scripts/02-install-dependencies.sh"
+
+  # # Start static web server
+  # config.vm.provision "shell", name: "start-web-server", path: "./vagrant-scripts/start-web-server.sh"#, run: "never"
+end
