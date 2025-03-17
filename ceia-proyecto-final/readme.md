@@ -40,3 +40,23 @@ Esta rama del repositorio contiene la implementación y documentación del proye
 ### Memoria
 
 Link al documento: TODO
+
+### Comandos útiles
+
+- Detener y eliminar todos los contenedores:
+```bash
+docker stop $(docker ps -aq)
+docker rm $(docker ps -aq)
+```
+
+- Prune:
+  - Eliminar imágenes no utilizadas: `docker image prune`
+  - Eliminar contenedores no utilizados: `docker container prune`
+  - Eliminar volúmenes no utilizados: `docker volume prune`
+  - Eliminar redes no utilizadas: `docker network prune`
+  - Eliminar todo lo anterior: `docker system prune`
+  
+- Eliminar volumenes:
+```bash
+docker volume rm $(docker volume ls -q)
+```
