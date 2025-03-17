@@ -1,60 +1,37 @@
 http:
-  middlewares:
-    # ldap-auth:
-    #   forwardAuth:
-    #     address: "http://ldap-auth-service:4181" # Dirección del servicio de autenticación LDAP
-    #     trustForwardHeader: true
-
-    # Middleware para redirigir la URL directa de registro (sin LDAP)
-    # redirect-cvat-registration:
-    #   redirectRegex:
-    #     regex: "^https?://cvat.picudo-rojo.org/auth/register"
-    #     replacement: "https://cvat.picudo-rojo.org"
-    #     permanent: true
-
-    # # Middleware para bloquear las API de registro
-    # block-registration-api:
-    #   redirectRegex:
-    #     regex: "^https?://cvat.picudo-rojo.org/api/auth/register"
-    #     replacement: "https://cvat.picudo-rojo.org"
-    #     permanent: true
-
   routers:
     cvat-router:
       rule: "Host(`cvat.picudo-rojo.org`)"
       service: cvat-service
-      entryPoints:
-        - web
-      # middlewares:
-      #   - redirect-cvat-registration
-      #   - block-registration-api
 
-    fiftyone-router:
-      rule: "Host(`fiftyone.picudo-rojo.org`)"
-      service: fiftyone-service
-      entryPoints:
-        - web
-      middlewares:
-        # - ldap-auth
+    # fiftyone-router:
+    #   rule: "Host(`fiftyone.picudo-rojo.org`)"
+    #   service: fiftyone-service
 
     landing-page-router:
       rule: "Host(`picudo-rojo.org`)"
-      service: landing-page
-      entryPoints:
-        - web
+      service: landing-page-service
+
+    # Testing router:
+    # landing-page-router:
+    #   rule: "PathPrefix(`/`)"
+    #   service: landing-page-service
 
   services:
     cvat-service:
       loadBalancer:
         servers:
-          - url: "http://host.docker.internal:8080"
+          # - url: "http://host.docker.internal:8080" # Windows
+          - url: "http://traefik:8080"
+          
 
-    fiftyone-service:
+    # fiftyone-service:
+    #   loadBalancer:
+    #     servers:
+    #       - url: "http://host.docker.internal:5151" # Windows
+
+    landing-page-service:
       loadBalancer:
         servers:
-          - url: "http://host.docker.internal:5151"
-
-    landing-page:
-      loadBalancer:
-        servers:
-          - url: "http://host.docker.internal:9100"
+          # - url: "http://host.docker.internal:9100" # Windows
+          - url: "http://landing-page:80" # Linux

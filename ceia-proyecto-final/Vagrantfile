@@ -11,8 +11,8 @@ Vagrant.configure("2") do |config|
     use_dhcp_assigned_default_route: true  # Prioriza esta interfaz
 
   config.vm.provider "virtualbox" do |vb|
-    vb.cpus = 2
-    vb.memory = "8192"
+    vb.cpus = 8 # Número de CPUs asignadas a la VM
+    vb.memory = "32768" # 32 GB de RAM asignados a la VM
     # Deshabilita la interfaz NAT (eth0) como ruta predeterminada
     vb.customize ["modifyvm", :id, "--nic1", "nat"]
     vb.customize ["modifyvm", :id, "--nicpromisc1", "deny"] 

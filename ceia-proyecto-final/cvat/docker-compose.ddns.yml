@@ -1,85 +1,54 @@
 # Este docker-compose.ddns.yml permite definir los servicios de CVAT que se ejecutarán en el entorno de ddns.
 # Se ejecuta con el comando:
 #   - docker compose --env-file .env.ddns -f docker-compose.yml -f docker-compose.ddns.yml up.
-#   - docker compose --env-file .env.ddns -f docker-compose.yml -f docker-compose.ddns.yml -f docker-compose.ddns.ldap.yml -f docker-compose.ddns.minio.yml up
 # Cambios:
 #   - Se agrega el nombre del proyecto, para que todos los servicios de CVAT tengan un prefijo.
 #   - Se sustituye la red cvat por la red main en todos los servicios.
 #   - Se agrega CSRF_TRUSTED_ORIGINS para permitir el acceso desde el dominio de ddns. Esto se hace mediante un workaround, en donde se extiende la configuración de "settings" de Django y se agrega la variable de entorno CSRF_TRUSTED_ORIGINS. Esto es porque en el archivo cvat/cvat/settings/base.py ni en el production.py se le pasa la variable de entorno CSRF_TRUSTED_ORIGINS que es necesario para que Django permita el acceso desde el dominio de ddns. El workaround consiste en importar esta configuración, agregar la variable de entorno y configurar el docker-compose.yml para que apunte a este archivo.
+
 name: picudo-rojo-project
 
-x-default_services_properties:
-  networks: !override &default_networks_anchor
+x-default_networks_anchor: &default_networks_anchor
+  networks: !override
     - main
 
-x-default_volumes_top_anchor: 
-  volumes: &default_volumes_anchor
-      - ./cvat_data:/home/django/data
-      - ./cvat_keys:/home/django/keys
-      - ./cvat_logs:/home/django/logs
-
-x-default_networks_volumes_properties: &default_networks_volumes_anchor
-  networks: *default_networks_anchor
-  volumes: *default_volumes_anchor
-
 services:
-  cvat_db:
-    volumes:
-      - ./cvat_db:/var/lib/postgresql/data
-    networks: *default_networks_anchor
+  cvat_db: *default_networks_anchor
 
-  cvat_redis_inmem:
-    networks: *default_networks_anchor
+  cvat_redis_inmem: *default_networks_anchor
 
-  cvat_redis_ondisk:
-    networks: *default_networks_anchor
+  cvat_redis_ondisk: *default_networks_anchor
 
   cvat_server:
     environment:
       DJANGO_SETTINGS_MODULE: settings
       CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-}
-    volumes: 
-      - ./cvat_data:/home/django/data
-      - ./cvat_keys:/home/django/keys
-      - ./cvat_logs:/home/django/logs
+    volumes:
       - ./csrf-ddns-settings.py:/home/django/settings.py:ro
     networks: !override
       main:
         aliases:
           - cvat-server
 
-  cvat_utils:
-    <<: *default_networks_volumes_anchor
+  cvat_utils: *default_networks_anchor
 
-  cvat_worker_import: 
-    <<: *default_networks_volumes_anchor
+  cvat_worker_import: *default_networks_anchor
 
-  cvat_worker_export: 
-    <<: *default_networks_volumes_anchor
+  cvat_worker_export: *default_networks_anchor
 
-  cvat_worker_annotation: 
-    <<: *default_networks_volumes_anchor
+  cvat_worker_annotation: *default_networks_anchor
 
-  cvat_worker_webhooks: 
-    <<: *default_networks_volumes_anchor
+  cvat_worker_webhooks: *default_networks_anchor
 
-  cvat_worker_quality_reports: 
-    <<: *default_networks_volumes_anchor
+  cvat_worker_quality_reports: *default_networks_anchor
 
-  cvat_worker_analytics_reports: 
-    <<: *default_networks_volumes_anchor
+  cvat_worker_analytics_reports: *default_networks_anchor
 
-  cvat_worker_chunks: 
-    <<: *default_networks_volumes_anchor
+  cvat_worker_chunks: *default_networks_anchor
 
-  cvat_ui: 
-    networks: *default_networks_anchor
+  cvat_ui: *default_networks_anchor
 
-  traefik: 
-    networks: *default_networks_anchor
-    ports: !override 
-      - 8080:8080 # Subdomain
-      - 8090:8090
+  traefik: *default_networks_anchor
 
   cvat_opa:
     networks: !override
@@ -88,8 +57,6 @@ services:
           - opa
 
   cvat_clickhouse:
-    volumes:
-      - ./cvat_events_db:/var/lib/clickhouse/
     networks: !override
       main:
         aliases:
