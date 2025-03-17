@@ -100,7 +100,7 @@ if __name__ == "__main__":
     base_dn = "DC=localhost,DC=local"
     # Credenciales de prueba
     username = "cvat_bind"
-    password = "aCi]$~gn2uAtmpv:"
+    password = "mypsecurepassword"
     
     # Ejecutar la prueba de conexión
     test_ldap_connection(server_url, base_dn, username, password)

@@ -1,0 +1,15 @@
+<?php // My SSP configuration
+$keyphrase = "UxJJErdZFekdAVqn";
+$debug = true;
+$lang = "en";
+$show_menu = false;
+$show_help = false;
+$messages['changehelpextramessage'] = "Contactá a email para más información.";
+$use_captcha = true;
+$captcha_class = "InternalCaptcha";
+$ldap_url = "ldap://LDAP_URL:LDAP_PORT";
+$ldap_binddn = "CN=pepe,DC=test,DC=com";
+$ldap_bindpw = "supersecure";
+$ldap_base = "DC=test,DC=com";
+$ldap_filter = "(&(objectClass=person)(uid={login}))";
+?>

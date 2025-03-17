@@ -1,5 +1,9 @@
 http:
   routers:
+    ldap-ssp-router:
+      rule: "Host(`password.picudo-rojo.org`)"
+      service: ldap-ssp-service
+    
     cvat-router:
       rule: "Host(`cvat.picudo-rojo.org`)"
       service: cvat-service
@@ -23,7 +27,6 @@ http:
         servers:
           # - url: "http://host.docker.internal:8080" # Windows
           - url: "http://traefik:8080"
-          
 
     # fiftyone-service:
     #   loadBalancer:
@@ -35,3 +38,9 @@ http:
         servers:
           # - url: "http://host.docker.internal:9100" # Windows
           - url: "http://landing-page:80" # Linux
+
+    ldap-ssp-service:
+      loadBalancer:
+        servers:
+          # - url: "http://host.docker.internal:17171" # Windows
+          - url: "http://ldap-ssp:80" # Linux

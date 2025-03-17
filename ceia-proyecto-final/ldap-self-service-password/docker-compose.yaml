@@ -1,0 +1,15 @@
+name: picudo-rojo-project
+
+services:
+  ldap-ssp:
+    image: ltbproject/self-service-password:${LDAP_SELF_SERVICE_PASSWORD_VERSION:-latest}
+    container_name: ldap-ssp
+    ports:
+      - "17171:80"
+    volumes:
+      - ./ssp.conf.php:/var/www/conf/config.inc.local.php
+    networks:
+      - main
+
+networks:
+  main:
