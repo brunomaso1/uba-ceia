@@ -17,7 +17,7 @@ except KeyError:
 IAM_TYPE = "LDAP"
 
 # Talking to the LDAP server
-AUTH_LDAP_SERVER_URI = "ldap://lldap:3890"  # IP Addresses also work
+AUTH_LDAP_SERVER_URI = os.environ.get("AUTH_LDAP_SERVER_URI", "ldap://lldap:3890")  # IP Addresses also work
 ldap.set_option(ldap.OPT_REFERRALS, 0)
 
 _BASE_DN = "DC=localhost,DC=local"

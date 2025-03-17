@@ -7,5 +7,6 @@ services:
     environment:
       CVAT_LDAP_USER: ${CVAT_LDAP_USER}
       CVAT_LDAP_PASSWORD: ${CVAT_LDAP_PASSWORD}
+      AUTH_LDAP_SERVER_URI: ${AUTH_LDAP_SERVER_URI}
     volumes:
       - ./ldap-csrf-ddns-settings.py:/home/django/settings.py:ro

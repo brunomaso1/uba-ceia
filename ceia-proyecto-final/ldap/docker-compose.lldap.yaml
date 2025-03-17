@@ -6,7 +6,7 @@ name: picudo-rojo-project
 
 services:
   lldap:
-    image: lldap/lldap:stable
+    image: lldap/lldap:${LLDAP_VERSION:-stable}
     ports:
       - "3890:3890" # Para LDAP, no es necesario si se comunican entre contenedores
       - "17170:17170" # Web UI
