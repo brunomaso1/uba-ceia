@@ -277,6 +277,8 @@ lldap_data/
 # General
 .vagrant/
 
+# LDAP-Self-Service-Password
+ssp.conf.php
 
 # CVAT
 # La carpeta cvat se ignora totalmente, menos los archivos de configuración actualizados o modificados.
