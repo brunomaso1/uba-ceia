@@ -10,6 +10,8 @@ Vagrant.configure("2") do |config|
     bridge: "Intel(R) Wi-Fi 6E AX211 160MHz",
     use_dhcp_assigned_default_route: true  # Prioriza esta interfaz
 
+  config.vm.disk :disk, size: "100GB", primary: true
+
   config.vm.provider "virtualbox" do |vb|
     vb.cpus = 8 # Número de CPUs asignadas a la VM
     vb.memory = "32768" # 32 GB de RAM asignados a la VM
