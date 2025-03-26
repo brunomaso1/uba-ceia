@@ -1,0 +1,3 @@
+- No hay espacio entre el número de la nota de pie y la descripción de la imagen.
+- El uso de "el cual". Cambiar por "que".
+- No usar notas al pie a no ser en la descripción de las imágenes.

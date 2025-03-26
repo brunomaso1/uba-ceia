@@ -1,0 +1,8 @@
+Capítulo 1 ->
+- \textit{Rhynchophorus Ferrugineus} (picudo rojo)
+- Intendencia de Montevideo (IM)
+- redes neuronales convolucionales (CNN)
+- visión por computadora (VPC)
+- inteligencia artificial (IA)
+- slicing aided hyper inference (SAHI)
+- sistema de información geográfica de la IM (SIG)
