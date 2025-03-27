@@ -6,3 +6,8 @@ Capítulo 1 ->
 - inteligencia artificial (IA)
 - slicing aided hyper inference (SAHI)
 - sistema de información geográfica de la IM (SIG)
+- vehículos aéreos no tripulados (UAV)
+- regiones de interés (ROI)
+- red de propuestas de regiones (RPN)
+- \textit{Average Precision} (AP)
+- \textit{Mean Average Precision} (mAP)
