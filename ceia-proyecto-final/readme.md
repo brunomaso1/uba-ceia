@@ -60,3 +60,23 @@ docker rm $(docker ps -aq)
 ```bash
 docker volume rm $(docker volume ls -q)
 ```
+
+- Chequear si Hyper-v está habilitado:
+```bash
+Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V
+```
+
+ WARNING: MongoDB 5.0+ requires a CPU with AVX support, and your current system does not appear to have that!
+
+VBoxManage modifyvm "ceia-proyecto-final_default_1742241501392_3388" --cpu-profile "host"
+VBoxManage setextradata "ceia-proyecto-final_default_1742241501392_3388" VBoxInternal/CPUM/IsaExts/AVX 1
+VBoxManage setextradata "ceia-proyecto-final_default_1742241501392_3388" VBoxInternal/CPUM/IsaExts/AVX2 1
+
+cat /proc/cpuinfo
+
+bcdedit /set hypervisorlaunchtype off
+DISM /Online /Disable-Feature:Microsoft-Hyper-V
+
+https://learn.microsoft.com/en-us/troubleshoot/windows-client/application-management/virtualization-apps-not-work-with-hyper-v
+
+https://stackoverflow.com/questions/54264439/how-to-get-shared-folders-working-with-vagrant-and-hyper-v

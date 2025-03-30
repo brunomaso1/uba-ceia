@@ -6,9 +6,13 @@
 #   - Se agrega la variable de entorno SMOKESCREEN_OPTS que apunta a la IP de Minio.
 # NOTA: Smokescreen por defecto bloquea todas las IPs privadas, no las públicas. Hay que obtener las IP de los servcios, ya que la variable de entorno SMOKESCREEN_OPTS recibe una IP:PUERTO. Otra opción, es ejecutar un .sh para setear esta variable antes de correr docker compose. También cabe destacar que para agregar el storage hay que hacerlo mediante el IP o poner la siguiente regla en el hosts `127.0.0.1 minio`.
 
+# x-allow-minio: &allow-minio
+#   environment:
+#     SMOKESCREEN_OPTS: '--allow-address=172.18.0.3'
+
 x-allow-minio: &allow-minio
-  environment:
-    SMOKESCREEN_OPTS: '--allow-address=172.18.0.3'
+  volumes:
+    - ./tests/allow_minio.sh:/etc/cvat/init.d/allow_minio.sh:ro
 
 services:
   cvat_server: 

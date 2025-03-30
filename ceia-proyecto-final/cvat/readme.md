@@ -37,9 +37,9 @@ git clone --depth 1 --branch v2.28.0 https://github.com/cvat-ai/cvat.git # Versi
 3. Completar las variables faltantes de `.env`.
 4. Hacer `docker compose up`.
 
-> 📝<font color='Gray'>NOTA:</font> Para levantar la versión de DDNS se debe ejecutar lo siguiente: `docker compose -f docker-compose.yml -f docker-compose.local.yml -f docker-compose.local.minio.yml`
+> 📝<font color='Gray'>NOTA:</font> Para levantar la versión completa con DDNS, Minio y LDAP se debe ejecutar lo siguiente: `docker compose --env-file .env.ddns -f docker-compose.yml -f docker-compose.ddns.yml -f docker-compose.ddns.ldap.yml -f docker-compose.ddns.minio.yml up -d`
 
-1. Luego, hay que agregar un super usuario:
+1. Luego, hay que agregar un super usuario (sino se utiliza LDAP):
 
 ```bash
 docker exec -it cvat_server bash -ic 'python3 ~/manage.py createsuperuser'
