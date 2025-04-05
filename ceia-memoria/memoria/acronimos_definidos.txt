@@ -1,4 +1,3 @@
-Capítulo 1 ->
 - \textit{Rhynchophorus Ferrugineus} (picudo rojo)
 - Intendencia de Montevideo (IM)
 - redes neuronales convolucionales (CNN)
@@ -11,3 +10,4 @@ Capítulo 1 ->
 - red de propuestas de regiones (RPN)
 - \textit{Average Precision} (AP)
 - \textit{Mean Average Precision} (mAP)
+- control de calidad (QA)
