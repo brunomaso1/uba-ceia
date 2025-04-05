@@ -1,8 +1,0 @@
-version: 3
-agent:
-  authtoken: 2slBU2kvRxkG8S3XqpaNZQw2pl4_2uTSMJCBhGJhomQc5KwuC
-endpoints:
-  - name: picudo_rojo_tunnel
-    url: picudo-rojo-imm.ngrok.io
-    upstream:
-      url: http://host.docker.internal:8080 # Si no están en la misma red, hay que usar host.docker.internal, para mappear el puerto 80 del host.

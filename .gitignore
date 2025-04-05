@@ -283,25 +283,25 @@ ssp.conf.php
 # CVAT
 # La carpeta cvat se ignora totalmente, menos los archivos de configuración actualizados o modificados.
 # Cuando se modifica o incluye un archivo, hay que agregar la excepción aca.
-ceia-proyecto-final/cvat/**
+ceia-proyecto-final/modulo-etiquetado-datos/cvat/**
 
-!ceia-proyecto-final/cvat/csrf-ddns-settings.py
-!ceia-proyecto-final/cvat/csrf-ngrok-settings.py
-!ceia-proyecto-final/cvat/ldap-csrf-ddns-settings.py
-!ceia-proyecto-final/cvat/ldap-local-settings.py
+!ceia-proyecto-final/modulo-etiquetado-datos/cvat/csrf-ddns-settings.py
+!ceia-proyecto-final/modulo-etiquetado-datos/cvat/csrf-ngrok-settings.py
+!ceia-proyecto-final/modulo-etiquetado-datos/cvat/ldap-csrf-ddns-settings.py
+!ceia-proyecto-final/modulo-etiquetado-datos/cvat/ldap-local-settings.py
 
-!ceia-proyecto-final/cvat/docker-compose.ddns.minio.yml
-!ceia-proyecto-final/cvat/docker-compose.ddns.yml
-!ceia-proyecto-final/cvat/docker-compose.local.fileserver.yml
-!ceia-proyecto-final/cvat/docker-compose.local.minio.yml
-!ceia-proyecto-final/cvat/docker-compose.local.yml
-!ceia-proyecto-final/cvat/docker-compose.ngrok.minio.yml
-!ceia-proyecto-final/cvat/docker-compose.ngrok.yml
-!ceia-proyecto-final/cvat/docker-compose.scaleway.yml
-!ceia-proyecto-final/cvat/docker-compose.local.ldap.yml
-!ceia-proyecto-final/cvat/docker-compose.ddns.ldap.yml
+!ceia-proyecto-final/modulo-etiquetado-datos/cvat/docker-compose.ddns.minio.yml
+!ceia-proyecto-final/modulo-etiquetado-datos/cvat/docker-compose.ddns.yml
+!ceia-proyecto-final/modulo-etiquetado-datos/cvat/docker-compose.local.fileserver.yml
+!ceia-proyecto-final/modulo-etiquetado-datos/cvat/docker-compose.local.minio.yml
+!ceia-proyecto-final/modulo-etiquetado-datos/cvat/docker-compose.local.yml
+!ceia-proyecto-final/modulo-etiquetado-datos/cvat/docker-compose.ngrok.minio.yml
+!ceia-proyecto-final/modulo-etiquetado-datos/cvat/docker-compose.ngrok.yml
+!ceia-proyecto-final/modulo-etiquetado-datos/cvat/docker-compose.scaleway.yml
+!ceia-proyecto-final/modulo-etiquetado-datos/cvat/docker-compose.local.ldap.yml
+!ceia-proyecto-final/modulo-etiquetado-datos/cvat/docker-compose.ddns.ldap.yml
 
-!ceia-proyecto-final/cvat/example*
+!ceia-proyecto-final/modulo-etiquetado-datos/cvat/example*
 
-!ceia-proyecto-final/cvat/readme.md
+!ceia-proyecto-final/modulo-etiquetado-datos/cvat/readme.md
 
