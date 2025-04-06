@@ -28,7 +28,7 @@ services:
   mongo-express:
     << : *services_defaults
     image: mongo-express:1.0.2
-    container_name: mongo_express
+    # container_name: mongo_express
     restart: always
     hostname: mongo_express
     environment:

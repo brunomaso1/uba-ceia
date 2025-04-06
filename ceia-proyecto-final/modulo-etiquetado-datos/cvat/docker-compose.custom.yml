@@ -1,10 +1,6 @@
 # Este docker-compose.ddns.yml permite definir los servicios de CVAT que se ejecutarán en el entorno de ddns.
 # Se ejecuta con el comando:
 #   - docker compose --env-file .env.ddns -f docker-compose.yml -f docker-compose.ddns.yml up.
-# Cambios:
-#   - Se agrega el nombre del proyecto, para que todos los servicios de CVAT tengan un prefijo.
-#   - Se sustituye la red cvat por la red main en todos los servicios.
-#   - Se agrega CSRF_TRUSTED_ORIGINS para permitir el acceso desde el dominio de ddns. Esto se hace mediante un workaround, en donde se extiende la configuración de "settings" de Django y se agrega la variable de entorno CSRF_TRUSTED_ORIGINS. Esto es porque en el archivo cvat/cvat/settings/base.py ni en el production.py se le pasa la variable de entorno CSRF_TRUSTED_ORIGINS que es necesario para que Django permita el acceso desde el dominio de ddns. El workaround consiste en importar esta configuración, agregar la variable de entorno y configurar el docker-compose.yml para que apunte a este archivo.
 
 name: picudo-rojo-project
 
@@ -20,21 +16,36 @@ services:
   cvat_redis_ondisk: *default_networks_anchor
 
   cvat_server:
-    environment:
-      DJANGO_SETTINGS_MODULE: settings
-      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-}
-    volumes:
-      - ./csrf-ddns-settings.py:/home/django/settings.py:ro
-    networks: !override
-      main:
-        aliases:
-          - cvat-server
+      environment:
+        DJANGO_SETTINGS_MODULE: settings
+        CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-}
+        CVAT_LDAP_USER: ${CVAT_LDAP_USER}
+        CVAT_LDAP_PASSWORD: ${CVAT_LDAP_PASSWORD}
+        AUTH_LDAP_SERVER_URI: ${AUTH_LDAP_SERVER_URI}
+      networks: !override
+        main:
+          aliases:
+            - cvat-server
+      volumes:
+        - ./custom-settings.py:/home/django/settings.py:ro
+        - ./tests/allow_minio.sh:/etc/cvat/init.d/allow_minio.sh:ro
 
   cvat_utils: *default_networks_anchor
 
-  cvat_worker_import: *default_networks_anchor
+  cvat_worker_import: 
+    <<: *default_networks_anchor
+    volumes:
+      - ./tests/allow_minio.sh:/etc/cvat/init.d/allow_minio.sh:ro
 
-  cvat_worker_export: *default_networks_anchor
+  cvat_worker_export: 
+    <<: *default_networks_anchor
+    volumes:
+      - ./tests/allow_minio.sh:/etc/cvat/init.d/allow_minio.sh:ro
+
+  cvat_worker_chunks:
+    <<: *default_networks_anchor
+    volumes:
+      - ./tests/allow_minio.sh:/etc/cvat/init.d/allow_minio.sh:ro
 
   cvat_worker_annotation: *default_networks_anchor
 
@@ -44,7 +55,7 @@ services:
 
   cvat_worker_analytics_reports: *default_networks_anchor
 
-  cvat_worker_chunks: *default_networks_anchor
+  
 
   cvat_ui: *default_networks_anchor
 

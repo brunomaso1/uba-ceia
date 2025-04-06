@@ -43,6 +43,8 @@ Link al documento: TODO
 
 ### Comandos útiles
 
+#### Docker
+
 - Detener y eliminar todos los contenedores:
 ```bash
 docker stop $(docker ps -aq)
@@ -61,6 +63,29 @@ docker rm $(docker ps -aq)
 docker volume rm $(docker volume ls -q)
 ```
 
+#### Vagrant
+
+- Iniciar Vagrant:
+```powershell
+$env:ENVIRONMENT="dev"; vagrant up
+```
+
+- Detener Vagrant:
+```powershell
+vagrant halt
+```
+
+- Levantar vagrant y aprovisionar:
+```powershell
+$env:ENVIRONMENT="dev"; vagrant up --provision-with start-services
+```
+
+- Solamente Aprovisionar Vagrant:
+```powershell
+$env:ENVIRONMENT="dev"; vagrant provision --provision-with start-services
+```
+
+#### Otros
 - Chequear si Hyper-v está habilitado:
 ```bash
 Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V

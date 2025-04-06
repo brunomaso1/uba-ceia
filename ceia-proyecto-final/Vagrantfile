@@ -1,3 +1,5 @@
+# $env:ENVIRONMENT="dev"; vagrant up
+
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
@@ -10,11 +12,11 @@ Vagrant.configure("2") do |config|
     bridge: "Intel(R) Wi-Fi 6E AX211 160MHz",
     use_dhcp_assigned_default_route: true  # Prioriza esta interfaz
 
-  config.vm.disk :disk, size: "100GB", primary: true
+  config.vm.disk :disk, size: "50GB", primary: true
 
   config.vm.provider "virtualbox" do |vb|
-    vb.cpus = 8 # Número de CPUs asignadas a la VM
-    vb.memory = "32768" # 32 GB de RAM asignados a la VM
+    vb.cpus = 4 # Número de CPUs asignadas a la VM
+    vb.memory = "8192" # 32 GB de RAM asignados a la VM
     # Deshabilita la interfaz NAT (eth0) como ruta predeterminada
     vb.customize ["modifyvm", :id, "--nic1", "nat"]
     vb.customize ["modifyvm", :id, "--nicpromisc1", "deny"] 
@@ -23,7 +25,13 @@ Vagrant.configure("2") do |config|
   config.vm.provision "setup-vm-network", type: "shell", path: "vagrant-scripts/01-setup-network.sh"
   config.vm.provision "install-dependencies", type: "shell", path: "vagrant-scripts/02-install-dependencies.sh"
   config.vm.provision "setup-firewall", type: "shell", path: "vagrant-scripts/03-configure-firewall.sh"
-  # To run: vagrant up --provision-with start-web-server
-  # To run: vagrant provision --provision-with start-web-server
-  config.vm.provision "start-web-server", type: "shell", path: "vagrant-scripts/04-start-services.sh", run: "never"
+  # To run: vagrant up --provision-with start-services
+  # To run: vagrant provision --provision-with start-services
+  environment = ENV['ENVIRONMENT'] || 'dev' # Por defecto, asume 'dev'
+
+  if environment == 'prod'
+    config.vm.provision "start-services", type: "shell", path: "vagrant-scripts/04-start-prod-services.sh", run: "never"
+  else
+    config.vm.provision "start-services", type: "shell", path: "vagrant-scripts/04-start-dev-services.sh", run: "never"
+  end
 end

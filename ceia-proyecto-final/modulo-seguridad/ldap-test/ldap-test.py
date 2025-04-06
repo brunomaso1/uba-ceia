@@ -96,7 +96,7 @@ def test_ldap_connection(server_url, base_dn, username, password):
 
 if __name__ == "__main__":
     # Configuración del servidor LDAP
-    server_url = "ldap://localhost:3890"
+    server_url = "ldap://192.168.0.175:3890"
     base_dn = "DC=localhost,DC=local"
     # Credenciales de prueba
     username = "cvat_bind"

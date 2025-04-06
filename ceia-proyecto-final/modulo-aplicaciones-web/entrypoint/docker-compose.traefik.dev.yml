@@ -9,16 +9,16 @@ services:
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
       - "--providers.file.filename=/etc/traefik/dynamic_conf.yaml"
-      # - "--api.insecure=true" # Habilita el dashboard de Traefik (no recomendado para producción)
-      # - "--accesslog=true" # Habilita el registro de acceso
-      # - "--log.level=DEBUG" # Cambia a INFO o ERROR para producción
+      - "--api.insecure=true" # Habilita el dashboard de Traefik (no recomendado para producción)
+      - "--accesslog=true" # Habilita el registro de acceso
+      - "--log.level=DEBUG" # Cambia a INFO o ERROR para producción
       # - "--tracing=true" # Habilita el tracing
     ports:
       - "80:80"
       - "443:443"
       - "8100:8080" # Dashboard (api.insecure=true)
     volumes:
-      - ./traefik_dynamic_conf.yaml:/etc/traefik/dynamic_conf.yaml
+      - ./traefik_dynamic_conf_dev.yaml:/etc/traefik/dynamic_conf.yaml
     networks:
       - main
 

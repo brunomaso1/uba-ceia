@@ -24,3 +24,13 @@ Se utiliza un proxy reverso para exponer las herramientas a internet. Se utiliza
 Estas configuraciones pueden verse en el archivo traefik_dynamic_conf.yml. Hay un ejemplo también del mismo caso de uso utilizando Nginx.
 
 Simplemente hay que levanter el proxy con: `docker compose -f docker-compose.traefik.yml up`.
+
+### Configuración de Traefik
+
+Para que funcione el ambiente de desarrollo hay que configurar en el hosts el dominio picudo-rojo-desarrollo.org. Debe apuntar a la IP de la máquina de desarrollo. Este archivo se encuentra en windows en `C:\Windows\System32\drivers\etc\hosts`.
+
+Ejemplo de configuración:
+
+```bash
+192.168.0.175  picudo-rojo-desarrollo.org cvat.picudo-rojo-desarrollo.org
+```

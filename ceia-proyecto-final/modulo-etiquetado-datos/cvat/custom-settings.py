@@ -3,16 +3,10 @@ from cvat.settings.production import *
 
 # Custom code below
 import ldap
-from django_auth_ldap.config import LDAPSearch
-from django_auth_ldap.config import NestedActiveDirectoryGroupType, GroupOfNamesType, GroupOfUniqueNamesType
+from django_auth_ldap.config import LDAPSearch, GroupOfUniqueNamesType
 
-# # Activate LDAP debugging
-# import logging, logging.handlers
-# logfile = "/tmp/django-ldap-debug.log"
-# my_logger = logging.getLogger("django_auth_ldap")
-# my_logger.setLevel(logging.DEBUG)
-# handler = logging.handlers.RotatingFileHandler(logfile, maxBytes=1024 * 500, backupCount=5)
-# my_logger.addHandler(handler)
+if os.environ.get("CSRF_TRUSTED_ORIGINS"):
+    CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",")
 
 try:
     CVAT_LDAP_USER = os.environ["CVAT_LDAP_USER"]
@@ -40,14 +34,9 @@ AUTH_LDAP_BIND_PASSWORD = CVAT_LDAP_PASSWORD
 
 AUTH_LDAP_USER_SEARCH = LDAPSearch(_BASE_DN, ldap.SCOPE_SUBTREE, "(uid=%(user)s)")
 
-# AUTH_LDAP_GROUP_SEARCH = LDAPSearch(
-#     "CN=Groups,%s" % _BASE_DN, ldap.SCOPE_SUBTREE, "(objectClass=groupOfNames)"
-# )
-
 AUTH_LDAP_GROUP_SEARCH = LDAPSearch(
     _GROUP_DN, ldap.SCOPE_SUBTREE, "(objectClass=groupOfUniqueNames)"
 )
-
 
 # Mapping Django field names to FreeIPA attributes
 AUTH_LDAP_USER_ATTR_MAP = {
@@ -60,27 +49,12 @@ AUTH_LDAP_USER_ATTR_MAP = {
 AUTH_LDAP_ALWAYS_UPDATE_USER = True
 
 # Cache group memberships for an hour to minimize LDAP traffic
-# AUTH_LDAP_CACHE_GROUPS = True
-# AUTH_LDAP_GROUP_CACHE_TIMEOUT = 3600
-# AUTH_LDAP_AUTHORIZE_ALL_USERS = False
+AUTH_LDAP_CACHE_GROUPS = True
+AUTH_LDAP_GROUP_CACHE_TIMEOUT = 3600
+AUTH_LDAP_AUTHORIZE_ALL_USERS = False
 
 # Group Management
 AUTH_LDAP_GROUP_TYPE = GroupOfUniqueNamesType(name_attr="cn")
-# Si GroupOfUniqueNamesType no funciona, se puede personalizar manualmente:
-# class LLDAPGroupType(GroupOfNamesType):
-#     member_attr = "uniquemember"  # Atributo que almacena los miembros
-# AUTH_LDAP_GROUP_TYPE = LLDAPGroupType()
-
-# AUTH_LDAP_GROUP_TYPE = GroupOfNamesType(name_attr="cn")
-# AUTH_LDAP_GROUP_TYPE = GroupOfNamesType() # FreeIPA, LLDAP
-# AUTH_LDAP_GROUP_TYPE = NestedActiveDirectoryGroupType() # Active Directory only
-
-# Ajuste manual:
-# AUTH_LDAP_USER_FLAGS_BY_GROUP = {
-#     "is_staff": "cn=cvat_admins," + _GROUP_DN,
-#     "is_superuser": "cn=cvat_admins," + _GROUP_DN,
-# }
-# AUTH_LDAP_FIND_GROUP_PERMS = True
 
 # Register Django LDAP backend
 AUTHENTICATION_BACKENDS += ["django_auth_ldap.backend.LDAPBackend"]

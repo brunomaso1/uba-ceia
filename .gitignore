@@ -255,9 +255,6 @@ $RECYCLE.BIN/
 # Archivos que terminan en .example son trackeados por git
 !*.example
 
-# Ngrok
-ngrok-config.yml
-
 # MongoDB
 mongodb_data/
 mongodb_log/
@@ -280,6 +277,9 @@ lldap_data/
 # LDAP-Self-Service-Password
 ssp.conf.php
 
+# Backups
+ceia-proyecto-final/modulo-respaldo/backup*
+
 # CVAT
 # La carpeta cvat se ignora totalmente, menos los archivos de configuración actualizados o modificados.
 # Cuando se modifica o incluye un archivo, hay que agregar la excepción aca.
@@ -289,6 +289,7 @@ ceia-proyecto-final/modulo-etiquetado-datos/cvat/**
 !ceia-proyecto-final/modulo-etiquetado-datos/cvat/csrf-ngrok-settings.py
 !ceia-proyecto-final/modulo-etiquetado-datos/cvat/ldap-csrf-ddns-settings.py
 !ceia-proyecto-final/modulo-etiquetado-datos/cvat/ldap-local-settings.py
+!ceia-proyecto-final/modulo-etiquetado-datos/cvat/custom-settings.py
 
 !ceia-proyecto-final/modulo-etiquetado-datos/cvat/docker-compose.ddns.minio.yml
 !ceia-proyecto-final/modulo-etiquetado-datos/cvat/docker-compose.ddns.yml
@@ -300,6 +301,7 @@ ceia-proyecto-final/modulo-etiquetado-datos/cvat/**
 !ceia-proyecto-final/modulo-etiquetado-datos/cvat/docker-compose.scaleway.yml
 !ceia-proyecto-final/modulo-etiquetado-datos/cvat/docker-compose.local.ldap.yml
 !ceia-proyecto-final/modulo-etiquetado-datos/cvat/docker-compose.ddns.ldap.yml
+!ceia-proyecto-final/modulo-etiquetado-datos/cvat/docker-compose.custom.yml
 
 !ceia-proyecto-final/modulo-etiquetado-datos/cvat/example*
 

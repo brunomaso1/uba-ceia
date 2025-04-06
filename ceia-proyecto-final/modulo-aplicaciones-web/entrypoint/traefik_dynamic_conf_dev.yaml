@@ -1,0 +1,46 @@
+http:
+  routers:
+    ldap-ssp-router:
+      rule: "Host(`password.picudo-rojo-desarrollo.org`)"
+      service: ldap-ssp-service
+    
+    cvat-router:
+      rule: "Host(`cvat.picudo-rojo-desarrollo.org`)"
+      service: cvat-service
+
+    # fiftyone-router:
+    #   rule: "Host(`fiftyone.picudo-rojo-desarrollo.org`)"
+    #   service: fiftyone-service
+
+    landing-page-router:
+      rule: "Host(`picudo-rojo-desarrollo.org`)"
+      service: landing-page-service
+
+    # Testing router:
+    # landing-page-router:
+    #   rule: "PathPrefix(`/`)"
+    #   service: landing-page-service
+
+  services:
+    cvat-service:
+      loadBalancer:
+        servers:
+          # - url: "http://host.docker.internal:8080" # Windows
+          - url: "http://traefik:8080"
+
+    # fiftyone-service:
+    #   loadBalancer:
+    #     servers:
+    #       - url: "http://host.docker.internal:5151" # Windows
+
+    landing-page-service:
+      loadBalancer:
+        servers:
+          # - url: "http://host.docker.internal:9100" # Windows
+          - url: "http://landing-page:80" # Linux
+
+    ldap-ssp-service:
+      loadBalancer:
+        servers:
+          # - url: "http://host.docker.internal:17171" # Windows
+          - url: "http://ldap-ssp:80" # Linux
