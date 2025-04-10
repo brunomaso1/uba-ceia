@@ -54,33 +54,34 @@ El objetivo principal de este trabajo fue brindar una introducción a un sistema
   \label{fig:plataforma}
 \end{figure}
 
-El sistema se divide en dos ecosistemas: el ecosistema interno, que se basa en herramientas dentro de la infraestructura de la IM y el ecosistema externo, que se basa en herramientas externas a la IM.
+El sistema se organiza en dos ecosistemas diferenciados: uno constituido por herramientas externas a la infraestructura de la IM, y otro integrado por herramientas internas.
 
-El ecosistema externo incluye interacciones con \textit{Google Maps} para obtener la información que, en el momento del trabajo, se encontraba disponible en dicha plataforma gestionada por el servicio de arbolado. En un futuro, esta información también estaría dentro del ecosistema interno de la IM.
+El ecosistema externo se encarga de las interaccione con plataformas de servicios externos, como lo es Google Maps, en donde al momento de realizar el trabajo se encontraba la información relevada por el servicio de arbolado. En un futuro, esta información estaría integrada a sistemas dentro de la IM, como lo es QGIS \citep{wikipedia_qgis_2025}.
 
-El ecosistema interno incluye todas las herramientas necesarias para llevar a cabo un proyecto de VPC. Este ecosistema se basa en software de código abierto y se divide en varios módulos, lo que aumenta la sustituibilidad de piezas de software (comúnmente conocido como el atributo de intercambiabilidad en patrones de arquitecturas de software). La comunicación se basa en protocolos ligeros como \textit{REST}, que permiten generar un bajo acoplamiento y alta cohesión entre módulos. Esta plataforma cuenta también con varios módulos definidos para procesos auxiliares como la seguridad, los respaldos y la gestión de la configuración.
+Por otra parte, en el ecosistema interno se incluyen todas las herramientas necesarias para llevar a cabo un proyecto de VPC, encapsuladas dentro de la infraestructura de la IM. Este ecosistema se basa en software de código abierto y se divide en varios módulos, lo que aumenta la sustituibilidad de piezas de software (atributo comúnmente conocido intercambiabilidad en patrones de arquitecturas de software). La comunicación se basa en protocolos ligeros como REST \citep{wikipedia_protocolo_2024}, que generan un bajo acoplamiento y una alta cohesión entre módulos. Esta plataforma cuenta también con varios módulos definidos para procesos auxiliares como la seguridad, los respaldos y la gestión de la configuración.
 
-El módulo de seguridad permite la administración de usuarios y permisos, lo que asegura que solo los usuarios autorizados tengan acceso a la información sensible. Este módulo se basa en el protocolo LDAP, que favorece una gestión centralizada de autenticación y autorización. Adicionalmente, el módulo puede ser sustituido por el software utilizado en la IM (WSO2 \citep{wso2_deliver_nodate}) o directamente interactuar con éste (WSO2 puede comunicarse mediante el protocolo LDAP).
+El módulo de seguridad permite la administración de usuarios y permisos. Esto garantiza que solo los usuarios autorizados tengan acceso a la información sensible. Este módulo se basa en el protocolo LDAP, que favorece una gestión centralizada de autenticación y autorización. Adicionalmente, el módulo puede ser sustituido por el software utilizado en la IM (WSO2 \citep{wso2_deliver_nodate}) o directamente interactuar con este (WSO2 puede comunicarse mediante el protocolo LDAP).
 
-El módulo de respaldo de datos asegura que los datos estén siempre disponibles y que se puedan recuperar en caso de pérdida. Se encarga de gestionar procesos de respaldo y recuperación de datos, lo que mitiga riesgos asociados a la pérdida de información. Al ser un módulo independiente, puede ser sustituido por otro software de respaldo, como por ejemplo: \textit{Bacula} \citep{bacula_documentation_nodate}.
+El módulo de respaldo de datos cerciora que los datos estén siempre disponibles y que se puedan recuperar en caso de pérdida. Gestiona procesos de respaldo y recuperación de datos, lo que mitiga riesgos asociados a la pérdida de información. Al ser un módulo independiente, puede ser sustituido por otro software de respaldo, como por ejemplo: Restic \citep{restic_restic_nodate} o Bacula \citep{bacula_documentation_nodate}.
 
-El módulo de gestor de datos es el encargado de almacenar los metadatos de las imágenes y los resultados de los modelos. Se conforma de una base de datos orientada a documentos, que permite almacenar datos no estructurados y estructurados, lo que facilita la gestión de grandes volúmenes de información. Esta estructura también soluciona el desafío del almacenamiento de las etiquetas generadas por los usuarios en el proceso de etiquetado de datos.
+El módulo gestor de datos es el encargado de almacenar los metadatos de las imágenes y los resultados de los modelos. Está conformado por una base de datos orientada a documentos, que permite almacenar varios tipos de datos (explicado en la sección \ref{sec:gestionRepoDatos}). Esta forma de almacenamiento, que mejora la eficiencia, facilita la gestión de grandes volúmenes de información. Asimismo, esta estructura también soluciona el desafío guardar las etiquetas generadas por los usuarios en el proceso de etiquetado de datos.
 
-El módulo de etiquetado de datos permite gestionar el proceso de etiquetado de imágenes y se comunica tanto con el módulo de seguridad para el manejo de diferentes niveles de información, así como con el módulo gestor datos para almacenar las etiquetas generadas por los usuarios. Este módulo intenta estar bajamente acoplado en todo momento, por lo que la integración con repositorios de datos y proveedores de identidad es esencial para su funcionamiento.
+El módulo de etiquetado de datos permite ejecutar el proceso de etiquetado de imágenes y se comunica tanto con el módulo de seguridad para el manejo de diferentes niveles de información, así como con el módulo gestor de datos para almacenar las etiquetas generadas por los usuarios. Este módulo intenta estar bajamente acoplado en todo momento, por lo que la integración con repositorios de datos y proveedores de identidad es esencial para su funcionamiento.
 
-El módulo de calidad de datos se encarga de realizar un análisis cualitativo de los datos, lo que mejora la eficiencia modelos dado que se utilizan datos de alta calidad. Este módulo permite que un equipo de control de calidad (QA, del inglés \textit{Quality Assurance}) pueda analizar los datos y generar informes sobre la calidad de los mismos, lo que habilita una traza y evolución de lás imágenes para el caso de proyectos de VPC, como lo es este trabajo.
+El módulo de calidad de datos se ocupa de realizar un análisis cualitativo de los datos, lo que mejora la eficiencia de los modelos al utilizar datos de alta calidad. Este módulo permite que un equipo de control de calidad pueda analizar y generar informes específicos sobre los datos, lo que habilita una traza y evolución de lás imágenes, esencial en proyectos de VPC donde la variable temporal afecta el resultado de las predicciones, como lo es este trabajo.
 
-El módulo de información georreferenciada permite gestionar la información espacial de los elementos de interés, lo que concede que los datos estén correctamente georreferenciados y que se puedan utilizar en modelos de IA. Este modulo asegura la coherencia entre el mapeo espacial que se realiza entre el dominio de los modelos de IA y las coordenadas reales de los elementos de interés. También permite brindar información con mayor descripción e historial de estos elementos, como lo son las palmeras y sus estados de infección.
+El módulo de información georreferenciada permite resolver la ubicación de los elementos de interés. Esto concede que los datos estén correctamente posicionados para así emparejar las predicciones de los modelos y las coordenadas reales. Además, este módulo brinda información con mayor granularidad y un historial de los elementos, como lo son las palmeras y sus antecedentes de infección.
 
-El módulo de repositorio de objetos se encarga del almacenamiento y gestión de las imágenes, en este caso las generadas por drones y aviones. Este módulo permite gestionar grandes volúmenes de diferentes tipos datos y garantizar a la disponibilidad continua de esta información mediante APIs, para esto se utilizan software de almacenamiento de objetos como lo es Amazon S3 \citep{amazon_web_services_aws_nodate}.
+El módulo de repositorio de objetos es el responsable del almacenamiento y gestión de las imágenes, en este caso las generadas por drones y aviones. Este módulo administra grandes volúmenes de diferentes tipos de datos y garantiza la disponibilidad continua de esta información mediante APIs. Para esta tarea, usualmente se utilizan sistemas de almacenamiento de objetos como Amazon S3 \citep{amazon_web_services_aws_nodate} o algún otro proveedor de nube.
 
-El módulo de aplicaciones web se encarga de gestionar la interfaz de usuarios, lo que les permite interactuar con el sistema y acceder a la información de manera sencilla. Interactúa con el sistema de información georreferenciada y muestra información sobre los elementos de interés, como lo son las palmeras y su estado de actual de infección. También permite ingresar nueva información al sistema como nuevos focos de detección de la plaga. Esto asegura que el sistema esté actualizado en todo momento y facilita a los usuarios la visualización e identificación de estos focos.
+El módulo de aplicaciones web se encarga de gestionar la interfaz de usuarios, lo que les permite interactuar con el sistema y acceder a la información de manera sencilla. Interactúa con el sistema de información georreferenciada y muestra información sobre los elementos de interés, como las palmeras y su estado de actual de infección. También permite ingresar nueva información al sistema como nuevos focos de detección de la plaga. Esto asegura que el sistema esté actualizado en todo momento y facilita a los usuarios la visualización e identificación de estos focos.
 
-El módulo \textit{mini-apps} centraliza aplicaciones utilizadas en varias tareas, como la actualización, migración y generación de datos que usualmente son insumos para los procesos de entrenamiento. Este módulo permite gestionar tareas específicas que no están directamente relacionadas con el proceso de detección, pero que son necesarias para el correcto funcionamiento del sistema. Un ejemplo de esto es una aplicación para realizar \textit{web scrapping} del sistema de información geográfica de la IM, para descargar las imágenes de los vuelos allí publicadas y guardarlas en el repositorio de imágenes.
+El módulo mini-apps centraliza aplicaciones utilizadas en varias tareas, como la actualización, migración y generación de datos que usualmente son insumos para los procesos de entrenamiento. Este módulo realiza tareas específicas que no están directamente relacionadas con el proceso de detección, pero que son necesarias para el correcto funcionamiento del sistema. Un ejemplo de esto es la aplicación que efectúa \textit{web scrapping} del sistema de información geográfica de la IM, para descargar las imágenes de los vuelos allí publicadas y guardarlas en el repositorio de imágenes.
 
-Finalmente, el módulo de IA se encarga de gestionar el entrenamiento y despliegue de los modelos de IA. Este módulo tiene el objetivo de manejar el ciclo de vida de los modelos, desde su entrenamiento hasta su despliegue en producción. Se incluye la administración de experimentos y expone una API para la interacción con otros módulos del sistema, como el módulo de aplicaciones web o el de \textit{mini-apps}.
+Finalmente, el módulo de IA se encarga de cumplir con los procesos asociados al entrenamiento y despliegue de los modelos. Tiene el objetivo de manejar sus el ciclos de vida, desde su desarrollo hasta su despliegue en producción. Incluye la administración de experimentos y expone una API para la interacción con otros elementos del sistema, como las aplicaciones web o las mini-apps.
 
-La interacción entre estos los módulos permite que el sistema funcione de manera eficiente y escalable. Cada módulo se encarga de una tarea específica, lo que permite una fácil sustitución y mejora continua del sistema. La arquitectura modular también facilita la integración de nuevas funcionalidades y la adaptación a cambios en los requisitos de la solución. Si bien el enfoque principal del trabajo fue sobre el módulo de IA, se utilizaron herramientas de soporte alineadas este enfoque modular, como las que se describen en la siguiente sección.
+
+La interacción entre estos componentes permite que el sistema funcione de manera eficiente y escalable. Cada módulo se encarga de una tarea específica, lo que se alinea con SRP (siglas del inglés, \textit{Single Responsibility Principle} \citep{soni_software_2024}). Esto posibilita una fácil sustitución y mejora continua del sistema. Este tipo de arquitecturas también favorece la integración de nuevas funcionalidades y la adaptación a cambios en los requisitos de la solución. Si bien el enfoque principal del trabajo fue sobre el módulo de IA, se utilizaron herramientas de soporte que satisfacen este enfoque modular, como las que se describen en la siguiente sección.
 
 %----------------------------------------------------------------------------------------
 %	SECTION 2
@@ -89,9 +90,11 @@ La interacción entre estos los módulos permite que el sistema funcione de mane
 \section{Despliegue de la infraestructura de soporte}
 \label{sec:despliegue_infraestructura}
 
-El despliegue de la infraestructura de soporte se realizó en dos ambientes: un ambiente local y un ambiente de producción. El ambiente local se utilizó para el desarrollo y pruebas iniciales, mientras que el ambiente de producción se utilizó para el despliegue final del sistema, que es idéntico a la infraestructura de la IM.
+El despliegue de la infraestructura de soporte se llevó a cabo en dos ambientes, uno local y otro de producción.
 
-El ambiente local, que en este caso también auspicia de ambiente de desarrollo, se intenta emular al ambiente de producción mediante el uso de las mismas (o similares) herramientas, como se puede apreciar en la figura \ref{fig:infra-desarrollo}
+El entorno local se utilizó para el desarrollo y la ejecución de pruebas preliminares, mientras que el de producción se destinó al despliegue final del sistema, el cual replica fielmente la infraestructura operativa de la IM.
+
+En este contexto, el dominio local se configuró para emular el entorno de producción mediante la adopción de herramientas idénticas o análogas, tal como se ilustra en la figura \ref{fig:infra-desarrollo}.
 
 \begin{figure}[htpb]
   \centering
@@ -100,25 +103,14 @@ El ambiente local, que en este caso también auspicia de ambiente de desarrollo,
   \label{fig:infra-desarrollo}
 \end{figure}
 
-Otro usuario desarrollador puede tener el ambiente directamente desde su máquina, simplemente clonando el repositorio \citep{bruno_masoller_brunomaso1uba-ceia_nodate} mediante \textit{Git} y luego utilizar herramientas como \textit{Visual Studio Code} \citep{microsoft_documentation_nodate} para importar el proyecto.
+Otro usuario desarrollador puede tener el ambiente directamente desde su máquina, simplemente clonando el repositorio \citep{bruno_masoller_brunomaso1uba-ceia_nodate} mediante Git y luego importar el proyecto utilizando un IDE \citep{wikipedia_entorno_2025}. En este caso, se utilizó Visual Studio Code. Una vez importado el proyecto, la estructura de directorios emula cada módulo del proyecto de la siguiente manera:
 
-La estructura de directorios para el ambiente de desarrollo del trabajo fue la siguiente:
+% Ejemplos de código:
 
 % \begin{lstlisting}[label=cod:vControl,caption=Estructura de directorios utilizada.]  % Start your code-block
 %
 %   desarrollo/
 %     |-- cvat/
-%     |-- entrypoint/
-%     |-- fiftyone/
-%     |-- landing-page/
-%     |-- ldap/
-%     |-- ldap-self-service-password/
-%     |-- minio/
-%     |-- mongo/
-%     |-- vagrant-scripts/
-%     |-- mini-apps/
-%     |-- readme.md
-%     `-- Vagrantfile
 %
 % \end{lstlisting}
 
@@ -127,115 +119,84 @@ La estructura de directorios para el ambiente de desarrollo del trabajo fue la s
 %
 %   desarrollo/
 %   ├── cvat/
-%   ├── entrypoint/
-%   ├── fiftyone/
-%   ├── landing-page/
-%   ├── ldap/
-%   ├── ldap-self-service-password/
-%   ├── minio/
-%   ├── mongo/
-%   ├── vagrant-scripts/
-%   ├── mini-apps/
-%   ├── readme.md
-%   └── Vagrantfile
 %
 % \end{alltt}
 
 \begin{lstlisting}[label=cod:vControl,caption=Estructura de directorios utilizada., literate={├}{{\textSFviii}}1 {─}{{\textSFx}}1 {└}{{\textSFii}}1 {│}{{\textSFxi}}1]  % Start your code-block
 
   desarrollo/
-  ├── cvat/
-  ├── entrypoint/
-  ├── fiftyone/
-  ├── landing-page/
-  ├── ldap/
-  ├── ldap-self-service-password/
-  ├── minio/
-  ├── mongo/
+  ├── modulo-aplicaciones-web/
+  │   ├── entrypoint/
+  │   └── landing-page/
+  ├── modulo-calidad-datos/
+  │   └── fiftyone/
+  ├── modulo-etiquetado-datos/
+  │   └── cvat/
+  ├── modulo-gestor-datos/
+  │   └── mongo/
+  ├── modulo-ia/
+  │   ├── YoloV11/
+  │   ├── Faster R-CNN/
+  │   ├── ConvNeXt/
+  │   ├── EfficientDet/
+  │   └── DETR/
+  ├── modulo-informacion-georreferenciada/
+  │   └── QGIS/
+  ├── modulo-mini-apps/
+  │   └── webscrapping-SIG/
+  ├── modulo-repositorio-objetos/
+  │   └── MinIO/
+  ├── modulo-respaldo/
+  │   └── scripts/
+  ├── modulo-seguridad/
+  │   ├── SSP/
+  │   └── LLDAP/
   ├── vagrant-scripts/
-  ├── mini-apps/
   ├── readme.md
   └── Vagrantfile
 
 \end{lstlisting}
 
-La estructura de directorios está organizada de manera tal de que cada directorio representa un módulo del sistema, con su herramienta o conjunto de herramientas que implementa dicha funcionalidad. Estos directorios o módulos luego se pueden adaptar a otros administradores, como en el caso del módulo de seguridad que usualmente es administrado por el equipo de seguridad de la IM.
+Esta estructura permite que luego se puedan sustituir estas herramientas por su análogo en la infraestructura de la IM. Por ejemplo, LLDAP puede ser sustituido por WSO2.
 
-En ingeniería de software es importante asegurar la reproducibilidad de los ambientes de trabajo. Una de las herramientas utilizadas para asegurar esto es \textit{Docker}, que permite crear contenedores que encapsulan una aplicación y sus dependencias. Esto asegura un entorno de ejecución uniforme y reproducible en diferentes sistemas. Para la orquestación de múltiples contenedores utilizó \textit{Docker Compose}, que permite simular entornos complejos en donde interactúan varias aplicaciones.
+En ingeniería de software es importante asegurar la reproducibilidad de los ambientes de trabajo. Una de las herramientas utilizadas para asegurar esto es Docker, que habilita crear contenedores que encapsulan una aplicación y sus dependencias. Esto asegura un entorno de ejecución uniforme y reproducible en diferentes sistemas. Para la orquestación de múltiples contenedores se utilizó Docker Compose, que brinda una infraestructura en entornos complejos en donde interactúan varias aplicaciones.
 
-Cada directorio tiene su propio archivo de \textit{Docker Compose} que habilita el despliegue de las herramientas del módulo. Esto permite que cada módulo pueda ser desarrollado y probado de manera independiente (con sus debidos \textit{stubs} \citep{wikipedia_talon_2025} o \textit{mocks} \citep{wikipedia_objeto_2024}), lo que facilita la integración y prueba del sistema completo. Estos archivos de configuración pueden ser adaptados a distintas situaciones. Por ejemplo, el archivo \textit{docker-compose.yml} de \textit{MinIO} fue adaptado para que si no existe el \textit{bucket} llamado "picudo-rojo-bucket", lo cree automáticamente, como se puede observar en el siguiente fragmento de código extraído de dicho archivo:
+Cada directorio tiene su propio archivo de Docker Compose (docker-compose.yml) que habilita el despliegue de las herramientas del módulo. Esto, además de las ventajas mencionadas anteriormente en la sección \ref{sec:arquitectura}, también permite que cada componente pueda ser desarrollado y probado de manera independiente (con sus debidos \textit{stubs} \citep{wikipedia_talon_2025} o \textit{mocks} \citep{wikipedia_objeto_2024}), lo que reduce el Lead Time \citep{wikipedia_lead_2025}. Estos archivos de configuración pueden ser adaptados a distintas situaciones. Por ejemplo, el archivo docker-compose.yml de MinIO fue adaptado para que, si no existe el \textit{bucket} llamado "picudo-rojo-bucket", se cree automáticamente.
 
-\begin{lstlisting}[label=cod:minio-mc,caption=Configuración del servicio MinIO Client (mc).]  % Start your code-block
-  
-  mc:
-    image: minio/mc
-    depends_on:
-      - minio
-    environment:
-      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
-      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
-      - MINIO_INITIAL_BUCKET=${MINIO_INITIAL_BUCKET}
-    entrypoint: >
-      /bin/sh -c "
-      until (/usr/bin/mc alias set myminio http://minio:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD) do sleep 1; done;
-      /usr/bin/mc mb myminio/${MINIO_INITIAL_BUCKET};
-      /usr/bin/mc policy set public myminio/${MINIO_INITIAL_BUCKET};
-      exit 0;
-      "
-    networks: *default-network
-    
-\end{lstlisting}
+Asimismo cada módulo tiene sus variables de entorno definidos como archivos .env su directorio raíz. Esto permite separar la configuración de los distintos ambientes para cada módulo. En este sentido, concede la fácil transición entre el ambiente de desarrollo y el ambiente de producción. Cuando se ejecute en el ambiente de producción, estos archivos de configuración se pueden migrar a ConfigMaps \citep{red_hat_chapter_nodate} y Secrets \citep{red_hat_chapter_nodate-1} de OpenShift, que permiten gestionar la configuración de los contenedores de manera segura y eficiente. Esto asegura que la información sensible, como contraseñas o claves de acceso, no se exponga en el código fuente.
 
-Este fragmento también evidencia que cada módulo tiene sus variables de entorno definidos como archivos \textit{.env} su directorio raíz. Esto permite separar la configuración de los distintos ambientas para cada  módulo. En este sentido, permite la fácil transición entre el ambiente de desarrollo y el ambiente de producción.
+Aunque Docker permite crear contenedores que emulan el ambiente de producción, esto no es suficiente para asegurar la reproducibilidad de este dominio en el entorno de desarrollo. Esto se debe a que Docker se ejecuta sobre una plataforma, que puede ser diferente en cada máquina. Por lo tanto, es necesario utilizar una herramienta que permita crear y gestionar la infraestructura de soporte de manera uniforme y reproducible. Para esto se utilizó Vagrant.
 
-Aunque Docker permiten crear contenedores que emulan el ambiente de producción, no es suficiente para asegurar la reproducibilidad del ambiente de desarrollo. Esto se debe a que Docker se ejecuta sobre una plataforma, que puede ser diferente en cada máquina. Por lo tanto, es necesario utilizar una herramienta que permita crear y gestionar la infraestructura de soporte de manera uniforme y reproducible. Para esto se utilizó \textit{Vagrant} que administra máquinas virtuales de manera sencilla y reproducible.
+Vagrant concede la habilidad de crear una o varias máquinas virtuales (VM, del inglés \textit{virtual machine}) que emulan una plataforma objetivo, en este caso, se podría crear una VM con la misma versión del sistema operativo que se utiliza en el ambiente real (RHEL \citep{red_hat_sistema_nodate}). Se maneja con un archivo de configuración llamado Vagrantfile que brinda la posibilidad de realizar la definición de la configuración de la máquina virtual como \textit{infrastructure as a code}. Esto implica definir parámetros como la cantidad de memoria, el sistema operativo o las aplicaciones a instalar. Se puede utilizar una imagen de un sistema operativo ya configurado o crear una desde cero. En este caso se utilizó una imagen de Ubuntu 24.04 LTS \citep{progress_chefs_bento_bentoubuntu-2404_nodate}, del repositorio oficial de Vagrant \citep{hashicorp_hashicorp_nodate}, que incluye la mayoría de las herramientas necesarias para el desarrollo y despliegue del sistema. Esta imagen se puede utilizar en cualquier máquina que tenga instalado Vagrant y VirtualBox \citep{wikipedia_virtualbox_2025} (también se puede utilizar otro software de virtualización, como lo es Hyper-V \citep{meaghanlewis_informacion_2025} o VMWare \citep{wikipedia_vmware_2025}), por lo que si otro desarrollador se incorpora al proyecto, al utilizar la misma imagen puede tener el mismo ambiente de desarrollo. Esto asegura que el sistema funcione de la misma manera en diferentes máquinas y evita problemas de compatibilidad entre diferentes versiones de software.
 
-Vagrant permite crear una (o varias) máquinas virtuales que emulan el ambiente de producción, inclusive con la misma versión del sistema operativo que se utiliza en el ambiente real (OpenShift). Se maneja con un archivo de configuración llamado (\textit{Vagrantfile}) que habilita la definición la configuración de la máquina virtual como \textit{infrastructure as a code}. Esto implica la posibilidad de definir parámetros como la cantidad de memoria, el sistema operativo o las aplicaciones a instalar. Se puede utilizar una imagen de un sistema operativo ya configurado o crear una desde cero. En este caso se utilizó una imagen de Ubuntu 24.04 LTS \citep{progress_chefs_bento_bentoubuntu-2404_nodate}, del repositorio oficial de \textit{Vagrant} \citep{hashicorp_hashicorp_nodate}, que incluye la mayoría de las herramientas necesarias para el desarrollo y despliegue del sistema. Esta imagen se puede utilizar en cualquier máquina que tenga instalado \textit{Vagrant} y \textit{VirtualBox} \citep{wikipedia_virtualbox_2025} (también se pueden utilizar otros software de virtualización, como lo es \textit{Hyper-V} \citep{meaghanlewis_informacion_2025} o \textit{VMWare} \citep{wikipedia_vmware_2025}), por lo que si otro desarrollador se incorpora al proyecto, puede utilizar la misma imagen y tener el mismo ambiente de desarrollo. Esto asegura que el sistema funcione de la misma manera en diferentes máquinas y evita problemas de compatibilidad entre diferentes versiones de software.
+Asimismo, Vagrant también permite aprovisionar \textit{scripts} de configuración a las máquinas virtuales. Estos pueden ejecutarse al iniciar estas máquinas, lo que permite instalar y configurar las aplicaciones necesarias para poner el funcionamiento el sistema. En este caso, se utilizaron cuatro scripts de aprovisionamiento:
 
-Para este trabajo, se utilizó el siguiente \textit{Vagrantfile}:
+\begin{lstlisting}[label=cod:dd,caption=Scripts de vagrant utilizados., literate={├}{{\textSFviii}}1 {─}{{\textSFx}}1 {└}{{\textSFii}}1 {│}{{\textSFxi}}1]  % Start your code-block
 
-\begin{lstlisting}[label=cod:vagrantfile,caption=Configuración de Vagrant.]  % Start your code-block  
-  
-  Vagrant.configure("2") do |config|
-    config.vm.box = "bento/ubuntu-24.04"
-    config.vm.box_version = "202502.21.0"
-    
-    config.vm.network "public_network",
-      bridge: "Intel(R) Wi-Fi 6E AX211 160MHz",
-      use_dhcp_assigned_default_route: true  # Prioriza esta interfaz
-  
-    config.vm.disk :disk, size: "100GB", primary: true
-  
-    config.vm.provider "virtualbox" do |vb|
-      vb.cpus = 8
-      vb.memory = "32768"
-      
-      vb.customize ["modifyvm", :id, "--nic1", "nat"]
-      vb.customize ["modifyvm", :id, "--nicpromisc1", "deny"] 
-    end
-  
-    config.vm.provision "setup-vm-network", type: "shell", path: "vagrant-scripts/01-setup-network.sh"
-    config.vm.provision "install-dependencies", type: "shell", path: "vagrant-scripts/02-install-dependencies.sh"
-    config.vm.provision "setup-firewall", type: "shell", path: "vagrant-scripts/03-configure-firewall.sh"
-    config.vm.provision "start-web-server", type: "shell", path: "vagrant-scripts/04-start-services.sh", run: "never" (*@\label{line:startwebserver}@*)
-  end
+  vagrant-scripts/
+  ├── 01-setup-network.sh
+  ├── 02-install-dependencies.sh
+  ├── 03-configure-firewall.sh
+  └── 04-start-dev-services.sh
 
 \end{lstlisting}
 
-Vagrant también permite aprovisionar \textit{scripts} de configuración a las máquinas virtuales. Éstos pueden ejecutarse al iniciar estas máquinas, lo que permite instalar y configurar las aplicaciones necesarias para el ambiente de desarrollo, pero también para el ambiente de producción. Se puede ejemplificar uno de estos aprovisionamientos en el script \ref{cod:vagrantfile} en la linea \ref{line:startwebserver}. En este caso, se utilizaron cuatro scripts de aprovisionamientos, en donde el último se encarga de iniciar los servicios dentro de cada módulo (usualmente se ejecuta mediante un script de shell el comando \textit{docker compose up}). Estos scripts se encuentran en el directorio \textit{vagrant-scripts}.
+En donde el último se encarga de iniciar los servicios dentro de cada módulo (usualmente se ejecuta mediante un script de shell el comando docker compose up).
 
-Una vez que se ejecuta el comando \textit{vagrant up}, se crea la máquina virtual (si ya no fue creada) y se ejecutan los scripts de aprovisionamiento, lo que permite obtener el ambiente de desarrollo en pocos minutos. Entre los servicios que se inician se encuentran:
+Una vez que se ejecuta el comando vagrant up, se crea una máquina virtual (si ya no fue creada), se ejecutan los scripts de aprovisionamiento, lo que resulta en el ambiente de desarrollo listo para utilizarse.
+
+Entre los servicios que se inician se encuentran:
 
 \begin{itemize}
-  \item \textit{MongoDB}: herramienta que implementa la base de datos, dentro del módulo de gestión de datos, que permite almacenar metadatos de las imágenes ortorectificadas y los resultados de los modelos.
-  \item \textit{MinIO}: herramienta que un repositorio de objetos dentro del módulo con el mismo nombre que almacena las imágenes generadas por los drones y aviones.
-  \item \textit{CVAT}: herramienta de etiquetado de imágenes, perteneciente al módulo de datos, que se utiliza para etiquetar las imágenes almacenadas en el repositorio de objetos.
-  \item \textit{FiftyOne}: herramienta de análisis, organización, visualización y generación de informes sobre los datos. Pertenece al módulo de calidad de datos.
-  \item \textit{LLDAP}: herramienta de gestión de usuarios y permisos, utilizada para administrar la seguridad del sistema. Permite gestionar el acceso a la información sensible de manera sencilla y eficiente. Integrada en el módulo de seguridad.
-  \item \textit{LDAP Self Service Password}: herramienta de gestión de contraseñas, utilizada para que los usuarios manejen sus credenciales. Se integra con LLDAP y pertenece al mismo módulo.
-  \item \textit{Landing Page}: conjunto de herramientas basadas en tecnologías de desarrollo web (HTML, CSS, Javascript) que brindan información sobre el proyecto. Es la cara visible del sistema desde internet. Se asocia con el módulo de aplicaciones web.
-  \item \textit{Mini-apps}: son scripts que ejecutan varias tareas, como por ejemplo, obtener las imágenes desde el SIG de la IM. Pertenece al módulo de \textit{mini-apps}.
-  \item \textit{Entrypoint}: es un proxy reverso que expone el ambiente de desarrollo a internet para su fácil acceso. Pertenece al módulo de aplicaciones web.
+  \item MongoDB: herramienta que implementa la base de datos que permite almacenar metadatos de las imágenes ortorectificadas y los resultados de los modelos.
+  \item MinIO: herramienta almacena las imágenes generadas por los drones y aviones.
+  \item CVAT: herramienta utiliza para etiquetar las imágenes almacenadas en el repositorio de objetos.
+  \item FiftyOne: herramienta de análisis, organización, visualización y generación de informes sobre los datos.
+  \item LLDAP: herramienta de gestión de usuarios y permisos, utilizada para administrar la seguridad del sistema.
+  \item LDAP Self Service Password: herramienta de gestión de contraseñas, utilizada para que los usuarios manejen sus credenciales.
+  \item Landing Page: conjunto de herramientas basadas en tecnologías de desarrollo web (HTML, CSS, Javascript) que brindan información sobre el proyecto. Es la cara visible del sistema desde internet.
+  \item Mini-apps: scripts que ejecutan varias tareas, como por ejemplo, obtener las imágenes desde el SIG de la IM.
+  \item Entrypoint: proxy reverso que expone el ambiente de desarrollo a internet o intranet para su fácil acceso.
 \end{itemize}
 
 % Poner un esquema de flujo (caso de uso) de la plataforma, mostrando los módulos y su interacción.
