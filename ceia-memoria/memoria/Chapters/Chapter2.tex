@@ -6,15 +6,9 @@ En este capítulo se presentan en detalle las tecnologías y conceptos utilizado
 \section{Imágenes generadas por vehículos aéreos}
 \label{sec:imgGenVehiculosAereos}
 
-Los UAV han emergido como herramientas fundamentales en la obtención de imágenes aéreas de alta resolución. Su empleo ha permitido avances significativos en diversos campos, entre los que se destacan la agricultura de precisión, la vigilancia ambiental y la inspección de infraestructuras, entre otros \citep{mokhtar_image_2023}.
+Los UAV se han consolidado como herramientas esenciales para la obtención de imágenes aéreas de alta resolución. Esto favorece avances en áreas como la agricultura de precisión, la vigilancia ambiental y la inspección de infraestructuras \citep{mokhtar_image_2023}. La flexibilidad operativa de estos drones permite planificar vuelos a medida para cada proyecto específico, lo que facilita el acceso a zonas amplias o de difícil acceso. Además, la incorporación de equipamientos especializados, como cámaras multiespectrales, sensores térmicos y sistemas LiDAR, posibilita la captura de datos en diferentes bandas del espectro electromagnético, fundamentales para un análisis detallado y preciso \citep{unmanned_system_technology_uavdrone_nodate}.
 
-La utilización de UAV en la adquisición de imágenes se fundamenta en varias ventajas inherentes a estos sistemas. En primer lugar, la flexibilidad operativa que ofrecen permite la planificación de vuelos adaptados a necesidades específicas de cada proyecto, garantizando la cobertura de zonas amplias o de difícil acceso (por ejemplo, palmeras en ubicaciones privadas de Montevideo o zonas en donde el acceso a pie es muy costoso). Asimismo, la capacidad de llevar equipamiento especializado (como cámaras multiespectrales, sensores térmicos y dispositivos LiDAR) posibilita la obtención de datos con distintos niveles de resolución y en diversas bandas del espectro electromagnético, que es esencial para aplicaciones que requieren análisis detallados y precisos \citep{unmanned_system_technology_uavdrone_nodate}.
-
-Otro aspecto relevante es la eficiencia en términos de tiempo y costos. Comparados con métodos tradicionales de monitoreo, los UAV reducen considerablemente los recursos necesarios para este tipo de tareas, al tiempo que minimizan la exposición de personal a ambientes potencialmente peligrosos. Esto, sumado a la posibilidad de repetir vuelos en condiciones controladas, favorece la generación de series temporales de datos que permiten, en conjunción con el monitoreo, el análisis evolutivo de fenómenos específicos (como lo son las plagas).
-
-Los UAV suelen cubrir un área específica; sin embargo, otros tipos de vehículos aéreos, como los vuelos de aviones tripulados, suelen cubren un área mucho mayor \citep{2000_aviation_ortoimagenes_nodate}. El servicio de geomática de la IM utiliza estas dos tecnologías para generar imágenes de todo Montevideo. Cada dos o tres años se realiza un vuelo tripulado que cubre toda la ciudad. En contraste, los vuelos de drones pueden ser solicitados a demanda, dado que su costo es mucho menor.
-
-La diferencia entre estas tecnologías no solo radica en el costo y área cubierta, sino también en el tipo de cámara que llevan estos vehículos. La resolución espacial de las imágenes generadas dependen de la cámara y la altura a la que vuelan estos vehículos (estas imágenes son procesadas por varias aplicaciones informáticas, como Agisoft \citep{agisoft_agisoft_nodate}, que permite generar ortomosaicos).
+En contraste con los métodos tradicionales y los vuelos tripulados (que cubren áreas mayores pero implican costos y logísticas más complejas \citep{2000_aviation_ortoimagenes_nodate}), los UAV ofrecen eficiencia en tiempo y costos. Asimismo, reducen la exposición del personal a ambientes potencialmente peligrosos. La adaptación a condiciones controladas y la capacidad de replicar vuelos contribuyen a la generación de series temporales que facilitan el monitoreo y análisis evolutivo de fenómenos específicos, como la plaga del picudo rojo.
 
 \subsection{Imágenes de drones}
 \label{sec:imgUavDrones}
@@ -26,24 +20,20 @@ Las imágenes generadas por drones se destacan por su alta resolución y capacid
 
 La cara visible de los proyectos de inteligencia artificial se fundamenta, en general, en los resultados y aplicaciones derivados de modelos de aprendizaje automático. No obstante, al igual que en cualquier proyecto de software, resulta fundamental integrar buenas prácticas de ingeniería de software, lo que implica focalizarse en atributos específicos del sistema, tales como la escalabilidad, la seguridad y la recuperabilidad, entre otros \citep{sommerville_software_2015}. Para alcanzar estos objetivos, es crucial considerar disciplinas que faciliten su consecución, como la gestión de la configuración o la gestión de datos. A continuación, se exponen algunas herramientas de apoyo a varios de estos procesos.
 
-\subsection{Gestión de código}
-
-El control de versiones es fundamental para asegurar la trazabilidad en los proyectos. Git permite mantener un historial detallado de los cambios, lo que facilita la integración de nuevas funcionalidades y la resolución de conflictos mediante estrategias de \textit{branching} y \textit{merging}. Esta práctica no solo mejora la trazabilidad, sino que brinda transparencia y contribuye a la reproducibilidad del proyecto a lo largo del tiempo. Una de las implementaciones más conocidas es GitHub \citep{github_build_nodate}, que se ha consolidado como una plataforma de colaboración que posibilita la gestión distribuida de proyectos de software en entornos tanto académicos como empresariales.
-
 \subsection{Gestión de infraestructura}
 \label{sec:gestionDeinfraestructura}
 
-La correcta administración de la infraestructura es esencial para el despliegue y mantenimiento de aplicaciones de inteligencia artificial, tanto en entornos de desarrollo como en producción. Para ello, en la industria se suelen utilizar diversas herramientas, entre que se encuentran:
+La correcta administración de la infraestructura es esencial para el despliegue y mantenimiento de aplicaciones de inteligencia artificial, tanto en entornos de desarrollo como en producción. Para ello, en la industria se suelen utilizar diversas herramientas, entre las que se encuentran:
 
 \begin{itemize}
 	\item Docker y Docker Compose \citep{merkel_docker_2014} \citep{docker_docker_0000}: estas herramientas permiten la creación de contenedores que encapsulan una aplicación (o varias aplicaciones) y sus dependencias, lo que asegura un entorno de ejecución uniforme y reproducible en diferentes sistemas. Docker Compose facilita la orquestación de múltiples contenedores y posibilita la simulación de entornos complejos en un ambiente local.
 	\item Vagrant \citep{hashicorp_vagrant_2023} \citep{hashicorp_documentation_nodate}: se utiliza para la configuración y despliegue de máquinas virtuales. Esta herramienta ofrece un entorno virtualizado consistente y de fácil replicación, lo que resulta útil para la estandarización del entorno de desarrollo simplemente con un archivo de configuración (Vagrantfile).
-	\item OpenShift \citep{red_hat_openshift_2023} \citep{red_hat_red_nodate} y Helm \citep{the_helm_authors_helm_2023} \citep{the_helm_authors_docs_nodate}: en entornos de producción, OpenShift basado en Kubernetes \citep{wikipedia_kubernetes_2025}, permite una gestión centralizada y escalable de las aplicaciones, mientras que Helm simplifica la instalación, configuración y actualización de éstas mediante el uso de paquetes predefinidos.
+	\item OpenShift \citep{red_hat_openshift_2023} \citep{red_hat_red_nodate} y Helm \citep{the_helm_authors_helm_2023} \citep{the_helm_authors_docs_nodate}: en entornos de producción, OpenShift basado en Kubernetes \citep{wikipedia_kubernetes_2025}, permite una gestión centralizada y escalable de las aplicaciones, mientras que Helm simplifica la instalación, configuración y actualización de estas mediante el uso de paquetes predefinidos.
 \end{itemize}
 
 \subsection{Gestión de usuarios y permisos}
 
-La seguridad y la privacidad son aspectos críticos en el desarrollo de aplicaciones de inteligencia artificial. La correcta gestión de usuarios y permisos es esencial para garantizar que solo las personas autorizadas tengan acceso a datos sensibles y funcionalidades específicas del sistema. Para ello, se pueden implementar herramientas compatibles con el protocolo \textit{Lightweight Directory Access Protocol} (LDAP) \citep{noauthor_protocolo_2024}, como lo es \textit{Light} LDAP (LLDAP) \citep{lldap_authors_lldap_2023}. Esta herramienta permite la autenticación y autorización de usuarios, lo que simplifica la gestión centralizada de credenciales y permisos. Además, se pueden establecer políticas de acceso basadas en roles, y así contribuir a una mayor seguridad y control sobre el sistema.
+La seguridad y la privacidad son aspectos críticos en el desarrollo de aplicaciones de inteligencia artificial. La correcta gestión de usuarios y permisos es esencial para garantizar que solo las personas autorizadas tengan acceso a datos sensibles y funcionalidades específicas del sistema. Para ello, se pueden implementar herramientas compatibles con el protocolo \textit{Lightweight Directory Access Protocol} (LDAP) \citep{wikipedia_protocolo_2024}, como lo es \textit{Light} LDAP (LLDAP) \citep{lldap_authors_lldap_2023}. Esta herramienta permite la autenticación y autorización de usuarios, lo que simplifica la gestión centralizada de credenciales y permisos. Además, se pueden establecer políticas de acceso basadas en roles, y así contribuir a una mayor seguridad y control sobre el sistema.
 
 \subsection{Gestión de etiquetado de datos}
 
@@ -127,15 +117,6 @@ Un resumen intuitivo de estas métricas se puede visualizar en la imagen \ref{fi
 
 \footnotetext{Imagen tomada de \url{https://www.researchgate.net/figure/Calculation-of-Precision-Recall-and-Accuracy-in-the-confusion-matrix_fig3_336402347}}
 
-\subsection{Intersección sobre unión}
-
-La intersección sobre unión (IOU, por su sigla en inglés de \textit{Intersection Over Union}) es una métrica que evalúa la superposición entre la caja delimitadora predicha y la caja delimitadora real de un objeto. Se calcula como el cociente entre el área de intersección y el área de unión de ambas cajas. Esta métrica es fundamental en tareas de detección, ya que un IOU alto indica una buena coincidencia espacial entre la predicción y la referencia, como se puede intuir en la siguiente fórmula:
-
-\begin{equation}
-	\text{IoU} = \frac{\text{Área de intersección}}{\text{Área de unión}}
-	\label{eq:iou}
-\end{equation}
-
 \subsection{\textit{Average Precision} y \textit{Mean Average Precision}}
 
 La evaluación del desempeño en tareas de detección de objetos requiere considerar cómo varía la precisión del modelo ante distintos umbrales de decisión. Se suele utilizar dos métricas claves: la precisión promedio (AP, del inglés \textit{Average Precision}) y media de la precisión promedio (mAP, del inglés \textit{Mean Average Precision}).
@@ -143,14 +124,6 @@ La evaluación del desempeño en tareas de detección de objetos requiere consid
 \begin{itemize}
 	\item AP: para cada clase de objeto, se calcula el promedio de la precisión, integrando la curva de precisión-recuperación (ROC, por su sigla en inglés de \textit{Receiver Operating Characteristic}) \citep{wikipedia_curva_2025}. La AP resume el rendimiento del detector en diferentes umbrales de decisión.
 	\item mAP: es la media aritmética de la AP calculada para cada clase. El mAP es ampliamente utilizado en competencias y evaluaciones de modelos de detección de objetos, ya que proporciona una única medida que resume la efectividad global del modelo.
-\end{itemize}
-
-\subsection{Otras métricas relevantes}
-
-Además de las métricas anteriormente descritas, en la práctica se pueden utilizar otros indicadores, dependiendo de la aplicación y la naturaleza de los datos:
-\begin{itemize}
-	\item Curva ROC y área bajo la curva (AUC, del inglés \textit{Area Under the Curve}): la curva ROC y el AUC se emplean comúnmente en tareas de clasificación para evaluar la capacidad del modelo en discriminar entre clases.
-	\item \textit{Mean Square Error} (MSE) y \textit{Mean Absolute Error} (MAE): en aplicaciones que requieren regresión, como la estimación de posiciones o dimensiones, se utilizan estas métricas para cuantificar la diferencia entre los valores predichos y los reales.
 \end{itemize}
 
 La correcta selección y combinación de estas métricas permite una evaluación integral de los modelos de VPC, lo que facilita la identificación de áreas de mejora así como la comparación objetiva entre diferentes enfoques o arquitecturas implementadas.

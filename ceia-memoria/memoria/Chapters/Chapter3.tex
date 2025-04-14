@@ -81,7 +81,7 @@ El módulo mini-apps centraliza aplicaciones utilizadas en varias tareas, como l
 Finalmente, el módulo de IA se encarga de cumplir con los procesos asociados al entrenamiento y despliegue de los modelos. Tiene el objetivo de manejar sus el ciclos de vida, desde su desarrollo hasta su despliegue en producción. Incluye la administración de experimentos y expone una API para la interacción con otros elementos del sistema, como las aplicaciones web o las mini-apps.
 
 
-La interacción entre estos componentes permite que el sistema funcione de manera eficiente y escalable. Cada módulo se encarga de una tarea específica, lo que se alinea con SRP (siglas del inglés, \textit{Single Responsibility Principle} \citep{soni_software_2024}). Esto posibilita una fácil sustitución y mejora continua del sistema. Este tipo de arquitecturas también favorece la integración de nuevas funcionalidades y la adaptación a cambios en los requisitos de la solución. Si bien el enfoque principal del trabajo fue sobre el módulo de IA, se utilizaron herramientas de soporte que satisfacen este enfoque modular, como las que se describen en la siguiente sección.
+La interacción entre estos componentes permite que el sistema funcione de manera eficiente y escalable. Cada módulo se encarga de una tarea específica, lo que se alinea con SRP (sigla del inglés \textit{Single Responsibility Principle} \citep{soni_software_2024}). Esto posibilita una fácil sustitución y mejora continua del sistema. Este tipo de arquitecturas también favorece la integración de nuevas funcionalidades y la adaptación a cambios en los requisitos de la solución. Si bien el enfoque principal del trabajo fue sobre el módulo de IA, se utilizaron herramientas de soporte que satisfacen este enfoque modular, como las que se describen en la siguiente sección.
 
 %----------------------------------------------------------------------------------------
 %	SECTION 2
@@ -92,14 +92,14 @@ La interacción entre estos componentes permite que el sistema funcione de maner
 
 El despliegue de la infraestructura de soporte se llevó a cabo en dos ambientes, uno local y otro de producción.
 
-El entorno local se utilizó para el desarrollo y la ejecución de pruebas preliminares, mientras que el de producción se destinó al despliegue final del sistema, el cual replica fielmente la infraestructura operativa de la IM.
+El entorno local se utilizó para el desarrollo y la ejecución de pruebas preliminares, mientras que el de producción, que intenta replicar la infraestructura operativa de la IM, se destinó al despliegue final del sistema.
 
 En este contexto, el dominio local se configuró para emular el entorno de producción mediante la adopción de herramientas idénticas o análogas, tal como se ilustra en la figura \ref{fig:infra-desarrollo}.
 
 \begin{figure}[htpb]
   \centering
   \includegraphics[scale=0.09]{./Figures/herramientas-plataforma.png}
-  \caption{Diagrama de arquitectura del sistema de monitoreo.}
+  \caption{Diagrama de la plataforma de monitoreo.}
   \label{fig:infra-desarrollo}
 \end{figure}
 
@@ -161,7 +161,7 @@ Esta estructura permite que luego se puedan sustituir estas herramientas por su 
 
 En ingeniería de software es importante asegurar la reproducibilidad de los ambientes de trabajo. Una de las herramientas utilizadas para asegurar esto es Docker, que habilita crear contenedores que encapsulan una aplicación y sus dependencias. Esto asegura un entorno de ejecución uniforme y reproducible en diferentes sistemas. Para la orquestación de múltiples contenedores se utilizó Docker Compose, que brinda una infraestructura en entornos complejos en donde interactúan varias aplicaciones.
 
-Cada directorio tiene su propio archivo de Docker Compose (docker-compose.yml) que habilita el despliegue de las herramientas del módulo. Esto, además de las ventajas mencionadas anteriormente en la sección \ref{sec:arquitectura}, también permite que cada componente pueda ser desarrollado y probado de manera independiente (con sus debidos \textit{stubs} \citep{wikipedia_talon_2025} o \textit{mocks} \citep{wikipedia_objeto_2024}), lo que reduce el Lead Time \citep{wikipedia_lead_2025}. Estos archivos de configuración pueden ser adaptados a distintas situaciones. Por ejemplo, el archivo docker-compose.yml de MinIO fue adaptado para que, si no existe el \textit{bucket} llamado "picudo-rojo-bucket", se cree automáticamente.
+Cada directorio tiene su propio archivo de Docker Compose (\lstinline[language=sh]|docker-compose.yml|) que habilita el despliegue de las herramientas del módulo. Esto, además de las ventajas mencionadas anteriormente en la sección \ref{sec:arquitectura}, también permite que cada componente pueda ser desarrollado y probado de manera independiente (con sus debidos \textit{stubs} \citep{wikipedia_talon_2025} o \textit{mocks} \citep{wikipedia_objeto_2024}), lo que reduce el Lead Time \citep{wikipedia_lead_2025}. Estos archivos de configuración pueden ser adaptados a distintas situaciones. Por ejemplo, el archivo \lstinline[language=sh]|docker-compose.yml| de MinIO fue adaptado para que, si no existe el \textit{bucket} llamado "picudo-rojo-bucket", se cree automáticamente.
 
 Asimismo cada módulo tiene sus variables de entorno definidos como archivos .env su directorio raíz. Esto permite separar la configuración de los distintos ambientes para cada módulo. En este sentido, concede la fácil transición entre el ambiente de desarrollo y el ambiente de producción. Cuando se ejecute en el ambiente de producción, estos archivos de configuración se pueden migrar a ConfigMaps \citep{red_hat_chapter_nodate} y Secrets \citep{red_hat_chapter_nodate-1} de OpenShift, que permiten gestionar la configuración de los contenedores de manera segura y eficiente. Esto asegura que la información sensible, como contraseñas o claves de acceso, no se exponga en el código fuente.
 
@@ -181,22 +181,22 @@ Asimismo, Vagrant también permite aprovisionar \textit{scripts} de configuraci�
 
 \end{lstlisting}
 
-En donde el último se encarga de iniciar los servicios dentro de cada módulo (usualmente se ejecuta mediante un script de shell el comando docker compose up).
+En donde el último se encarga de iniciar los servicios dentro de cada módulo (usualmente se ejecuta mediante un script de shell el comando \lstinline[language=sh]|docker compose up|).
 
-Una vez que se ejecuta el comando vagrant up, se crea una máquina virtual (si ya no fue creada), se ejecutan los scripts de aprovisionamiento, lo que resulta en el ambiente de desarrollo listo para utilizarse.
+Una vez que se ejecuta el comando \lstinline[language=sh]|vagrant up|, se crea una máquina virtual (si ya no fue creada), se ejecutan los scripts de aprovisionamiento, lo que resulta en el ambiente de desarrollo listo para utilizarse.
 
 Entre los servicios que se inician se encuentran:
 
 \begin{itemize}
-  \item MongoDB: herramienta que implementa la base de datos que permite almacenar metadatos de las imágenes ortorectificadas y los resultados de los modelos.
-  \item MinIO: herramienta almacena las imágenes generadas por los drones y aviones.
-  \item CVAT: herramienta utiliza para etiquetar las imágenes almacenadas en el repositorio de objetos.
+  \item MongoDB: implementa la base de datos que permite almacenar metadatos de las imágenes ortorectificadas y los resultados de los modelos.
+  \item MinIO: almacena las imágenes generadas por los drones y aviones.
+  \item CVAT: se utiliza para etiquetar las imágenes almacenadas en el repositorio de objetos.
   \item FiftyOne: herramienta de análisis, organización, visualización y generación de informes sobre los datos.
   \item LLDAP: herramienta de gestión de usuarios y permisos, utilizada para administrar la seguridad del sistema.
-  \item LDAP Self Service Password: herramienta de gestión de contraseñas, utilizada para que los usuarios manejen sus credenciales.
-  \item Landing Page: conjunto de herramientas basadas en tecnologías de desarrollo web (HTML, CSS, Javascript) que brindan información sobre el proyecto. Es la cara visible del sistema desde internet.
+  \item LDAP \textit{Self Service Password}: autoservicio de contraseñas (permite que los usuarios gestionen sus credenciales)
+  \item \textit{Landing Page}: conjunto de herramientas basadas en tecnologías de desarrollo web (HTML, CSS, Javascript) que brindan información sobre el proyecto. Es la cara visible del sistema desde internet.
   \item Mini-apps: scripts que ejecutan varias tareas, como por ejemplo, obtener las imágenes desde el SIG de la IM.
-  \item Entrypoint: proxy reverso que expone el ambiente de desarrollo a internet o intranet para su fácil acceso.
+  \item \textit{Entrypoint}: proxy reverso que expone el ambiente de desarrollo a internet o intranet para su fácil acceso.
 \end{itemize}
 
 % Poner un esquema de flujo (caso de uso) de la plataforma, mostrando los módulos y su interacción.
