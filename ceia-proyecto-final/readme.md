@@ -41,6 +41,10 @@ Esta rama del repositorio contiene la implementación y documentación del proye
 
 Link al documento: TODO
 
+### Gestor de dependencias
+
+Para gestionar las dependencias del proyecto, se utiliza Poetry.
+
 ### Comandos útiles
 
 #### Docker
@@ -61,6 +65,55 @@ docker rm $(docker ps -aq)
 - Eliminar volumenes:
 ```bash
 docker volume rm $(docker volume ls -q)
+```
+
+#### Comandos útiles poetry
+
+- Instalar proyecto:
+```bash
+poetry install
+```
+
+- Para instalar una nueva dependencia:
+```bash
+poetry add <nombre-dependencia>
+poetry add <nombre-dependencia> --dev # para dependencias de desarrollo
+```
+
+- Listar las dependencias instaladas:
+```bash
+poetry show
+```
+
+- Listar intérpretes de python disponibles:
+```bash
+poetry python list
+```
+
+- Configurar entorno virtual para crearse en el directorio del proyecto:
+```bash
+poetry config virtualenvs.in-project true
+```
+
+- Activar el entorno virtual:
+```powershell
+Invoke-Expression (poetry env activate)
+```
+
+- Desactivar el entorno virtual:
+```bash
+deactivate
+```
+
+- Especificar el intérprete de python a utilizar:
+```bash
+poetry env use <ruta-al-intérprete-python>
+```
+
+- Modo dependencias:
+```toml
+[tool.poetry]
+package-mode = false
 ```
 
 #### Vagrant

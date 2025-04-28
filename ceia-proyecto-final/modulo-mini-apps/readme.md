@@ -19,53 +19,6 @@ Este módulo se encarga de implementar las mini-apps que se utilizarán para el 
 
 ## Resolución
 
-### Gestor de dependencias
-
-Para gestionar las dependencias del proyecto, se utiliza Poetry.
-
-#### Comandos útiles poetry
-
-- Instalar proyecto:
-```bash
-poetry install
-```
-
-- Para instalar una nueva dependencia:
-```bash
-poetry add <nombre-dependencia>
-poetry add <nombre-dependencia> --dev # para dependencias de desarrollo
-```
-
-- Listar las dependencias instaladas:
-```bash
-poetry show
-```
-
-- Listar intérpretes de python disponibles:
-```bash
-poetry python list
-```
-
-- Configurar entorno virtual para crearse en el directorio del proyecto:
-```bash
-poetry config virtualenvs.in-project true
-```
-
-- Activar el entorno virtual:
-```powershell
-Invoke-Expression (poetry env activate)
-```
-
-- Desactivar el entorno virtual:
-```bash
-deactivate
-```
-
-- Especificar el intérprete de python a utilizar:
-```bash
-poetry env use <ruta-al-intérprete-python>
-```
-
 ### Aplicaciones
 
 Dentro del módulo de mini-apps se encuentran las siguientes aplicaciones:
