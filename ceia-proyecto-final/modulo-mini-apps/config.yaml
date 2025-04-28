@@ -1,0 +1,75 @@
+# Configuración general
+environment: "LOCAL" # Opciones: PRODUCTION, LOCAL, SCALEWAY
+
+# Logger
+logging:
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s"
+  level: "INFO"
+
+# Rutas y configuración
+download_path: "./downloads"
+patches_path: "./downloads/patches"
+tile_size: [4096, 4096]
+over_lap: 400
+purge_white_images: true
+
+# OpenCV
+opencv:
+  max_image_pixels: 2500000000 # 50000*50000
+
+# MongoDB
+mongodb:
+  database: ${MONGODB_INITDB_DATABASE}
+  host: ${MONGODB_SERVER_HOST}
+  port: ${MONGODB_SERVER_PORT}
+  user: ${MONGODB_USER}
+  password: ${MONGODB_PASSWORD}
+  connection_string: "mongodb://${MONGODB_USER}:${MONGODB_PASSWORD}@${MONGODB_SERVER_HOST}:${MONGODB_SERVER_PORT}/${MONGODB_INITDB_DATABASE}"
+
+# S3 Storage
+s3:
+  # Configuración dinámica según environment
+  bucket:
+    LOCAL: ${MINIO_BUCKET}
+    SCALEWAY: ${SCALEWAY_BUCKET}
+  endpoint_url:
+    LOCAL: ${MINIO_ENDPOINT_URL}
+    SCALEWAY: ${SCALEWAY_ENDPOINT_URL}
+  access_key:
+    LOCAL: ${MINIO_ACCESS_KEY}
+    SCALEWAY: ${SCALEWAY_ACCESS_KEY}
+  secret_key:
+    LOCAL: ${MINIO_SECRET_KEY}
+    SCALEWAY: ${SCALEWAY_SECRET_KEY}
+  region:
+    LOCAL: ${MINIO_REGION}
+    SCALEWAY: ${SCALEWAY_REGION}
+
+  # Rutas dentro del bucket
+  paths:
+    images: "imagenes"
+    patches: "patches"
+    metadata: "metadatos"
+
+# URLs de servicios externos
+urls:
+  main_page: "https://gis.montevideo.gub.uy/pmapper/map.phtml?&config=default&me=548000,6130000,596000,6162000"
+  toc: "https://intgis.montevideo.gub.uy/pmapper/incphp/xajax/x_toc.php?"
+  generate_zip: "https://intgis.montevideo.gub.uy/sit/php/common/datos/generar_zip2.php?nom_jpg=/inetpub/wwwroot/sit/mapserv/data/fotos_dron/{id}&tipo=jpg"
+  download_zip: "https://intgis.montevideo.gub.uy/sit/tmp/{id}.zip"
+  js: "https://intgis.montevideo.gub.uy/pmapper/config/default/custom.js"
+
+# Headers para las peticiones HTTP
+headers:
+  common:
+    User-Agent: "Mozilla/5.0"
+  toc:
+    User-Agent: "Mozilla/5.0"
+    Referer: "https://gis.montevideo.gub.uy/pmapper/map.phtml?&config=default&me=548000,6130000,596000,6162000"
+    X-Requested-With: "XMLHttpRequest"
+    Content-Type: "application/x-www-form-urlencoded"
+
+# Cuerpo de las peticiones
+request_body:
+  toc:
+    dummy: "dummy"
