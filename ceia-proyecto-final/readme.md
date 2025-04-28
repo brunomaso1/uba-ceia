@@ -85,23 +85,48 @@ $env:ENVIRONMENT="dev"; vagrant up --provision-with start-services
 $env:ENVIRONMENT="dev"; vagrant provision --provision-with start-services
 ```
 
-#### Otros
+#### Windows
 - Chequear si Hyper-v está habilitado:
-```bash
+```powershell
 Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V
 ```
 
- WARNING: MongoDB 5.0+ requires a CPU with AVX support, and your current system does not appear to have that!
-
-VBoxManage modifyvm "ceia-proyecto-final_default_1742241501392_3388" --cpu-profile "host"
-VBoxManage setextradata "ceia-proyecto-final_default_1742241501392_3388" VBoxInternal/CPUM/IsaExts/AVX 1
-VBoxManage setextradata "ceia-proyecto-final_default_1742241501392_3388" VBoxInternal/CPUM/IsaExts/AVX2 1
-
-cat /proc/cpuinfo
-
-bcdedit /set hypervisorlaunchtype off
+- Deshabilitar Hyper-v [Tutorial](https://learn.microsoft.com/en-us/troubleshoot/windows-client/application-management/virtualization-apps-not-work-with-hyper-v):
+```powershell
 DISM /Online /Disable-Feature:Microsoft-Hyper-V
+Disable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-Hypervisor
+bcdedit /set hypervisorlaunchtype off
+```
 
-https://learn.microsoft.com/en-us/troubleshoot/windows-client/application-management/virtualization-apps-not-work-with-hyper-v
+- Habilitar "nested virtualization VirtualBox":
+```powershell
+VBoxManage modifyvm <YourVirtualMachineName> --nested-hw-virt on
+VBoxManage modifyvm "ceia-proyecto-final-develop" --cpu-profile "Intel(R) Core(TM) i7-6700K"
+```
 
-https://stackoverflow.com/questions/54264439/how-to-get-shared-folders-working-with-vagrant-and-hyper-v
+#### Linux
+
+- Verificar espacio en disco:
+```bash
+df -h
+```
+
+- Verificar uso de memoria:
+```bash
+free -h
+```
+
+- Verificar uso de CPU:
+```bash
+top
+htop
+ps aux
+```
+
+- Verificar si AEX está habilitado:
+```bash
+cat /proc/cpuinfo # Verifica si AVX está habilitado
+grep -m1 -o 'avx[^ ]*' /proc/cpuinfo
+grep -E 'avx' /proc/cpuinfo
+egrep "svm|vmx" /proc/cpuinfo
+```
