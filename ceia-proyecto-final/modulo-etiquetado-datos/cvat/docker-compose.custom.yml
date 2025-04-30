@@ -30,7 +30,7 @@ services:
         - ./custom-settings.py:/home/django/settings.py:ro
         - ./tests/allow_minio.sh:/etc/cvat/init.d/allow_minio.sh:ro
 
-  cvat_utils: *default_networks_anchor
+  cvat_worker_utils: *default_networks_anchor
 
   cvat_worker_import: 
     <<: *default_networks_anchor
@@ -42,20 +42,18 @@ services:
     volumes:
       - ./tests/allow_minio.sh:/etc/cvat/init.d/allow_minio.sh:ro
 
-  cvat_worker_chunks:
-    <<: *default_networks_anchor
-    volumes:
-      - ./tests/allow_minio.sh:/etc/cvat/init.d/allow_minio.sh:ro
-
   cvat_worker_annotation: *default_networks_anchor
 
   cvat_worker_webhooks: *default_networks_anchor
 
   cvat_worker_quality_reports: *default_networks_anchor
 
-  cvat_worker_analytics_reports: *default_networks_anchor
+  cvat_worker_chunks:
+    <<: *default_networks_anchor
+    volumes:
+      - ./tests/allow_minio.sh:/etc/cvat/init.d/allow_minio.sh:ro
 
-  
+  cvat_worker_consensus: *default_networks_anchor  
 
   cvat_ui: *default_networks_anchor
 

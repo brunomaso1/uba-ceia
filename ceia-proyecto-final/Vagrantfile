@@ -33,8 +33,10 @@ Vagrant.configure("2") do |config|
   environment = ENV['ENVIRONMENT'] || 'dev' # Por defecto, asume 'dev'
 
   if environment == 'prod'
+    puts "Script de produccion"
     config.vm.provision "start-services", type: "shell", path: "vagrant-scripts/04-start-prod-services.sh", run: "never"
   else
+    puts "Script de desarrollo"
     config.vm.provision "start-services", type: "shell", path: "vagrant-scripts/04-start-dev-services.sh", run: "never"
   end
 end
