@@ -6,10 +6,26 @@ authors = [{ name = "brunomaso1", email = "brunomaso1@hotmail.com" }]
 license = { text = "CC" }
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = ["ipykernel (>=6.29.5,<7.0.0)", "requests (>=2.32.3,<3.0.0)", "python-dotenv (>=1.1.0,<2.0.0)", "beautifulsoup4 (>=4.13.4,<5.0.0)", "pymongo (>=4.12.0,<5.0.0)", "boto3 (>=1.38.4,<2.0.0)", "tqdm (>=4.67.1,<5.0.0)", "numpy (>=2.2.5,<3.0.0)", "pyyaml (>=6.0.2,<7.0.0)"]
+dependencies = [
+    "ipykernel (>=6.29.5,<7.0.0)",
+    "requests (>=2.32.3,<3.0.0)",
+    "python-dotenv (>=1.1.0,<2.0.0)",
+    "beautifulsoup4 (>=4.13.4,<5.0.0)",
+    "pymongo (>=4.12.0,<5.0.0)",
+    "boto3 (>=1.38.4,<2.0.0)",
+    "tqdm (>=4.67.1,<5.0.0)",
+    "numpy (>=2.2.5,<3.0.0)",
+    "pyyaml (>=6.0.2,<7.0.0)",
+    "cvat-sdk[pytorch] (>=2.35.0,<3.0.0)",
+]
 
 [tool.poetry]
 package-mode = false
+
+packages = [
+    # Incluye el directorio "modulo-mini-apps" como paquete
+    { include = "modulo-mini-apps", from = "ceia-proyecto-final" },
+]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

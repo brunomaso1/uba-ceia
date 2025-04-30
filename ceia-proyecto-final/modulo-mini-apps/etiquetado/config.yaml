@@ -1,0 +1,21 @@
+# Configuración general
+environment: "LOCAL" # Opciones: PRODUCTION, LOCAL, SCALEWAY
+
+# Logger
+logging:
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s"
+  level: "INFO"
+
+# MongoDB
+mongodb:
+  database: ${MONGODB_INITDB_DATABASE}
+  host: ${MONGODB_SERVER_HOST}
+  port: ${MONGODB_SERVER_PORT}
+  user: ${MONGODB_USER}
+  password: ${MONGODB_PASSWORD}
+  connection_string: "mongodb://${MONGODB_USER}:${MONGODB_PASSWORD}@${MONGODB_SERVER_HOST}:${MONGODB_SERVER_PORT}/${MONGODB_INITDB_DATABASE}"
+
+cvat:
+  url: ${CVAT_URL}
+  user: ${CVAT_USER}
+  password: ${CVAT_PASSWORD}
