@@ -19,3 +19,37 @@ cvat:
   url: ${CVAT_URL}
   user: ${CVAT_USER}
   password: ${CVAT_PASSWORD}
+  export_format: "COCO 1.0"
+  task_export_path: "annotations\\instances_default.json"
+  job_export_path: "annotations\\instances_default.json"
+
+coco_dataset:
+  info:
+    description: "Conjunto de imágenes para la detección del picudo rojo"
+    url: "https://picudo-rojo.org"
+    version: "1.0"
+    year: 2025
+    contributor: "Intendencia de Montevideo"
+    date_created: "2025/01/01"
+  licenses:
+    - id: 1
+      name: "CC BY-NC-SA 4.0"
+      url: "https://creativecommons.org/licenses/by-nc-sa/4.0/"
+  categories:
+    - id: 1
+      name: "palmera-sana"
+      supercategory: ""
+    - id: 2
+      name: "palmera-inf-leve"
+      supercategory: ""
+    - id: 3
+      name: "palmera-inf-grave"
+      supercategory: ""
+    - id: 4
+      name: "palmera-muerta"
+      supercategory: ""
+    - id: 5
+      name: "palmera"
+      supercategory: ""
+
+download_folder: "downloads"
