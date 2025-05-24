@@ -1,4 +1,5 @@
 import shutil, zipfile, os, sys
+
 sys.path.append(os.path.abspath("../"))
 
 from pathlib import Path
@@ -24,6 +25,20 @@ DOWNLOAD_TEMP_FOLDER = download_folder / "temp"
 DOWNLOAD_JOB_FOLDER = download_folder / "jobs"
 DOWNLOAD_TASK_FOLDER = download_folder / "tasks"
 
+
+def test_connection():
+    """Testea la conexión a CVAT y devuelve True si la conexión es exitosa, False en caso contrario."""
+    try:
+        with make_client(
+            host=CONFIG["cvat"]["url"],
+            credentials=(CONFIG["cvat"]["user"], CONFIG["cvat"]["password"]),
+        ) as client:
+            client.get_server_version()
+            LOGGER.debug("Conexión a CVAT exitosa.")
+            return True
+    except Exception as e:
+        LOGGER.error(f"Error al conectar a CVAT: {e}")
+        return False
 
 
 def download_annotations_from_cvat(
@@ -163,6 +178,7 @@ def load_annotations_from_cvat(
     else:
         raise FileNotFoundError(f"No se pudo encontrar el archivo de anotaciones en {file_path}.")
 
+
 def convert_image_annotations_to_cvat_annotations(
     images: Dict[str, Any], annotations: Dict[str, Any]
 ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
@@ -254,6 +270,7 @@ def convert_image_annotations_to_cvat_annotations(
         output_annotations.extend(annotations)
 
     return output_images, output_annotations
+
 
 def convert_patch_annotations_to_cvat_annotations(
     images: Dict[str, Any], annotations: Dict[str, Any]

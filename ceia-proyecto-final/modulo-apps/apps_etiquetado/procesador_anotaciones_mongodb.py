@@ -24,6 +24,16 @@ MINIO_PATCHES_FOLDER = CONFIG["minio"]["paths"]["patches"]
 download_folder = Path(CONFIG["folders"]["download_folder"])
 DOWNLOAD_COCO_ANNOTATIONS_FOLDER = download_folder / "coco_annotations"
 
+def test_connection():
+    """
+    Test the connection to the MongoDB database.
+    """
+    try:
+        DB.command("ping")
+        LOGGER.debug("Conexión a la base de datos MongoDB exitosa.")
+    except Exception as e:
+        LOGGER.error(f"Error al conectar a la base de datos MongoDB: {e}")
+        raise e
 
 def save_coco_annotations(
     coco_annotations: Dict[str, Any],
