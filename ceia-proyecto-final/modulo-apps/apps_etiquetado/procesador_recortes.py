@@ -11,9 +11,9 @@ import cv2 as cv
 from apps_config.settings import Config
 from apps_utils.logging import Logging
 from apps_com_db.mongodb_client import MongoDB
-from apps_com_s3.minio_client import S3Client
+from apps_com_s3.cliente_s3 import S3Client
 
-import apps_etiquetado.utils_coco_dataset as CocoDatasetUtils
+import apps_etiquetado.procesador_anotaciones_coco_dataset as CocoDatasetUtils
 import apps_etiquetado.convertor_cordenadas as ConvertorCoordenadas
 
 CONFIG = Config().config_data

@@ -1,6 +1,7 @@
 # CONFIGURACION GENERAL
 environment: "LOCAL" # Opciones: PRODUCTION, LOCAL, SCALEWAY
 
+seed: 42
 # Logger
 logging:
   format: "%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s"
@@ -38,6 +39,8 @@ minio:
 folders:
   download_folder: "downloads"
   patches_patches: "downloads/patches"
+  raw_dataset_folder: "downloads/raw_dataset"
+  yolo_dataset: "downloads/yolo_dataset"
 
 # ----------------------------------------------------------------------------
 # APP: WEBSCRAPPING

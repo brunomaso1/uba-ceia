@@ -13,7 +13,7 @@ from pycocotools.coco import COCO
 
 from apps_config.settings import Config
 
-import apps_etiquetado.utils_coco_dataset as CocoDatasetUtils
+import apps_etiquetado.procesador_anotaciones_coco_dataset as CocoDatasetUtils
 
 CONFIG = Config().config_data
 
@@ -85,7 +85,7 @@ def show_anotated_image(
         raise FileNotFoundError(f"El archivo de imagen {image_path} no existe.")
     if bool(coco_annotations is None) == bool(annotation_path is None):  # xor
         raise ValueError("Se debe proporcionar coco_annotations o annotation_path.")
-    if annotation_path.exists():
+    if annotation_path and annotation_path.exists():
         coco_annotations = CocoDatasetUtils.load_annotations_from_file(annotation_path)
 
     # Buscamos el id de la imagen en las anotaciones
@@ -117,7 +117,7 @@ def show_anotated_image(
         else:
             plt.figure()
 
-        color_map = {k: tuple(v) for k, v in CONFIG["opencv"]["draw_box"]["color_map"].items()}
+        color_map = {k: tuple(v) for k, v in CONFIG["opencv_draw"]["draw_box"]["color_map"].items()}
         category_map = {cat["id"]: cat["name"] for cat in coco_annotations["categories"]}
 
         # Dibujar las anotaciones en la imagen
@@ -130,16 +130,16 @@ def show_anotated_image(
                     (int(x), int(y)),
                     (int(x + w), int(y + h)),
                     color,
-                    CONFIG["opencv"]["draw_box"]["box_width"],
+                    CONFIG["opencv_draw"]["draw_box"]["box_width"],
                 )
                 cv.putText(
                     image,
                     str(category_map[annotation["category_id"]]),
                     (int(x), int(y) - 10),
                     cv.FONT_HERSHEY_SIMPLEX,
-                    CONFIG["opencv"]["draw_box"]["font_scale"],
+                    CONFIG["opencv_draw"]["draw_box"]["font_scale"],
                     color,
-                    CONFIG["opencv"]["draw_box"]["font_thickness"],
+                    CONFIG["opencv_draw"]["draw_box"]["font_thickness"],
                 )
 
         plt.imshow(image)

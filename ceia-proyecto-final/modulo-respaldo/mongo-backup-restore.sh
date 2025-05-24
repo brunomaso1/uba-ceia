@@ -2,8 +2,9 @@
 set -euo pipefail
 
 # Configuración
-DATE_FORMAT="%Y-%m-%d_%H-%M-%S"
-SERVICE_BASE_DIR="/vagrant/modulo-gestor-datos/mongo"
+DATE_FORMAT="%Y%m%d%H%M%S"
+# SERVICE_BASE_DIR="/vagrant/modulo-gestor-datos/mongo" # Desde dentro de Vagrant (VM)
+SERVICE_BASE_DIR="../modulo-gestor-datos/mongo" # Desde fuera de Vagrant (host)
 
 log() {
     echo "[$(date +"$DATE_FORMAT")] $*"
