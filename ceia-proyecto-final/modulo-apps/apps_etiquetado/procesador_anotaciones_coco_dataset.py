@@ -1,10 +1,16 @@
+import datetime
 import json
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Annotated, Any, Dict, List, Optional, Tuple
 
 
 from apps_utils.logging import Logging
+from apps_config.settings import Config
+from apps_utils.types import Metadata
 
+import apps_etiquetado.convertor_cordenadas as ConvertorCordenadas
+
+CONFIG = Config().config_data
 LOGGER = Logging().logger
 
 
@@ -91,29 +97,113 @@ def parse_class_annotations_to(coco_annotations: Dict[str, Any], class_name: str
 
 
 def merge_coco_annotations(
-    coco_annotations: Dict[str, Any],
-    new_annotations: Dict[str, Any],
+    metadata: Metadata,
+    coco_annotations: List[Dict[str, Any]],
 ) -> Dict[str, Any]:
-    """Fusiona dos conjuntos de anotaciones COCO."""
-    raise NotImplementedError(
-        "Esta función no está implementada. Se debe implementar la lógica de fusión de anotaciones COCO."
-    )
-    # if not coco_annotations["annotations"]:
-    #     LOGGER.warning("No hay anotaciones en el archivo COCO.")
-    #     return coco_annotations
+    """
+    Fusiona múltiples anotaciones COCO en una sola anotación, adaptando los cuadros delimitadores (bboxes)
+    de los parches a las coordenadas de la imagen completa utilizando los metadatos proporcionados.
 
-    # # Merge categories
-    # existing_category_ids = {cat["id"] for cat in coco_annotations["categories"]}
-    # new_category_ids = {cat["id"] for cat in new_annotations["categories"]}
+    Args:
+        metadata (Metadata): Metadatos de la imagen objetivo, incluyendo el tamaño y la información de los parches.
+        coco_annotations (List[Dict[str, Any]]): Lista de diccionarios de anotaciones COCO, cada uno correspondiente a un parche.
 
-    # for category in new_annotations["categories"]:
-    #     if category["id"] not in existing_category_ids:
-    #         coco_annotations["categories"].append(category)
+    Returns:
+        Dict[str, Any]: Diccionario de anotaciones COCO fusionadas y adaptadas a la imagen completa.
 
-    # # Merge annotations
-    # for annotation in new_annotations["annotations"]:
-    #     if annotation["category_id"] not in existing_category_ids:
-    #         annotation["category_id"] = 1  # Asignar a la primera categoría si no existe
-    #     coco_annotations["annotations"].append(annotation)
+    Ejemplo de uso:
 
-    # return coco_annotations
+        >>> patch_name1 = "8deOctubreyCentenario-EspLibreLarranaga_20190828_dji_pc_5cm_patch_0"
+        >>> coco_annotations1_path = ProcesadorMongoDB.download_annotations_as_coco_from_mongodb(
+        ...     field_name="cvat",
+        ...     patches_names=[patch_name1],
+        ...     output_filename=DOWNLOAD_COCO_ANNOTATIONS_FOLDER
+        ...     / f"{patch_name1}.json",
+        ... )
+        >>> patch_name2 = "8deOctubreyCentenario-EspLibreLarranaga_20190828_dji_pc_5cm_patch_2"
+        >>> coco_annotations2_path = ProcesadorMongoDB.download_annotations_as_coco_from_mongodb(
+        ...     field_name="cvat",
+        ...     patches_names=[patch_name2],
+        ...     output_filename=DOWNLOAD_COCO_ANNOTATIONS_FOLDER
+        ...     / f"{patch_name2}.json",
+        ... )
+        >>> coco_annotations1 = ProcesadorCOCODataset.load_annotations_from_file(coco_annotations1_path)
+        >>> coco_annotations2 = ProcesadorCOCODataset.load_annotations_from_file(coco_annotations2_path)
+        >>> patch_metadata1 = ProcesadorMongoDB.get_patch_metadata_from_mongodb(patch_name1)
+        >>> patch_metadata2 = ProcesadorMongoDB.get_patch_metadata_from_mongodb(patch_name2)
+        >>> image_name = "8deOctubreyCentenario-EspLibreLarranaga_20190828_dji_pc_5cm"
+        >>> image_shape = (5426, 4356)  # Altura, Ancho
+        >>> metadata: Metadata = {
+        ...     "pic_name": image_name,
+        ...     "image_shape": image_shape,
+        ...     "patches": [patch_metadata1, patch_metadata2],
+        ... }
+        >>> merged_annotations = ProcesadorCOCODataset.merge_coco_annotations(metadata, [coco_annotations1, coco_annotations2])
+        >>> print("Merged Annotations:")
+        >>> pprint(merged_annotations)
+    """
+    merged_annotations = {
+        "info": CONFIG["coco_dataset"]["info"],
+        "licenses": CONFIG["coco_dataset"]["licenses"],
+        "categories": CONFIG["coco_dataset"]["categories"],
+        "images": [],
+        "annotations": [],
+    }
+
+    image_height, image_width = metadata["image_shape"]
+    pic_name = metadata["pic_name"]
+    image = {
+        "id": 1,
+        "width": image_width,
+        "height": image_height,
+        "file_name": f"{pic_name}.jpg",
+        "date_captured": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    }
+
+    # 1. Primeramente, modifico todos los bboxes de todas las anotaciones ajustandose al tamaño de la imagen objetivo, utilizando los metadatos.
+    coco_annotations = _convert_patch_bboxes_to_image(metadata, coco_annotations)
+
+    # 2. Me quedo con todas las anotaciones aplanadas.
+    all_annotations = [
+        {**annotation} for coco_annotation in coco_annotations for annotation in coco_annotation["annotations"]
+    ]
+
+    # 3. Simplemente modifico el id de la imagen, dado que el bbox ya está adaptado a las coordenadas de la imagen objetivo.
+    annotations = [
+        {"id": index + 1, "image_id": image["id"], **annotation} for index, annotation in enumerate(all_annotations)
+    ]
+
+    merged_annotations["images"] = [image]
+    merged_annotations["annotations"] = annotations
+
+    return merged_annotations
+
+
+def _convert_patch_bboxes_to_image(
+    metadata: Metadata,
+    coco_annotations: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    """
+    Convierte las coordenadas de los cuadros delimitadores de subimágenes a las coordenadas de la imagen completa.
+
+    Args:
+        metadata (Metadata): Metadatos de la imagen.
+        coco_annotations (List[Dict[str, Any]]): Lista de anotaciones COCO.
+
+    Returns:
+        List[Dict[str, Any]]: Lista de anotaciones COCO con cuadros delimitadores convertidos.
+    """
+    for coco_annotation in coco_annotations:
+        for image in coco_annotation["images"]:
+            patch_name = image["file_name"].split(".")[0]  # Nombre sin extensión
+            x_start, y_start = next(
+                (patch["x_start"], patch["y_start"])
+                for patch in metadata["patches"]
+                if patch["patch_name"] == patch_name
+            )
+            for annotation in coco_annotation["annotations"]:
+                if annotation["image_id"] == image["id"]:
+                    annotation["bbox"] = ConvertorCordenadas.convert_bbox_patch_to_image(
+                        annotation["bbox"], x_start, y_start
+                    )
+    return coco_annotations

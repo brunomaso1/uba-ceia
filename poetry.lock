@@ -4771,6 +4771,18 @@ url = "https://download.pytorch.org/whl/cu126"
 reference = "pytorch-gpu"
 
 [[package]]
+name = "torchsummary"
+version = "1.5.1"
+description = "Model summary in PyTorch similar to `model.summary()` in Keras"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "torchsummary-1.5.1-py3-none-any.whl", hash = "sha256:10f41d1743fb918f83293f13183f532ab1bb8f6639a1b89e5f8592ec1919a976"},
+    {file = "torchsummary-1.5.1.tar.gz", hash = "sha256:981bf689e22e0cf7f95c746002f20a24ad26aa6b9d861134a14bc6ce92230590"},
+]
+
+[[package]]
 name = "torchvision"
 version = "0.22.0+cu126"
 description = "image and video datasets and models for torch deep learning"
@@ -5236,4 +5248,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13,<4.0"
-content-hash = "4dd73d0357643a8ad28807c4ef2f63f2153bf4365cf509f820bc6c5b7cf43e3c"
+content-hash = "689a650a7bc0ae5af237bf49d58982ae03866d6d4f7b99452a58335bc6b70ed0"

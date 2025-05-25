@@ -1,3 +1,5 @@
+import datetime
+import numpy as np
 import os, sys, yaml, shutil
 
 sys.path.append(os.path.abspath("../../modulo-apps"))  # Se agrega modulo-mini-apps
@@ -145,7 +147,92 @@ def create_coco_annotations_from_yolo_results(
     pic_name: str,
 ) -> Dict[str, Any]:
     """
-    Convierte los resultados de detección de objetos en formato YOLO a un formato compatible con COCO.
-    Funciona también para clasificación de imágenes.
+    Convierte los resultados de detección de objetos en formato YOLO a anotaciones en formato COCO.
+
+    Esta función toma una imagen y sus resultados de detección, y genera un diccionario
+    que sigue la estructura del formato COCO. Se espera que los resultados contengan
+    información sobre las cajas delimitadoras, categorías y confianza de las detecciones.
+    Solamente se procesa una imagen a la vez.
+
+    Args:
+        image (np.ndarray): Imagen en formato numpy array sobre la que se realizó la detección.
+        results (Dict[str, Any]): Resultados de la detección de objetos, típicamente una lista de predicciones YOLO.
+        pic_name (str): Nombre base del archivo de la imagen (sin extensión).
+
+    Raises:
+        ValueError: Si los resultados contienen detecciones para más de una imagen.
+
+    Returns:
+        Dict[str, Any]: Diccionario con las anotaciones en formato COCO, incluyendo info, licenses, categories, images y annotations.
     """
-    raise NotImplementedError("Esta función aún no está implementada.")
+    if len(results) > 1:
+        raise ValueError(
+            "Se detectó un resultado para varias imágenes. Asegúrate de que solo haya el resultado de una imagen."
+        )
+
+    bboxes_result = results[0].boxes.cpu()
+    names = results[0].names
+    coco_annotations = {
+        "info": CONFIG["coco_dataset"]["info"],
+        "licenses": CONFIG["coco_dataset"]["licenses"],
+        "categories": CONFIG["coco_dataset"]["categories"],
+        "images": [],
+        "annotations": [],
+    }
+
+    category_map = {cat["name"]: cat["id"] for cat in coco_annotations["categories"]}
+    image_height, image_width = results[0].orig_shape
+
+    image = {
+        "id": 1,
+        "width": image_width,
+        "height": image_height,
+        "file_name": f"{pic_name}.jpg",
+        "date_captured": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    }
+
+    coco_annotations["images"] = [image]
+
+    if not results[0].boxes:
+        LOGGER.warning("No se encontraron resultados de detección de objetos.")
+        return coco_annotations
+
+    annotations = []
+    for index, bbox_result in enumerate(bboxes_result):
+        id = index + 1
+        category_name = names[bbox_result.cls.int().item()]
+        category_id = category_map.get(category_name, None)
+        if category_id is None:
+            LOGGER.warning(f"Categoría '{category_name}' no encontrada en el mapa de categorías.")
+            continue
+
+        x_min, y_min, x_max, y_max = bbox_result.xyxy[0].numpy()
+        ancho = x_max - x_min
+        alto = y_max - y_min
+        area = ancho * alto
+
+        conf = bbox_result.conf[0].numpy()
+
+        # Casteamos a float para evitar problemas de serialización
+        conf = float(conf)
+        x_min, y_min, ancho, alto = map(float, [x_min, y_min, ancho, alto])
+        area = float(area)
+
+        annotation = {
+            "id": id,
+            "image_id": image["id"],
+            "category_id": category_id,
+            "bbox": [x_min, y_min, ancho, alto],
+            "area": area,
+            "iscrowd": 0,
+            "attributes": {
+                "occluded": False,
+                "rotation": 0.0,
+            },
+            "confidence": conf,
+        }
+        annotations.append(annotation)
+
+    coco_annotations["annotations"] = annotations
+
+    return coco_annotations

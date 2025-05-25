@@ -727,3 +727,28 @@ def list_images_w_ann_from_mongodb(field_name: str = "cvat") -> List[str]:
     image_names = [doc["image_name"] for doc in resultados]
 
     return image_names
+
+def get_patch_metadata_from_mongodb(patch_name: str) -> Optional[Dict[str, Any]]:
+    """
+    Obtiene la metadata de un parche específico desde MongoDB.
+
+    Args:
+        patch_name (str): Nombre del parche cuya metadata se desea obtener.
+
+    Returns:
+        Optional[Dict[str, Any]]: Diccionario con la metadata del parche.
+                                Devuelve None si no se encuentra el parche.
+    """
+    imagenes = DB.get_collection("imagenes")
+    db_image = imagenes.find_one({"patches.patch_name": patch_name})
+    if not db_image:
+        LOGGER.warning(f"No se encontró el parche {patch_name} en la base de datos.")
+        return None
+
+    # Obtener la metadata del parche
+    patch_metadata = next((p for p in db_image.get("patches", []) if p["patch_name"] == patch_name), None)
+    if not patch_metadata:
+        LOGGER.warning(f"No se encontró la metadata para el parche {patch_name}.")
+        return None
+
+    return patch_metadata

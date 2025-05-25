@@ -208,6 +208,7 @@ pip-selfcheck.json
 !.vscode/launch.json
 !.vscode/extensions.json
 !.vscode/*.code-snippets
+.vscode/settings.json
 
 # Local History for Visual Studio Code
 .history/
@@ -306,3 +307,6 @@ ceia-proyecto-final/modulo-etiquetado-datos/cvat/**
 !ceia-proyecto-final/modulo-etiquetado-datos/cvat/example*
 
 !ceia-proyecto-final/modulo-etiquetado-datos/cvat/readme.md
+
+# Modelos
+*.pt

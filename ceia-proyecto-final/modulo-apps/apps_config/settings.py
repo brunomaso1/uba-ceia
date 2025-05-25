@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional
 from yaml.parser import ParserError
 
 sys.path.append(os.path.abspath("../"))  # Agregar el directorio padre al path
-from apps_utils.apps_utils import Singleton
+from apps_utils.utils import Singleton
 
 tag_matcher = re.compile(r".*\${([^}^{]+)}.*")
 var_matcher = re.compile(r"\${([^}^{]+)}")

@@ -255,7 +255,7 @@ def create_geojson_from_annotation(
     return gdf
 
 
-def create_kml_from_geojson(
+def convert_kml_from_geojson(
     gdf: gpd.GeoDataFrame,
     kml_filename: Optional[Path] = None,
     category_column: str = "category",

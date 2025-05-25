@@ -88,21 +88,33 @@ coco_dataset:
       name: "CC BY-NC-SA 4.0"
       url: "https://creativecommons.org/licenses/by-nc-sa/4.0/"
   categories:
-    - id: 1
+    - id: 0
       name: "palmera-sana"
       supercategory: ""
-    - id: 2
+    - id: 1
       name: "palmera-inf-leve"
       supercategory: ""
-    - id: 3
+    - id: 2
       name: "palmera-inf-grave"
       supercategory: ""
-    - id: 4
+    - id: 3
       name: "palmera-muerta"
       supercategory: ""
-    - id: 5
+    - id: 4
       name: "palmera"
       supercategory: ""
+    - id: 5
+      name: "palmera-exterminada"
+      supercategory: ""
+    # - id: 6
+    #   name: "bicycle"
+    #   supercategory: ""
+    # - id: 7
+    #   name: "dog"
+    #   supercategory: ""
+    # - id: 8
+    #   name: "person"
+    #   supercategory: ""
 
 layoutparser:
   draw_box:

@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional
 
 sys.path.append(os.path.abspath("../"))
 
-from apps_utils.apps_utils import Singleton
+from apps_utils.utils import Singleton
 
 import boto3
 from botocore.exceptions import ClientError

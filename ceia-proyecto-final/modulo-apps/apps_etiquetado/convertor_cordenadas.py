@@ -12,6 +12,8 @@ def convert_bbox_patch_to_image(patch_bbox: list, x_start: int, y_start: int) ->
     de la imagen original aplicando una traslación basada en los valores de desplazamiento
     proporcionados (x_start, y_start).
 
+    Precondición: El parche no debe tener ninguna transformación afín.
+
     Args:
         patch_bbox (list): Bounding box del parche en formato [x_min, y_min, width, height].
         x_start (int): Coordenada x inicial del parche en la imagen original.

@@ -1,6 +1,7 @@
 import os, sys
 
 from matplotlib import pyplot as plt
+import numpy as np
 
 sys.path.append(os.path.abspath("../"))
 
@@ -46,7 +47,9 @@ def _load_coco_annotations(annotations, coco=None):
 
 
 def show_anotated_image(
-    image_path: Path,
+    image_path: Optional[Path] = None,
+    image: Optional[np.ndarray] = None,
+    image_name: Optional[str] = None,
     coco_annotations: Optional[Dict[str, Any]] = None,
     annotation_path: Optional[Path] = None,
     fig_size: Optional[Tuple[int, int]] = None,
@@ -80,19 +83,25 @@ def show_anotated_image(
         ...     use_layoutparser=False
         ... )
     """
-
-    if not image_path.exists():
-        raise FileNotFoundError(f"El archivo de imagen {image_path} no existe.")
+    if bool(image_path is None) == bool(image is None):  # xor
+        raise ValueError("Se debe proporcionar image_path o image.")
     if bool(coco_annotations is None) == bool(annotation_path is None):  # xor
         raise ValueError("Se debe proporcionar coco_annotations o annotation_path.")
-    if annotation_path and annotation_path.exists():
+    if image and not image_name:
+        raise ValueError("Se debe proporcionar image_name si se proporciona image.")
+    if annotation_path and not annotation_path.exists():
+        raise FileNotFoundError(f"El archivo de anotaciones {annotation_path} no existe.")
+    if image_path and not image_path.exists():
+        raise FileNotFoundError(f"El archivo de imagen {image_path} no existe.")
+
+    if annotation_path:
         coco_annotations = CocoDatasetUtils.load_annotations_from_file(annotation_path)
+    if image_path:
+        image = cv.imread(str(image_path))
 
     # Buscamos el id de la imagen en las anotaciones
-    image_name = image_path.name
+    image_name = image_path.name if image_path else image_name
     image_id = CocoDatasetUtils.get_image_id_from_annotations(image_name, coco_annotations)
-
-    image = cv.imread(image_path)
     if use_layoutparser:
         coco = COCO(annotation_path)
         annotations = coco.loadAnns(coco.getAnnIds([image_id]))

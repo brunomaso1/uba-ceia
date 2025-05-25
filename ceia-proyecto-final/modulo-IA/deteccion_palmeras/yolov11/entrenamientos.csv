@@ -1,0 +1,2 @@
+Modelo,Epocas,Batch,Imgsz,LR,Earlystopping,Epoca final,Tiempo (min),Proyecto
+yolo11x,100,1,1,default,-,-,50,deteccion_palmeras_yolo11x_8abcc8ff37d8
