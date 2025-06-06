@@ -1,0 +1,14 @@
+name: picudo-rojo-project
+
+services:
+  keepalive:
+    build: .
+    container_name: keepalive
+    restart: unless-stopped
+    env_file:
+      - .env
+    networks:
+      - main
+
+networks:
+  main:

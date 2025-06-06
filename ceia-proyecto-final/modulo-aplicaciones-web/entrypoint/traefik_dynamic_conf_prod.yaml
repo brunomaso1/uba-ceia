@@ -13,7 +13,7 @@ http:
     #   service: fiftyone-service
 
     landing-page-router:
-      rule: "Host(`picudo-rojo.org`)"
+      rule: "Host(`picudo-rojo.org`) || Host(`192.168.0.3`)"
       service: landing-page-service
 
     # Testing router:

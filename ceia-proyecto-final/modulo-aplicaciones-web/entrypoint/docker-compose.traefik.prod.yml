@@ -16,7 +16,7 @@ services:
     ports:
       - "80:80"
       - "443:443"
-      - "8100:8080" # Dashboard (api.insecure=true)
+      # - "8100:8080" # Dashboard (api.insecure=true)
     volumes:
       - ./traefik_dynamic_conf_prod.yaml:/etc/traefik/dynamic_conf.yaml
     networks:
