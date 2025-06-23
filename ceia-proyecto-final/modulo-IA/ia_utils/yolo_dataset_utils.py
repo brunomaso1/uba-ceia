@@ -16,6 +16,8 @@ from apps_com_s3.procesador_s3 import ProcesadorS3
 from tqdm import tqdm
 import apps_etiquetado.procesador_anotaciones_mongodb as ProcesadorCocoDataset
 
+from ultralytics.engine.results import Results
+
 CONFIG = Config().config_data
 LOGGER = Logging().logger
 DB = MongoDB().db
@@ -142,8 +144,52 @@ def split_yolo_dataset(dataset_path: Path, ratios=(0.7, 0.2, 0.1)) -> None:
     return None
 
 
-def create_coco_annotations_from_yolo_results(
-    results: Dict[str, Any],
+def filter_results_by_confidence(
+    results: List[Dict[str, Any]],
+    min_confidence: float = 0.5,
+) -> Results:
+    """
+    Filtra los resultados de detección de objetos para eliminar aquellas detecciones
+    con una confianza inferior al umbral especificado.
+
+    Args:
+        results (List[Dict[str, Any]]): Lista de resultados de detección, donde cada resultado
+                                        es un diccionario que contiene información sobre las
+                                        cajas delimitadoras, categorías y confianza.
+        min_confidence (float): Umbral mínimo de confianza para filtrar las detecciones.
+                                Por defecto es 0.5.
+
+    Returns:
+        Results: Resultados filtrados que cumplen con el umbral de confianza.
+    """
+    if len(results) > 1:
+        raise ValueError(
+            "Se detectó un resultado para varias imágenes. Asegúrate de que solo haya el resultado de una imagen."
+        )
+    result = results[0]
+
+    # Filtrar los índices según el umbral
+    filtered_indices = [i for i, conf in enumerate(result.boxes.conf) if conf.item() >= min_confidence]
+
+    # Filtrar las cajas y otros atributos
+    filtered_boxes = result.boxes[filtered_indices]
+
+    # Crear un nuevo objeto Results con las mismas propiedades pero solo con las detecciones filtradas
+    results_filtered = Results(
+        orig_img=result.orig_img,
+        path=result.path,
+        names=result.names,
+    )
+    results_filtered.boxes = filtered_boxes
+    results_filtered.orig_shape = result.orig_shape
+    results_filtered.speed = result.speed
+    results_filtered.save_dir = result.save_dir
+
+    return [results_filtered]
+
+
+def create_coco_annotations_from_yolo_result(
+    results: List[Dict[str, Any]],
     pic_name: str,
 ) -> Dict[str, Any]:
     """
@@ -165,13 +211,8 @@ def create_coco_annotations_from_yolo_results(
     Returns:
         Dict[str, Any]: Diccionario con las anotaciones en formato COCO, incluyendo info, licenses, categories, images y annotations.
     """
-    if len(results) > 1:
-        raise ValueError(
-            "Se detectó un resultado para varias imágenes. Asegúrate de que solo haya el resultado de una imagen."
-        )
-
-    bboxes_result = results[0].boxes.cpu()
-    names = results[0].names
+    bboxes_result = results.boxes.cpu()
+    names = results.names
     coco_annotations = {
         "info": CONFIG["coco_dataset"]["info"],
         "licenses": CONFIG["coco_dataset"]["licenses"],
@@ -181,7 +222,7 @@ def create_coco_annotations_from_yolo_results(
     }
 
     category_map = {cat["name"]: cat["id"] for cat in coco_annotations["categories"]}
-    image_height, image_width = results[0].orig_shape
+    image_height, image_width = results.orig_shape
 
     image = {
         "id": 1,
@@ -193,7 +234,7 @@ def create_coco_annotations_from_yolo_results(
 
     coco_annotations["images"] = [image]
 
-    if not results[0].boxes:
+    if not results.boxes:
         LOGGER.warning("No se encontraron resultados de detección de objetos.")
         return coco_annotations
 

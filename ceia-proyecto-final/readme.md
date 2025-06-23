@@ -67,6 +67,11 @@ docker rm $(docker ps -aq)
 docker volume rm $(docker volume ls -q)
 ```
 
+- Obtener logs de Traefik (parseados a windows - ejecutar dentro de la VM):
+```bash
+docker logs traefik-entrypoint | sed 's/\x1b\[[0-9;]*m//g' > traefik-entrypoint-20250610.log
+```
+
 #### Comandos útiles poetry
 
 - Instalar proyecto:

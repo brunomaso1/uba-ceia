@@ -35,10 +35,8 @@ def test_connection():
         ) as client:
             client.get_server_version()
             LOGGER.debug("Conexión a CVAT exitosa.")
-            return True
     except Exception as e:
-        LOGGER.error(f"Error al conectar a CVAT: {e}")
-        return False
+        raise ConnectionError(f"Error al conectar con CVAT: {e}")
 
 
 def download_annotations_from_cvat(

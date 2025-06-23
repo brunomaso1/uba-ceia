@@ -33,6 +33,9 @@ dependencies = [
     "ipywidgets (>=8.1.7,<9.0.0)",
     "fiftyone (==1.2.0)",
     "torchsummary (>=1.5.1,<2.0.0)",
+    "fastapi[standard] (>=0.115.13,<0.116.0)",
+    "loguru (>=0.7.3,<0.8.0)",
+    "python-multipart (>=0.0.20,<0.0.21)",
 ]
 
 [tool.poetry]
@@ -50,9 +53,9 @@ priority = "explicit"
 
 
 [tool.poetry.dependencies]
-torch = {source = "pytorch-gpu"}
-torchvision = {source = "pytorch-gpu"}
-torchaudio = {source = "pytorch-gpu"}
+torch = { source = "pytorch-gpu" }
+torchvision = { source = "pytorch-gpu" }
+torchaudio = { source = "pytorch-gpu" }
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
