@@ -76,13 +76,20 @@ docker logs traefik-entrypoint | sed 's/\x1b\[[0-9;]*m//g' > traefik-entrypoint-
 
 - Instalar proyecto:
 ```bash
-poetry install
+poetry install # Producción
+poetry install --with dev # Desarrollo, también instala módulos locales de forma editable
 ```
 
 - Para instalar una nueva dependencia:
 ```bash
 poetry add <nombre-dependencia>
 poetry add <nombre-dependencia> --dev # para dependencias de desarrollo
+```
+
+- Agregar pytorch con cuda:
+```bash
+potery source add --priority explicit pytorch_gpu https://download.pytorch.org/whl/cu128
+poetry add torch torchvision torchaudio --source pytorch_gpu
 ```
 
 - Listar las dependencias instaladas:
@@ -160,6 +167,11 @@ bcdedit /set hypervisorlaunchtype off
 ```powershell
 VBoxManage modifyvm <YourVirtualMachineName> --nested-hw-virt on
 VBoxManage modifyvm "ceia-proyecto-final-develop" --cpu-profile "Intel(R) Core(TM) i7-6700K"
+```
+
+- Acortar path de powershell:
+```powershell
+Function Prompt { "$( ( get-item $pwd ).Name )>" }
 ```
 
 #### Linux

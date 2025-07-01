@@ -310,3 +310,6 @@ ceia-proyecto-final/modulo-etiquetado-datos/cvat/**
 
 # Modelos
 *.pt
+data
+
+prediction-app
