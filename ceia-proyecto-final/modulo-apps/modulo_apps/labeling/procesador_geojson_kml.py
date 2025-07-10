@@ -1,4 +1,5 @@
 from concurrent.futures import ProcessPoolExecutor
+import io
 import datetime, json, os, zipfile
 
 from tqdm import tqdm
@@ -11,7 +12,7 @@ import geopandas as gpd
 from fastkml import kml
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, TextIO, Tuple
 
 from shapely.geometry import Point, Polygon
 
@@ -23,15 +24,18 @@ from modulo_apps.database_comunication.mongodb_client import mongodb as DB
 
 import modulo_apps.labeling.procesador_anotaciones_coco_dataset as CocoDatasetUtils
 import modulo_apps.labeling.convertor_cordenadas as ConvertorCoordenadas
+import modulo_apps.labeling.procesador_anotaciones_mongodb as ProcesadorAnotacionesMongoDB
 
 DOWNLOAD_TEMP_FOLDER = CONFIG.folders.download_temp_folder
 DOWNLOAD_GOOGLE_MAPS_FOLDER = CONFIG.folders.download_google_maps_folder
 DOWNLOAD_KMLS_FOLDER = CONFIG.folders.download_kmls_folder
+DOWNLOAD_GEOJSON_FOLDER = CONFIG.folders.download_geojson_folder
 
 COCO_DATASET_DATA = CONFIG.coco_dataset.to_dict()
 COCO_DATASET_CATEGORIES = CONFIG.coco_dataset.categories
 
 app = typer.Typer()
+
 
 @app.command()
 def download_kmz_from_gmaps(
@@ -83,101 +87,134 @@ def download_kmz_from_gmaps(
     except requests.exceptions.HTTPError as err:
         raise Exception(f"Error al acceder a {url}. Razón: {err}")
 
-@app.command()
-# TODO: Impelemntar leer el archivo KML antes y pasarlo como buffer.
-def convert_kml_to_geojson(kml_file_path: Path, geojson_file_path: Optional[Path]) -> Optional[Path]:
+
+def convert_kml_to_geojson(
+    kml_data: str,
+    should_download: bool = False,
+    output_filename: Path = DOWNLOAD_GEOJSON_FOLDER / "converted.geojson",
+) -> gpd.GeoDataFrame:
     """
-    Convierte un archivo KML a formato GeoJSON.
+    Convierte datos en formato KML a GeoJSON y los retorna como un GeoDataFrame.
 
     Args:
-        kml_file_path (str): Ruta al archivo KML de entrada.
-        geojson_file_path (str): Ruta donde se guardará el archivo GeoJSON convertido.
+        kml_data (str): Cadena de texto que contiene los datos en formato KML.
+        should_download (bool, opcional): Indica si el archivo GeoJSON generado debe ser guardado en disco.
+            Por defecto es False.
+        output_filename (Path, opcional): Ruta del archivo donde se guardará el GeoJSON si `should_download` es True.
+            Por defecto se guarda en `DOWNLOAD_GEOJSON_FOLDER/converted.geojson`.
+
+    Returns:
+        gpd.GeoDataFrame: GeoDataFrame generado a partir de los datos convertidos de KML a GeoJSON.
+
+    Raises:
+        Exception: Si ocurre un error durante la conversión de KML a GeoJSON.
+
+    Notas:
+        - Utiliza la biblioteca `kml2geojson` para realizar la conversión.
+        - Si `should_download` es True, el archivo GeoJSON se guarda en la ubicación especificada.
+        - El GeoDataFrame se genera a partir de las características del GeoJSON convertido.
     """
     try:
-        geojson = kml2geojson.main.convert(kml_file_path)[0]
-        LOGGER.info(f"Conversión exitosa de '{kml_file_path}' a '{geojson_file_path}'.")
-
-        if not geojson_file_path:
-            DOWNLOAD_GOOGLE_MAPS_FOLDER.mkdir(parents=True, exist_ok=True)
-            geojson_file_path = DOWNLOAD_GOOGLE_MAPS_FOLDER / f"{kml_file_path.stem}.geojson"
-        # Guardar el archivo GeoJSON
-        with open(geojson_file_path, "w") as f:
-            json.dump(geojson, f, indent=4)
-            return geojson_file_path
-        LOGGER.info(f"Archivo GeoJSON guardado en '{geojson_file_path}'.")
-
-    except FileNotFoundError:
-        LOGGER.error(f"Error: Archivo KML no encontrado en '{kml_file_path}'.")
-    except ValueError as e:
-        LOGGER.error(f"Error de valor: {e}")
+        buffer = io.StringIO(kml_data)
+        geojson = kml2geojson.main.convert(buffer)[0]  # https://mrcagney.github.io/kml2geojson_docs/
+        LOGGER.success(f"Conversión exitosa.")
     except Exception as e:
-        LOGGER.error(f"Ocurrió un error inesperado: {e}")
-    return None
+        LOGGER.error(f"Error al convertir KML a GeoJSON: {e}")
+
+    if should_download:
+        output_filename.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_filename, "w", encoding="utf-8") as f:
+            json.dump(geojson, f, ensure_ascii=False, indent=2)
+        LOGGER.success(f"GeoJSON guardado en {output_filename}")
+
+    return gpd.GeoDataFrame.from_features(geojson["features"])
 
 
-def create_geojson_from_annotation(
+@app.command()
+def convert_kml_to_geojson_from_path(
+    kml_filepath: Path, should_download: bool = None, output_filename: Path = None
+) -> gpd.GeoDataFrame:
+    """
+    Convierte un archivo KML a GeoJSON desde una ruta de archivo.
+
+    Args:
+        kml_filepath (Path): Ruta al archivo KML que se desea convertir.
+                             Debe ser un objeto de tipo `Path`.
+        should_download (bool, opcional): Indica si el archivo GeoJSON resultante
+                                          debe ser descargado. Por defecto es `None`.
+        output_filename (Path, opcional): Ruta y nombre del archivo GeoJSON de salida.
+                                          Si no se especifica, se utiliza un nombre predeterminado.
+
+    Returns:
+        gpd.GeoDataFrame: Un GeoDataFrame que contiene los datos convertidos del archivo KML.
+
+    Raises:
+        FileNotFoundError: Si el archivo KML especificado no existe.
+    """
+    # Read kml file
+    if not kml_filepath.exists():
+        raise FileNotFoundError(f"El archivo KML {kml_filepath} no existe.")
+    with open(kml_filepath, "r", encoding="utf-8") as f:
+        kml_text = f.read()
+
+    kwargs = {}
+    if output_filename is not None:
+        kwargs["output_filename"] = output_filename
+    if should_download is not None:
+        kwargs["should_download"] = should_download
+
+    return convert_kml_to_geojson(kml_text, **kwargs)
+
+
+def create_geojson_from_annotations(
     pic_name: str,
-    coco_annotation: Dict[str, Any],
+    coco_annotations: Dict[str, Any],
     jgw_data: Dict[str, Any],
-    output_filename: Optional[Path] = None,
+    should_download: bool = False,
+    output_filename: Path = DOWNLOAD_GEOJSON_FOLDER / "annotations.geojson",
     upload_to_drive: bool = False,
     geo_sistema_referencia: str = CONFIG.georeferenciacion.codigo_epsg,
 ) -> gpd.GeoDataFrame:
     """
-    Crea un GeoDataFrame a partir de las anotaciones COCO y datos de georreferenciación.
+    Crea un GeoDataFrame a partir de las anotaciones COCO y los datos de georreferenciación (JGW),
+    y opcionalmente guarda el resultado como un archivo GeoJSON.
 
     Args:
-        pic_name (str): Nombre de la imagen para la cual se generará el GeoJSON.
-        coco_annotation (Dict[str, Any]): Anotaciones en formato COCO que incluyen categorías y bounding boxes.
-        jgw_data (Dict[str, Any]): Datos de georreferenciación provenientes de un archivo JGW.
-        output_filename (Optional[Path], optional): Ruta donde se guardará el archivo GeoJSON. Defaults to None.
-        upload_to_drive (bool, optional): Indica si el archivo GeoJSON debe subirse a Google Drive. Defaults to False.
-        geo_sistema_referencia (str, optional): Código EPSG del sistema de referencia geográfico. Defaults to CONFIG.georeferenciacion.codigo_epsg.
-
-    Raises:
-        NotImplementedError: Si se solicita subir el archivo a Google Drive, pero la funcionalidad no está implementada.
+        pic_name (str): Nombre de la imagen para la cual se generarán las anotaciones geográficas.
+        coco_annotations (Dict[str, Any]): Diccionario con las anotaciones en formato COCO, incluyendo
+            categorías, imágenes y anotaciones.
+        jgw_data (Dict[str, Any]): Diccionario con los datos de georreferenciación provenientes del archivo JGW.
+        should_download (bool, opcional): Indica si el GeoDataFrame generado debe guardarse como un archivo GeoJSON.
+            Por defecto es False.
+        output_filename (Path, opcional): Ruta del archivo donde se guardará el GeoJSON si `should_download` es True.
+            Por defecto es "annotations.geojson" en la carpeta `DOWNLOAD_GEOJSON_FOLDER`.
+        upload_to_drive (bool, opcional): Indica si el archivo GeoJSON generado debe subirse a Google Drive.
+            Por defecto es False. Actualmente no implementado.
+        geo_sistema_referencia (str, opcional): Código EPSG del sistema de referencia geográfico que se asignará
+            al GeoDataFrame. Por defecto se toma de la configuración global `CONFIG.georeferenciacion.codigo_epsg`.
 
     Returns:
-        gpd.GeoDataFrame: GeoDataFrame que contiene las geometrías y propiedades de las anotaciones.
+        gpd.GeoDataFrame: GeoDataFrame que contiene las anotaciones geográficas con sus propiedades y geometrías.
+        Si no se encuentran anotaciones para la imagen especificada, se devuelve un GeoDataFrame vacío.
 
-    Ejemplo de uso:
+    Raises:
+        NotImplementedError: Si `upload_to_drive` es True, ya que la funcionalidad de subida a Google Drive
+        no está implementada.
 
-        >>> image_name = "8deOctubreyCentenario-EspLibreLarranaga_20190828_dji_pc_5cm"
-        >>> patch_name = "8deOctubreyCentenario-EspLibreLarranaga_20190828_dji_pc_5cm_patch_0"
-        >>> annotations_field = "cvat"
-        >>> pic_name = image_name
-        >>> if pic_name == image_name:
-        >>>     coco_annotations = load_coco_annotation_from_mongodb(
-        ...         field_name=annotations_field, image_name=image_name
-        ...     )
-        >>>     jgw_data = load_jgw_file_from_mongodb(image_name=image_name)
-        >>> else:
-        >>>     coco_annotations = load_coco_annotation_from_mongodb(
-        ...         field_name=annotations_field, patch_name=patch_name
-        ...     )
-        >>>     jgw_data = load_jgw_file_from_mongodb(patch_name=patch_name)
-        >>> gdf = create_geojson_from_annotation(
-        ...     pic_name=pic_name,
-        ...     coco_annotation=coco_annotations,
-        ...     jgw_data=jgw_data,
-        ...     output_filename=DOWNLOAD_TEMP_FOLDER / f"{pic_name}.geojson",
-        ... )
-
-        >>> # Cambiar proyectar en otro sistema de coordenadas
-        >>> # gdf_crs = gdf.to_crs("EPSG:4326")
-        >>> # gdf_crs.to_file(
-        ... #     DOWNLOAD_TEMP_FOLDER / f"{pic_name}_4326.geojson",
-        ... #     driver="GeoJSON",
-        ... # )
+    Notas:
+        - Las coordenadas globales de los bounding boxes se calculan utilizando los datos de georreferenciación
+          proporcionados en el archivo JGW.
+        - Las geometrías generadas son puntos (centroides) basados en los bounding boxes de las anotaciones.
+        - El archivo GeoJSON se guarda en el sistema de archivos si `should_download` es True.
     """
     # 1 - Configuraciones generales
-    category_map = {cat["id"]: cat["name"] for cat in coco_annotation["categories"]}
+    category_map = {cat["id"]: cat["name"] for cat in coco_annotations["categories"]}
 
     # 2 - Obtener el id de la imagen en las anotaciones
-    image_id = CocoDatasetUtils.get_image_id_from_annotations(pic_name, coco_annotation)
+    image_id = CocoDatasetUtils.get_image_id_from_annotations(pic_name, coco_annotations)
 
     # 3 - Obtener las anotaciones de la imagen
-    annotations = [ann for ann in coco_annotation["annotations"] if ann["image_id"] == image_id]
+    annotations = [ann for ann in coco_annotations["annotations"] if ann["image_id"] == image_id]
     if not annotations:
         LOGGER.warning(f"No se encontraron anotaciones para la imagen {pic_name}.")
         return gpd.GeoDataFrame()
@@ -241,80 +278,101 @@ def create_geojson_from_annotation(
     gdf.crs = geo_sistema_referencia
 
     # 9 - Guardar como GeoJSON si se proporciona un nombre de archivo
-    if output_filename:
-        output_path = output_filename
-        Path(output_path.parent).mkdir(parents=True, exist_ok=True)
-        gdf.to_file(output_path, driver="GeoJSON")
-        LOGGER.info(f"GeoJSON guardado en {output_path}")
-
+    if should_download:
+        output_filename.parent.mkdir(parents=True, exist_ok=True)
+        gdf.to_file(output_filename, driver="GeoJSON")
+        LOGGER.info(f"GeoJSON guardado en {output_filename}")
         # 10 - Opcional: Subir a Google Drive si se solicita
         if upload_to_drive:
             # Aquí iría tu código para subir a Drive
             raise NotImplementedError("Subida a Google Drive no implementada.")
     return gdf
 
-# TODO: Pasar todo esto a bufer con opcion a descargar el archivo KML.
-def convert_kml_from_geojson(
-    gdf: gpd.GeoDataFrame,
-    kml_filename: Optional[Path] = None,
-    category_column: str = "category",
-    target_category: Optional[str] = "palmera",
-    reproject: bool = True,
-):
-    """
-    Crea un archivo KML a partir de un GeoDataFrame.
 
-    Este método toma un GeoDataFrame con geometrías y propiedades, filtra las categorías
-    deseadas, y genera un archivo KML con las geometrías y propiedades correspondientes.
+@app.command()
+def generate_geojson_from_annotations_from_path(
+    pic_name: str,
+    coco_annotation_path: Path,
+    jgw_data_path: Path,
+    should_download: bool = None,
+    output_filename: Path = None,
+    upload_to_drive: bool = None,
+    geo_sistema_referencia: str = None,
+) -> gpd.GeoDataFrame:
+    """
+    Genera un GeoJSON a partir de anotaciones COCO y datos JGW desde rutas especificadas.
 
     Args:
-        gdf (gpd.GeoDataFrame): GeoDataFrame que contiene las geometrías y propiedades.
-        kml_filename (Optional[Path], optional): Ruta donde se guardará el archivo KML.
-                                                 Si no se proporciona, se utiliza una ruta predeterminada.
-                                                 Defaults to None.
-        category_column (str, optional): Nombre de la columna que contiene las categorías.
-                                         Defaults to "category".
-        target_category (Optional[str], optional): Categoría objetivo que se desea incluir en el KML.
-                                                   Si no se proporciona, se incluyen todas las categorías.
-                                                   Defaults to "palmera".
-        reproject (bool, optional): Si se debe reproyectar el GeoDataFrame a EPSG:4326 (WGS84).
-                                    Defaults to True.
-
-    Raises:
-        ValueError: Si ocurre un error al reproyectar el GeoDataFrame.
+        pic_name (str): Nombre de la imagen asociada a las anotaciones.
+        coco_annotation_path (Path): Ruta al archivo de anotaciones en formato COCO.
+        jgw_data_path (Path): Ruta al archivo JGW que contiene datos de georreferenciación.
+        should_download (bool, opcional): Indica si el archivo generado debe descargarse. Por defecto es None.
+        output_filename (Path, opcional): Ruta y nombre del archivo de salida GeoJSON. Por defecto es None.
+        upload_to_drive (bool, opcional): Indica si el archivo generado debe subirse a Google Drive. Por defecto es None.
+        geo_sistema_referencia (str, opcional): Sistema de referencia geográfico para el GeoJSON. Por defecto es None.
 
     Returns:
-        None: El archivo KML se guarda en la ubicación especificada o predeterminada.
+        gpd.GeoDataFrame: GeoDataFrame generado a partir de las anotaciones y datos de georreferenciación.
 
-    Ejemplo de uso:
-
-        >>> image_name = "8deOctubreyCentenario-EspLibreLarranaga_20190828_dji_pc_5cm"
-        >>> patch_name = "8deOctubreyCentenario-EspLibreLarranaga_20190828_dji_pc_5cm_patch_0"
-        >>> annotations_field = "cvat"
-        >>> pic_name = image_name
-        >>> if pic_name == image_name:
-        >>>     coco_annotations = load_coco_annotation_from_mongodb(
-        ...         field_name=annotations_field, image_name=image_name
-        ...     )
-        >>>     jgw_data = load_jgw_file_from_mongodb(image_name=image_name)
-        >>> else:
-        >>>     coco_annotations = load_coco_annotation_from_mongodb(
-        ...         field_name=annotations_field, patch_name=patch_name
-        ...     )
-        >>>     jgw_data = load_jgw_file_from_mongodb(patch_name=patch_name)
-        >>> gdf = create_geojson_from_annotation(
-        ...     pic_name=pic_name,
-        ...     coco_annotation=coco_annotations,
-        ...     jgw_data=jgw_data,
-        ...     output_filename=DOWNLOAD_TEMP_FOLDER / f"{pic_name}.geojson",
-        ... )
-        >>> create_kml_from_geojson(
-        ...     gdf=gdf,
-        ...     kml_filename=KMLS_FOLDER / f"{pic_name}.kml",
-        ...     category_column="category",
-        ...     target_category=None
-        ... )
+    Raises:
+        FileNotFoundError: Si el archivo de anotaciones COCO o el archivo JGW no existen en las rutas especificadas.
     """
+    if not coco_annotation_path.exists():
+        raise FileNotFoundError(f"El archivo de anotaciones {coco_annotation_path} no existe.")
+    if not jgw_data_path.exists():
+        raise FileNotFoundError(f"El archivo JGW {jgw_data_path} no existe.")
+
+    coco_annotations = CocoDatasetUtils.load_annotations_from_path(coco_annotation_path)
+    with open(jgw_data_path, "r") as f:
+        jgw_data = json.load(f)
+
+    kwargs = {}
+    if output_filename is not None:
+        kwargs["output_filename"] = output_filename
+    if should_download is not None:
+        kwargs["should_download"] = should_download
+    if upload_to_drive is not None:
+        kwargs["upload_to_drive"] = upload_to_drive
+    if geo_sistema_referencia is not None:
+        kwargs["geo_sistema_referencia"] = geo_sistema_referencia
+
+    return create_geojson_from_annotations(pic_name, coco_annotations, jgw_data, **kwargs)
+
+
+def generate_kml_from_geojson(
+    gdf: gpd.GeoDataFrame,
+    category_column: str = "category",
+    target_category: Optional[str] = None,
+    reproject: bool = True,
+    should_download: bool = False,
+    output_filename: Path = DOWNLOAD_KMLS_FOLDER / "palmeras.kml",
+) -> Optional[kml.KML]:
+    """
+    Genera un archivo KML a partir de un GeoDataFrame de GeoPandas.
+
+    Args:
+        gdf (gpd.GeoDataFrame): GeoDataFrame que contiene las geometrías y atributos.
+        category_column (str): Nombre de la columna que contiene las categorías. Por defecto es "category".
+        target_category (Optional[str]): Categoría específica que se desea filtrar. Si es None, se incluyen todas las categorías.
+        reproject (bool): Indica si se debe reproyectar el GeoDataFrame a WGS84 (EPSG:4326). Por defecto es True.
+        should_download (bool): Indica si el archivo KML generado debe guardarse en disco. Por defecto es False.
+        output_filename (Path): Ruta y nombre del archivo KML a guardar. Por defecto es "palmeras.kml" en la carpeta definida por DOWNLOAD_KMLS_FOLDER.
+
+    Returns:
+        Optional[kml.KML]: Objeto KML generado. Retorna None si el GeoDataFrame está vacío o si no se encuentran elementos con la categoría especificada.
+
+    Raises:
+        ValueError: Si ocurre un error al reproyectar el GeoDataFrame a EPSG:4326.
+
+    Notas:
+        - Solo se procesan geometrías de tipo "Point". Las demás geometrías se ignoran.
+        - Si `should_download` es True, el archivo KML se guarda en la ubicación especificada por `output_filename`.
+        - El CRS del GeoDataFrame debe ser válido para realizar la reproyección.
+    """
+    if gdf.empty:
+        LOGGER.warning("El GeoDataFrame está vacío. No se creará el archivo KML.")
+        return None
+
     k = kml.KML()
     ns = "{http://www.opengis.net/kml/2.2}"
 
@@ -335,7 +393,7 @@ def convert_kml_from_geojson(
         LOGGER.warning(
             f"No se encontraron elementos con la categoría '{target_category}'. No se creará el archivo KML."
         )
-        return
+        return None
 
     # Reproyectar a WGS84 (EPSG:4326) si no está ya en ese CRS
     if reproject and palm_gdf.crs is not None and palm_gdf.crs != "EPSG:4326":
@@ -356,19 +414,60 @@ def convert_kml_from_geojson(
         else:
             LOGGER.warning(f"La geometría del elemento con índice {index} no es un Point. No se agregará al KML.")
 
-    if kml_filename:
-        kml_filename.parent.mkdir(parents=True, exist_ok=True)
-    else:
-        DOWNLOAD_KMLS_FOLDER.mkdir(parents=True, exist_ok=True)
-        kml_filename = DOWNLOAD_KMLS_FOLDER / f"kml_{target_category}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}.kml"
-    try:
-        k.write(kml_filename)
-        LOGGER.info(f"Archivo KML guardado en {kml_filename}")
-    except Exception as e:
-        LOGGER.error(f"Error al guardar el archivo KML: {e}")
+    if should_download:
+        output_filename.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            k.write(output_filename)
+            LOGGER.info(f"Archivo KML guardado en {output_filename}")
+        except Exception as e:
+            LOGGER.error(f"Error al guardar el archivo KML: {e}")
+    return k
 
 
-def load_gdf_from_file(
+@app.command()
+def generate_kml_from_geojson_from_path(
+    gdf_path: Path,
+    category_column: str = None,
+    target_category: Optional[str] = None,
+    reproject: bool = None,
+    should_download: bool = None,
+    output_filename: Path = None,
+) -> Optional[kml.KML]:
+    """
+    Genera un archivo KML a partir de un archivo GeoJSON ubicado en una ruta específica.
+
+    Args:
+        gdf_path (Path): Ruta al archivo GeoJSON que se utilizará como entrada.
+        category_column (str, opcional): Nombre de la columna que contiene las categorías en el GeoDataFrame.
+        target_category (Optional[str], opcional): Categoría específica que se desea filtrar en el GeoDataFrame.
+        reproject (bool, opcional): Indica si se debe reproyectar el GeoDataFrame a un sistema de coordenadas específico.
+        should_download (bool, opcional): Indica si el archivo KML generado debe ser descargado automáticamente.
+        output_filename (Path, opcional): Ruta y nombre del archivo KML de salida.
+
+    Returns:
+        Optional[kml.KML]: Objeto KML generado, o None si el archivo GeoJSON está vacío o no se puede procesar.
+    """
+    gdf = _load_gdf_from_path(gdf_path)
+    if gdf.empty:
+        LOGGER.warning(f"El archivo {gdf_path} está vacío. No se creará el archivo KML.")
+        return None
+
+    kwargs = {}
+    if category_column is not None:
+        kwargs["category_column"] = category_column
+    if target_category is not None:
+        kwargs["target_category"] = target_category
+    if reproject is not None:
+        kwargs["reproject"] = reproject
+    if should_download is not None:
+        kwargs["should_download"] = should_download
+    if output_filename is not None:
+        kwargs["output_filename"] = output_filename
+
+    return generate_kml_from_geojson(gdf, **kwargs)
+
+
+def _load_gdf_from_path(
     file_path: Path,
     crs: Optional[str] = None,
 ) -> gpd.GeoDataFrame:
@@ -386,6 +485,7 @@ def load_gdf_from_file(
     if crs:
         gdf.crs = crs
     return gdf
+
 
 def _process_single_patch(
     imagen: Dict[str, Any],
@@ -493,7 +593,7 @@ def _process_single_patch(
     return image, annotations
 
 
-def create_annotations_from_geojson(
+def generate_coco_annotations_from_geojson(
     gdf: gpd.GeoDataFrame,
     output_filename: Optional[Path] = None,
     use_parallel: bool = True,
@@ -605,8 +705,57 @@ def create_annotations_from_geojson(
         LOGGER.warning("No se encontraron tareas para procesar.")
 
 
+@app.command()
+def generate_coco_annotations_from_geojson_from_path(
+    gdf_path: Path,
+    output_filename: Optional[Path] = None,
+    use_parallel: bool = None,
+    max_workers: int = None,
+) -> Optional[Dict[str, Any]]:
+    """
+    Genera anotaciones en formato COCO a partir de un archivo GeoJSON especificado por su ruta.
+
+    Args:
+        gdf_path (Path): Ruta al archivo GeoJSON que contiene los datos geoespaciales.
+        output_filename (Optional[Path], opcional): Ruta del archivo donde se guardarán las anotaciones COCO generadas.
+            Si no se especifica, las anotaciones no se guardarán en un archivo.
+        use_parallel (bool, opcional): Indica si se debe utilizar procesamiento paralelo para generar las anotaciones.
+            Por defecto es None.
+        max_workers (int, opcional): Número máximo de trabajadores para el procesamiento paralelo.
+            Solo se utiliza si `use_parallel` es True. Por defecto es None.
+
+    Returns:
+        Optional[Dict[str, Any]]: Diccionario con las anotaciones en formato COCO generadas.
+        Si el archivo GeoJSON está vacío o no existe, se devuelve None.
+
+    Raises:
+        FileNotFoundError: Si el archivo GeoJSON especificado por `gdf_path` no existe.
+
+    Advertencias:
+        - Si el archivo GeoJSON está vacío, se genera una advertencia en el registro y no se generan anotaciones COCO.
+    """
+    if not gdf_path.exists():
+        raise FileNotFoundError(f"El archivo GeoJSON {gdf_path} no existe.")
+
+    gdf = _load_gdf_from_path(gdf_path)
+    if gdf.empty:
+        LOGGER.warning(f"El archivo {gdf_path} está vacío. No se generarán anotaciones COCO.")
+        return None
+
+    kwargs = {}
+    if output_filename is not None:
+        kwargs["output_filename"] = output_filename
+    if use_parallel is not None:
+        kwargs["use_parallel"] = use_parallel
+    if max_workers is not None:
+        kwargs["max_workers"] = max_workers
+
+    return generate_coco_annotations_from_geojson(gdf, **kwargs)
+
+
 def merge_annotations():
     raise NotImplementedError("Función merge_annotations no implementada.")
+
 
 if __name__ == "__main__":
     app()

@@ -1,15 +1,19 @@
 import datetime, json
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from loguru import logger as LOGGER
 from modulo_apps.config import config as CONFIG
 from modulo_apps.utils.types import Metadata
 
+from supervision import Detections
+
 import modulo_apps.labeling.convertor_cordenadas as ConvertorCordenadas
 
+DOWNLOAD_COCO_ANNOTATIONS_FOLDER = CONFIG.folders.download_coco_annotations_folder
 
-def load_annotations_from_file(file_path: Path) -> Dict[str, Any]:
+
+def load_annotations_from_path(file_path: Path) -> Dict[str, Any]:
     """
     Carga anotaciones desde un archivo JSON.
 
@@ -73,7 +77,17 @@ def get_image_id_from_annotations(image_name: str, coco_annotations: Dict[str, A
 
 
 def parse_class_annotations_to(coco_annotations: Dict[str, Any], class_name: str) -> Dict[str, Any]:
-    """Convierte todas las anotaciones de una clase de un archivo de anotaciones COCO a otra clase especificada."""
+    """
+    Modifica las anotaciones de un archivo COCO para asignar todas las anotaciones a una única categoría.
+    Args:
+        coco_annotations (Dict[str, Any]): Diccionario que representa las anotaciones en formato COCO.
+        class_name (str): Nombre de la clase que se asignará a todas las anotaciones.
+    Returns:
+        Dict[str, Any]: Diccionario modificado con las anotaciones actualizadas y una única categoría.
+    Advertencias:
+        - Si el archivo COCO no contiene anotaciones, se registra una advertencia y se devuelve el diccionario sin modificaciones.
+    """
+
     if not coco_annotations["annotations"]:
         LOGGER.warning("No hay anotaciones en el archivo COCO.")
         return coco_annotations
@@ -202,4 +216,103 @@ def _convert_patch_bboxes_to_image(
                     annotation["bbox"] = ConvertorCordenadas.convert_bbox_patch_to_image(
                         annotation["bbox"], x_start, y_start
                     )
+    return coco_annotations
+
+
+def create_coco_annotations_from_detections(
+    detections: Detections,
+    image_size_hw: Tuple[int, int],
+    pic_name: str,
+    category_map: Optional[Dict[int, str]] = None,
+    should_download: bool = False,
+    output_filename: Path = DOWNLOAD_COCO_ANNOTATIONS_FOLDER / "coco_annotations.json",
+) -> Dict[str, Any]:
+    """
+    Genera anotaciones en formato COCO a partir de detecciones de objetos.
+
+    Args:
+        detections (Detections): Objeto que contiene las detecciones realizadas, incluyendo coordenadas, clases y confianza.
+        image_size_hw (Tuple[int, int]): Tamaño de la imagen en formato (alto, ancho).
+        pic_name (str): Nombre de la imagen (sin extensión) que será utilizada en las anotaciones.
+        category_map (Optional[Dict[int, str]]): Mapa opcional que relaciona IDs de categorías con nombres de categorías.
+            Si no se proporciona, se utiliza el mapa de categorías definido en la configuración del dataset COCO.
+        should_download (bool): Indica si las anotaciones generadas deben ser guardadas en un archivo JSON.
+        output_filename (Path): Ruta del archivo donde se guardarán las anotaciones en caso de que `should_download` sea True.
+
+    Returns:
+        Dict[str, Any]: Diccionario con las anotaciones en formato COCO, incluyendo información del dataset, licencias,
+        categorías, imágenes y anotaciones.
+
+    Notas:
+        - Si no se encuentran detecciones en el objeto `detections`, se devuelve un diccionario de anotaciones vacío.
+        - Las anotaciones incluyen información como el ID de la categoría, el cuadro delimitador (bbox), el área, y la confianza.
+        - Si `should_download` es True, las anotaciones se guardan en el archivo especificado por `output_filename`.
+        
+    Advertencias:
+        - Si una categoría no se encuentra en el mapa de categorías, se omite la anotación correspondiente y se registra
+          una advertencia en el registro de eventos.
+    """
+    coco_annotations = {
+        "info": CONFIG.coco_dataset.to_dict()["info"],
+        "licenses": CONFIG.coco_dataset.to_dict()["licenses"],
+        "categories": CONFIG.coco_dataset.to_dict()["categories"],
+        "images": [],
+        "annotations": [],
+    }
+    if category_map is None:
+        category_map = {cat["id"]: cat["name"] for cat in coco_annotations["categories"]}
+    image_height, image_width = image_size_hw
+
+    image = {
+        "id": 1,
+        "width": image_width,
+        "height": image_height,
+        "file_name": f"{pic_name}.jpg",
+        "date_captured": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    }
+
+    coco_annotations["images"] = [image]
+
+    if detections.is_empty():
+        LOGGER.warning("No se encontraron resultados de detección de objetos.")
+        return coco_annotations
+
+    annotations = []
+    for index in range(len(detections)):
+        id = index + 1
+        category_id = int(detections.class_id[index])
+        category_name = category_map.get(category_id, None)
+        if category_id is None:
+            LOGGER.warning(f"Categoría '{category_name}' no encontrada en el mapa de categorías.")
+            continue
+
+        x_min, y_min, x_max, y_max = map(float, detections.xyxy[index])
+        ancho = x_max - x_min
+        alto = y_max - y_min
+        area = ancho * alto
+
+        conf = float(detections.confidence[index])
+        annotation = {
+            "id": id,
+            "image_id": image["id"],
+            "category_id": category_id,
+            "bbox": [x_min, y_min, ancho, alto],
+            "area": area,
+            "iscrowd": 0,
+            "attributes": {
+                "occluded": False,
+                "rotation": 0.0,
+            },
+            "confidence": conf,
+        }
+        annotations.append(annotation)
+
+    coco_annotations["annotations"] = annotations
+
+    if should_download:
+        output_filename.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_filename, "w", encoding="utf-8") as f:
+            json.dump(coco_annotations, f, indent=4, ensure_ascii=False)
+        LOGGER.success(f"Anotaciones COCO guardadas en {output_filename}")
+
     return coco_annotations

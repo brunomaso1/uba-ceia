@@ -38,3 +38,12 @@ start_service "/vagrant/modulo-etiquetado-datos/cvat" "--env-file .env.dev -f do
 
 # Entrypoint
 start_service "/vagrant/modulo-aplicaciones-web/entrypoint" "-f docker-compose.traefik.dev.yml"
+
+# FiftyOne
+start_service "/vagrant/modulo-calidad-datos/fiftyone" ""
+
+# MongoDB
+# start_service "/vagrant/modulo-gestor-datos/mongodb" "" # Se tiene que levantar local por problemas de virtualizacion de la VM
+
+# Mlflow
+start_service "/vagrant/modulo-reportes/mlflow" ""

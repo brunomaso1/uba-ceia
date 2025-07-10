@@ -67,3 +67,5 @@ def show_system_info():
             print(f"GPU Memory Used: {gpu.memoryUsed} MB")
             print(f"GPU Load: {gpu.load * 100}%")
             print(f"GPU Temperature: {gpu.temperature}°C")
+
+

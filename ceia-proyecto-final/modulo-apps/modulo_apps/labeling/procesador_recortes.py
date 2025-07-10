@@ -192,7 +192,7 @@ def cut_palms_from_image_path(
     """
     image = cv.imread(str(image_path))
     pic_name = image_path.stem
-    coco_annotations = CocoDatasetUtils.load_annotations_from_file(coco_annotations_path)
+    coco_annotations = CocoDatasetUtils.load_annotations_from_path(coco_annotations_path)
 
     return cut_palms_from_image(
         image=image,
@@ -226,7 +226,7 @@ def cut_palms_from_images_path(
 
     >>> py -m modulo_apps.labeling.procesador_recortes cut-palms-from-images-path --images-paths "img1.jpg" --images-paths "img2.jpg" --coco-annotations-path "coco_anotations.json"
     """
-    coco_annotations = CocoDatasetUtils.load_annotations_from_file(coco_annotations_path)
+    coco_annotations = CocoDatasetUtils.load_annotations_from_path(coco_annotations_path)
     images = [cv.imread(str(image_path)) for image_path in images_paths]
     pic_names = [image_path.stem for image_path in images_paths]
 

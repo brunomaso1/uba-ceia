@@ -18,6 +18,7 @@ import modulo_apps.labeling.procesador_anotaciones_cvat as ProcesadorCVAT
 
 MINIO_PATCHES_PATH = CONFIG.minio.paths.patches
 DOWNLOAD_COCO_ANNOTATIONS_FOLDER = CONFIG.folders.download_coco_annotations_folder
+DOWNLOAD_JGW_FOLDER = CONFIG.folders.download_jgw_folder
 
 COCO_DATASET_DATA = CONFIG.coco_dataset.to_dict()
 COCO_DATASET_CATEGORIES = CONFIG.coco_dataset.categories
@@ -95,7 +96,7 @@ def save_coco_annotations(
         ]
 
         if not patch_annotations:
-            LOGGER.warning(f"No se encontraron anotaciones para la imagen {file_name}.")
+            LOGGER.debug(f"No se encontraron anotaciones para la imagen {file_name}.")
         else:
             LOGGER.debug(f"Se encontraron {len(patch_annotations)} anotaciones para {file_name}.")
 
@@ -254,7 +255,7 @@ def _create_images_fields(
     for patch in db_patches:
         patch_annotations = patch.get(f"{field_name}_annotations", [])
         if not patch_annotations:
-            LOGGER.warning(f"No se encontraron anotaciones para el parche {patch['patch_name']}.")
+            LOGGER.debug(f"No se encontraron anotaciones para el parche {patch['patch_name']}.")
             continue
 
         # Mapeamos las categorías a los nombres correspondientes
@@ -342,7 +343,7 @@ def _download_annotation_as_coco_from_mongodb(
         else _create_images_fields(db_image, field_name, category_map, image_name)
     )
     if not annotations:
-        LOGGER.warning(f"No se encontraron anotaciones para el parche {patch_name}.")
+        LOGGER.debug(f"No se encontraron anotaciones para el parche {patch_name}.")
 
     coco_annotations = {
         "info": COCO_DATASET_DATA["info"],
@@ -412,7 +413,7 @@ def _load_coco_annotation_from_mongodb(
         raise Exception(f"Error al descargar las anotaciones: {e}")
 
     if file_path:
-        annotations = CocoDatasetUtils.load_annotations_from_file(file_path)
+        annotations = CocoDatasetUtils.load_annotations_from_path(file_path)
         LOGGER.debug(f"Anotaciones cargadas desde {file_path}.")
         if clean_files and file_path and file_path.exists():
             try:
@@ -452,7 +453,7 @@ def _create_patches_coco_annotations(
         patch_annotations = _load_coco_annotation_from_mongodb(field_name=field_name, patch_name=patch_name)
 
         if not patch_annotations:
-            LOGGER.warning(f"No se encontraron anotaciones para el parche {patch_name}.")
+            LOGGER.debug(f"No se encontraron anotaciones para el parche {patch_name}.")
 
         patch_annotations["images"][0]["id"] = image_id
         patch_annotations["annotations"] = [{**ann, "image_id": image_id} for ann in patch_annotations["annotations"]]
@@ -493,7 +494,7 @@ def _create_images_coco_annotations(
         image_annotations = _load_coco_annotation_from_mongodb(field_name=field_name, image_name=image_name)
 
         if not image_annotations["annotations"]:
-            LOGGER.warning(f"No se encontraron anotaciones para la imagen {image_name}.")
+            LOGGER.debug(f"No se encontraron anotaciones para la imagen {image_name}.")
 
         image_annotations["images"][0]["id"] = image_id
         image_annotations["annotations"] = [{**ann, "image_id": image_id} for ann in image_annotations["annotations"]]
@@ -588,7 +589,7 @@ def load_coco_annotations_from_mongodb(
         raise Exception(f"Error al descargar las anotaciones: {e}")
 
     if file_path:
-        annotations = CocoDatasetUtils.load_annotations_from_file(file_path)
+        annotations = CocoDatasetUtils.load_annotations_from_path(file_path)
         LOGGER.debug(f"Anotaciones cargadas desde {file_path}.")
         if clean_files and file_path and file_path.exists():
             try:
@@ -602,7 +603,10 @@ def load_coco_annotations_from_mongodb(
 
 
 def load_jgw_file_from_mongodb(
-    image_name: Optional[str] = None, patch_name: Optional[str] = None
+    image_name: Optional[str] = None,
+    patch_name: Optional[str] = None,
+    should_download: bool = False,
+    output_filename: Path = DOWNLOAD_JGW_FOLDER / "jgw_data.json",
 ) -> Optional[Dict[str, Any]]:
     """
     Carga un archivo JGW desde MongoDB.
@@ -664,6 +668,12 @@ def load_jgw_file_from_mongodb(
             "x_origin": x_origin_patch,
             "y_origin": y_origin_patch,
         }
+
+    if should_download:
+        output_filename.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_filename, "w") as f:
+            json.dump(jgw_data, f, indent=4)
+            LOGGER.success(f"Archivo JGW guardado en {output_filename}.")
 
     return jgw_data
 

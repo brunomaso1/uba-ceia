@@ -1,18 +1,81 @@
 name: picudo-rojo-project
 
+x-services_defaults: &services_defaults
+  networks:
+    - main
+
 services:
+  mongodb:
+    << : *services_defaults
+    image: mongo:4.4.29
+    restart: always
+    hostname: mongo
+    volumes:
+      - mongodb-data:/data/db/ # No se puede montar el volumen en el host porque da problemas: https://www.mongodb.com/community/forums/t/wiredtiger-wt-handle-open-preventing-server-start/245079/3
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    ports:
+      - 27017:27017
+    healthcheck:
+      test: ["CMD", "mongo", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    
+  mongo-express:
+    << : *services_defaults
+    image: mongo-express
+    restart: always
+    hostname: mongo_express
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: example
+      ME_CONFIG_MONGODB_PORT: 27017
+      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_BASICAUTH_USERNAME: root
+      ME_CONFIG_BASICAUTH_PASSWORD: example
+    ports:
+      - 8081:8081
+    depends_on:
+      - mongodb
   fiftyone:
+    << : *services_defaults
+    # https://docs.voxel51.com/user_guide/config.html#configuring-a-mongodb-connection
+    command: ["python", "-m", "fiftyone.server.main", "--port", "5151"]
     environment:
       FIFTYONE_DEFAULT_APP_ADDRESS: 0.0.0.0
-    image: voxel51/fiftyone:${FIFTYONE_VERSION:-latest}
+      FIFTYONE_DATABASE_URI: "mongodb://root:example@mongo:27017"
+      FIFTYONE_DATABASE_VALIDATION: false
+    image: voxel51/fiftyone:${FIFTYONE_VERSION:-v1.7.0}
+    volumes:
+      - ./data:/data # montar carpeta de datos
     ports:
       - 5151:5151
+    depends_on:
+      - mongodb
+
+  # Servicio de carga de datos
+  automatic-data-loader: # Contenedor efímero.
+    << : *services_defaults
+    image: voxel51/fiftyone:${FIFTYONE_VERSION:-v1.7.0}
     volumes:
-      - ./fiftyone-data:/fiftyone
-      - ../webscrapping/downloads/exctracted:/imagenes # montamos la carpeta de imagenes
       - ./scripts:/scripts # montar scripts
-    networks:
-      - main
+      - ./data:/data # montar carpeta de datos
+    environment:
+      FIFTYONE_DATABASE_URI: "mongodb://root:example@mongo:27017"
+      LOAD_INTERVAL_SECONDS: 600
+      FIFTYONE_DATABASE_VALIDATION: false
+      PYTHONUNBUFFERED: 1
+    command: ["python", "/scripts/load-datastets.py"]
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    restart: unless-stopped
 
 networks:
   main:
+
+volumes:
+  mongodb-data:

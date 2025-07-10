@@ -91,7 +91,7 @@ def show_anotated_image(
         raise FileNotFoundError(f"El archivo de imagen {image_path} no existe.")
 
     if annotation_path:
-        coco_annotations = CocoDatasetUtils.load_annotations_from_file(annotation_path)
+        coco_annotations = CocoDatasetUtils.load_annotations_from_path(annotation_path)
     if image_path:
         image = cv.imread(str(image_path))
 
@@ -121,8 +121,8 @@ def show_anotated_image(
             plt.figure(figsize=fig_size)
         else:
             plt.figure()
-
-        drawbox_config = CONFIG.opencv_draw.draw_box.to_dict()
+        
+        drawbox_config = CONFIG.opencv_draw.to_dict()['draw_box']
         color_map = {k: tuple(v) for k, v in drawbox_config["color_map"].items()}
         category_map = {cat["id"]: cat["name"] for cat in coco_annotations["categories"]}
 

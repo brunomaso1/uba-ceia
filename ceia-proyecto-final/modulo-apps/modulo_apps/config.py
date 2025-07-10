@@ -8,11 +8,12 @@ from typing import List, Dict, Any, Tuple, Optional
 OPENCV_IO_MAX_IMAGE_PIXELS = 50000 * 50000  # Para imágenes grandes, ej: barrio3Ombues_20180801_dji_pc_3cm.jpg
 os.environ["OPENCV_IO_MAX_IMAGE_PIXELS"] = str(OPENCV_IO_MAX_IMAGE_PIXELS)
 
-ROOT_DIR = Path(__file__).resolve().parent
+PROJECT_DIR = Path(__file__).resolve().parent
+ROOT_DIR = PROJECT_DIR.parent
 
 # Construir las rutas con respecto al directorio raíz.
-env_dev_path = ROOT_DIR / ".env.dev"
-env_prod_path = ROOT_DIR / ".env.prod"
+env_dev_path = PROJECT_DIR / ".env.dev"
+env_prod_path = PROJECT_DIR / ".env.prod"
 
 logger.info(f"Directorio de configuración raíz: {ROOT_DIR}")
 
@@ -73,8 +74,6 @@ class FoldersConfig:
     download_folder: Path = Path("downloads")
 
     def __post_init__(self):
-        self.raw_dataset_folder: Path = self.download_folder / "raw_dataset"
-        self.yolo_dataset_folder: Path = self.download_folder / "yolo_dataset"
         self.download_images_folder: Path = self.download_folder / "images"
         self.download_patches_folder: Path = self.download_folder / "patches"
         self.download_temp_folder: Path = self.download_folder / "temp"
@@ -85,6 +84,8 @@ class FoldersConfig:
         self.download_kmls_folder: Path = self.download_folder / "kmls"
         self.download_cutouts_folder: Path = self.download_folder / "cutouts"
         self.download_cutouts_metadata_folder: Path = self.download_folder / "cutouts_metadata"
+        self.download_geojson_folder: Path = self.download_folder / "geojson"
+        self.download_jgw_folder: Path = self.download_folder / "jgw"
 
 
 @dataclass

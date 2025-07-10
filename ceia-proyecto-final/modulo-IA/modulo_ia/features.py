@@ -4,12 +4,12 @@ from pathlib import Path
 import random
 from typing import Dict, List, Optional, Tuple, Union
 
-import cv2
-
-import yaml
-
 from loguru import logger as LOGGER
 from modulo_ia.config import config as CONFIG
+
+import cv2  # Debe venir después de la importación del config por configuraciones de variables de entorno.
+
+import yaml
 
 import typer
 
@@ -44,7 +44,7 @@ EXTERNAL_DATA_FOLDER = CONFIG.folders.external_data_folder
 INTERIM_DATA_FOLDER = CONFIG.folders.interim_data_folder
 PROCESSED_DATA_FOLDER = CONFIG.folders.processed_data_folder
 
-FULL_DATASET_NAME = CONFIG.names.detection_dataset_name
+FULL_DATASET_NAME = CONFIG.names.palm_detection_dataset_name
 FULL_DATASET_VERSION = CONFIG.versions.detection_dataset_version
 
 PARTIAL_DATASET_NAME = CONFIG.names.partial_dataset_name
@@ -150,6 +150,7 @@ def crop_dataset(
         - Las imágenes blancas y los parches blancos se omiten.
         - Las anotaciones se ajustan al sistema de coordenadas de cada parche y se incluyen solo si cumplen con el umbral de IoU.
     """
+    # TODO: Mejorar performance (concurrent.futures o multiprocessing)
     if not dataset_path.exists():
         LOGGER.error(f"El dataset {dataset_path} no existe.")
         return
@@ -207,10 +208,6 @@ def _crop_and_adjust_annotations(
             f"No se pudo leer la imagen {image_file}. Asegúrate de que el archivo existe y es una imagen válida."
         )
 
-    if Helpers.is_white_image(img)[0]:
-        LOGGER.warning(f"La imagen {image_file} es blanca. Saltando.")
-        return 0
-
     h, w, _ = img.shape
     base_name = image_file.stem
     label_file = labels_dir / f"{base_name}.txt"
@@ -224,9 +221,9 @@ def _crop_and_adjust_annotations(
                 x_center, y_center, width, height = parts[1:]
                 annotations.append((class_id, x_center, y_center, width, height))
     else:
-        LOGGER.warning(f"No se encontró archivo de etiquetas para {image_file}. Continuando sin anotaciones.")
+        LOGGER.debug(f"No se encontró archivo de etiquetas para {image_file}. Continuando sin anotaciones.")
 
-    LOGGER.info(f"Eliminando {image_file} y {label_file}")
+    LOGGER.debug(f"Eliminando {image_file} y {label_file}")
     image_file.unlink(missing_ok=True)
     label_file.unlink(missing_ok=True)
 
@@ -328,42 +325,42 @@ def _crop_and_adjust_annotations(
 def balance_dataset(
     dataset_path: Path = INTERIM_DATA_FOLDER / f"{FULL_DATASET_NAME}_{FULL_DATASET_VERSION}_{DatasetFormat.YOLO.value}",
     dataset_format: DatasetFormat = DatasetFormat.YOLO,
-    all_classes: bool = False,  # Nuevo parámetro para controlar el balanceo por clase
+    all_classes: bool = False,
 ) -> None:
     """
     Balancea un dataset YOLO eliminando imágenes para igualar la cantidad de imágenes con y sin detecciones,
     o para igualar la cantidad de imágenes por clase.
 
-    Este proceso es útil para evitar sesgos en el entrenamiento de modelos de detección de objetos, 
-    asegurando que todas las clases tengan una representación similar en el dataset o que haya un balance 
+    Este proceso es útil para evitar sesgos en el entrenamiento de modelos de detección de objetos,
+    asegurando que todas las clases tengan una representación similar en el dataset o que haya un balance
     entre imágenes con y sin detecciones.
 
     Args:
-        dataset_path (Path, optional): Ruta al dataset YOLO que se desea balancear. 
+        dataset_path (Path, optional): Ruta al dataset YOLO que se desea balancear.
             Por defecto es la carpeta de datos interinos con el nombre y versión del dataset completo.
-        dataset_format (DatasetFormat, optional): Formato del dataset. 
+        dataset_format (DatasetFormat, optional): Formato del dataset.
             Por defecto es YOLO.
-        all_classes (bool, optional): Si es True, balancea el dataset por clase, igualando la cantidad de imágenes 
-            para cada clase. Si es False, balancea entre imágenes con y sin detecciones. 
+        all_classes (bool, optional): Si es True, balancea el dataset por clase, igualando la cantidad de imágenes
+            para cada clase. Si es False, balancea entre imágenes con y sin detecciones.
             Por defecto es False.
 
     Raises:
         NotImplementedError: Si el formato del dataset no es YOLO.
 
     Notas:
-        - Si `all_classes` es True, el balanceo se realiza considerando cada clase individualmente. 
+        - Si `all_classes` es True, el balanceo se realiza considerando cada clase individualmente.
           Esto implica que se eliminarán imágenes para que todas las clases tengan la misma cantidad de imágenes.
-        - Si `all_classes` es False, el balanceo se realiza entre imágenes con detecciones y sin detecciones, 
+        - Si `all_classes` es False, el balanceo se realiza entre imágenes con detecciones y sin detecciones,
           igualando la cantidad de imágenes en ambas categorías.
         - Las imágenes eliminadas se seleccionan de manera aleatoria.
         - Las imágenes sin anotaciones se consideran como imágenes sin detecciones.
-        - El archivo `dataset.yaml` es necesario para identificar los nombres de las clases cuando se realiza 
+        - El archivo `dataset.yaml` es necesario para identificar los nombres de las clases cuando se realiza
           el balanceo por clase.
     """
     if not dataset_path.exists():
         LOGGER.error(f"El dataset {dataset_path} no existe.")
         return
-    
+
     if dataset_format != DatasetFormat.YOLO:
         raise NotImplementedError(
             f"El formato de dataset {dataset_format} no está implementado para el balanceo de imágenes."
@@ -440,7 +437,7 @@ def balance_dataset(
         else:
             LOGGER.warning("No se encontraron detecciones para ninguna clase. Balanceo por clase no aplicable.")
             return
-        
+
         # Conjunto de imágenes a mantener para evitar eliminar duplicados o deseados
         files_to_keep: set[Path] = set()
 
@@ -473,8 +470,12 @@ def balance_dataset(
             img_file.unlink(missing_ok=True)
             lbl_file.unlink(missing_ok=True)
 
-        LOGGER.info(f"Imágenes con detecciones restantes: {len(files_to_keep & set(image_file for image_file, _ in images_with_detections))}")
-        LOGGER.info(f"Imágenes sin detecciones restantes: {len(files_to_keep & set(image_file for image_file, _ in images_without_detections))}")
+        LOGGER.info(
+            f"Imágenes con detecciones restantes: {len(files_to_keep & set(image_file for image_file, _ in images_with_detections))}"
+        )
+        LOGGER.info(
+            f"Imágenes sin detecciones restantes: {len(files_to_keep & set(image_file for image_file, _ in images_without_detections))}"
+        )
         LOGGER.success(f"Balanceo de dataset completado en {dataset_path}")
 
     else:

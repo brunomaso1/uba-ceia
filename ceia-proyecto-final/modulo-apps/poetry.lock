@@ -951,6 +951,18 @@ docs = ["ipython", "matplotlib", "numpydoc", "sphinx"]
 tests = ["pytest", "pytest-cov", "pytest-xdist"]
 
 [[package]]
+name = "defusedxml"
+version = "0.7.1"
+description = "XML bomb protection for Python stdlib modules"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+groups = ["main"]
+files = [
+    {file = "defusedxml-0.7.1-py2.py3-none-any.whl", hash = "sha256:a352e7e428770286cc899e2542b6cdaedb2b4953ff269a210103ec58f6198a61"},
+    {file = "defusedxml-0.7.1.tar.gz", hash = "sha256:1bb3032db185915b62d7c6209c5a8792be6a32ab2fedacc84e01b52c51aa3e69"},
+]
+
+[[package]]
 name = "dnspython"
 version = "2.7.0"
 description = "DNS toolkit"
@@ -2797,6 +2809,33 @@ files = [
 ]
 
 [[package]]
+name = "supervision"
+version = "0.25.1"
+description = "A set of easy-to-use utils that will come in handy in any Computer Vision project"
+optional = false
+python-versions = "<4.0,>=3.8"
+groups = ["main"]
+files = [
+    {file = "supervision-0.25.1-py3-none-any.whl", hash = "sha256:ebc015c22983bc64563beda75f5f529e465e4020b318da07948ce03148307a72"},
+    {file = "supervision-0.25.1.tar.gz", hash = "sha256:61781b4abe4fa6ff95c58af6aec7dd3451a78e7e6a797e9ea2787f93771dd031"},
+]
+
+[package.dependencies]
+contourpy = {version = ">=1.3.0", markers = "python_version >= \"3.13\""}
+defusedxml = ">=0.7.1,<0.8.0"
+matplotlib = {version = ">=3.9.2", markers = "python_version >= \"3.13\""}
+numpy = {version = ">=2.1.0", markers = "python_version >= \"3.13\""}
+opencv-python = ">=4.5.5.64"
+pillow = ">=9.4"
+pyyaml = ">=5.3"
+requests = ">=2.26.0"
+scipy = {version = ">=1.14.1,<2.0.0", markers = "python_version >= \"3.13\""}
+tqdm = ">=4.62.3"
+
+[package.extras]
+metrics = ["pandas (>=2.0.0) ; python_version < \"3.13\"", "pandas (>=2.2.3) ; python_version >= \"3.13\""]
+
+[[package]]
 name = "tinydb"
 version = "4.8.2"
 description = "TinyDB is a tiny, document oriented database optimized for your happiness :)"
@@ -2983,4 +3022,4 @@ dev = ["black (>=19.3b0) ; python_version >= \"3.6\"", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13,<4.0"
-content-hash = "5b2950c07bdb75b5f849ed7355bef47c9b54aeb627559ed02ea2b2c30a69afd9"
+content-hash = "3335bf5dc09b7af741c9fa3cf5b643f047556834482ce7173360c3697070c215"

@@ -13,3 +13,5 @@ EOF
 
 # Aplica la configuración
 netplan apply
+
+sleep 5

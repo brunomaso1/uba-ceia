@@ -166,7 +166,7 @@ def load_annotations_from_cvat(
         raise Exception(f"Error al descargar las anotaciones: {e}")
 
     if file_path:
-        annotations = CocoDatasetUtils.load_annotations_from_file(file_path)
+        annotations = CocoDatasetUtils.load_annotations_from_path(file_path)
         LOGGER.debug(f"Anotaciones cargadas desde {file_path}.")
         if clean_files and file_path and file_path.exists():
             try:

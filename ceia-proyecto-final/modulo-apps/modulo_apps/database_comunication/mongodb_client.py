@@ -9,6 +9,7 @@ from modulo_apps.config import MongoDBConfig
 
 from loguru import logger
 
+
 @dataclass
 class MongoDB:
     """Clase para manejar la conexión a MongoDB usando dataclass."""
@@ -33,7 +34,7 @@ class MongoDB:
         if self.client:
             logger.debug("Cerrando conexión a MongoDB.")
             self.client.close()
-            self.client = None # Resetear el cliente después de cerrar
+            self.client = None  # Resetear el cliente después de cerrar
 
 
 # Instancia única (patrón Singleton a nivel de módulo)

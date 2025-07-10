@@ -1,8 +1,6 @@
 import re
-import os, sys
 from pathlib import Path
-from typing import Annotated, List, Optional
-from loguru import logger
+from typing import List
 
 from tqdm import tqdm
 import typer
@@ -21,6 +19,24 @@ DOWNLOAD_CUTOUTS_FOLDER = CONFIG.folders.download_cutouts_folder
 DOWNLOAD_CUTOUTS_METADATA_FOLDER = CONFIG.folders.download_cutouts_metadata_folder
 
 app = typer.Typer()
+
+
+@app.command()
+def check_connection() -> None:
+    """Verifica la conexión con el servicio S3 (MinIO)."""
+    try:
+        S3CLIENT.head_bucket(Bucket=MINIO_BUCKET)
+        LOGGER.success(f"Conexión exitosa a MinIO y acceso al bucket '{MINIO_BUCKET}' verificado.")
+    except botocore.exceptions.ClientError as e:
+        error_code = e.response["Error"]["Code"]
+        if error_code == "403":
+            raise PermissionError(f"Acceso denegado al bucket '{MINIO_BUCKET}'. Verifica tus credenciales.")
+        elif error_code == "404":
+            raise FileNotFoundError(f"El bucket '{MINIO_BUCKET}' no existe. Verifica la configuración.")
+        else:
+            raise ConnectionError(f"Error al conectar con MinIO: {e}")
+    except Exception as e:
+        raise ConnectionError(f"Error inesperado al conectar con MinIO: {e}")
 
 
 @app.command()
@@ -50,7 +66,7 @@ def download_image_from_minio(
 
     try:
         S3CLIENT.download_file(Bucket=MINIO_BUCKET, Key=image_key, Filename=output_filename)
-        logger.debug(f"Imagen {image_name} descargada correctamente en {output_filename}.")
+        LOGGER.debug(f"Imagen {image_name} descargada correctamente en {output_filename}.")
     except Exception as e:
         raise Exception(f"Error al descargar la imagen {image_name}: {e}")
 
@@ -77,14 +93,14 @@ def download_images_from_minio(images_name: List[str], output_folder: Path = DOW
         >>> # Esto descargará las imágenes con los IDs especificados y las guardará en la carpeta de descargas.
     """
     output_folder.mkdir(parents=True, exist_ok=True)
-    logger.debug(f"Descargando {len(images_name)} imágenes de MinIO a {output_folder}.")
+    LOGGER.debug(f"Descargando {len(images_name)} imágenes de MinIO a {output_folder}.")
 
     try:
         for image_name in tqdm(images_name, desc="Descargando imágenes", unit="MB"):
             download_image_from_minio(image_name, output_folder)
-        logger.debug(f"Se descargaron {len(images_name)} imágenes de MinIO.")
+        LOGGER.debug(f"Se descargaron {len(images_name)} imágenes de MinIO.")
     except Exception as e:
-        logger.error(f"Error al descargar imágenes de MinIO: {e}")
+        LOGGER.error(f"Error al descargar imágenes de MinIO: {e}")
         raise e
     return True
 
@@ -118,7 +134,7 @@ def download_patch_from_minio(patch_name: str, output_folder: Path = DOWNLOAD_PA
     patch = next((p for p in image.get("patches", []) if p["patch_name"] == patch_name), None)
 
     if patch["is_white"]:
-        logger.warning(f"El parche {patch_name} es blanco, no se descargará.")
+        LOGGER.warning(f"El parche {patch_name} es blanco, no se descargará.")
         return None
 
     image_name = image["id"]
@@ -126,7 +142,7 @@ def download_patch_from_minio(patch_name: str, output_folder: Path = DOWNLOAD_PA
 
     try:
         S3CLIENT.download_file(Bucket=MINIO_BUCKET, Key=patch_key, Filename=output_filename)
-        logger.debug(f"Parche {patch_name} descargado correctamente en {output_filename}.")
+        LOGGER.debug(f"Parche {patch_name} descargado correctamente en {output_filename}.")
     except Exception as e:
         raise Exception(f"Error al descargar el parche {patch_name}: {e}")
 
@@ -157,7 +173,7 @@ def download_patches_from_minio(patch_names: List[str], output_folder: Path = DO
     try:
         for patch_name in tqdm(patch_names, desc="Descargando parches", unit="MB"):
             download_patch_from_minio(patch_name, output_folder)
-        logger.debug(f"Se descargaron {len(patch_names)} parches de MinIO.")
+        LOGGER.debug(f"Se descargaron {len(patch_names)} parches de MinIO.")
     except Exception as e:
         raise Exception(f"Error al descargar parches de MinIO: {e}")
     return True
@@ -196,7 +212,7 @@ def download_cutout_from_minio(
 
     try:
         S3CLIENT.download_file(Bucket=MINIO_BUCKET, Key=cutout_key, Filename=output_filename)
-        logger.debug(f"Recorte {cutout_name} descargado correctamente en {output_filename}.")
+        LOGGER.debug(f"Recorte {cutout_name} descargado correctamente en {output_filename}.")
     except Exception as e:
         raise Exception(f"Error al descargar el recorte {cutout_name}: {e}")
 
@@ -230,7 +246,7 @@ def download_cutouts_from_minio(
     try:
         for cutout_name in tqdm(cutout_names, desc="Descargando recortes", unit="MB"):
             download_cutout_from_minio(cutout_name, output_folder)
-        logger.debug(f"Se descargaron {len(cutout_names)} recortes de MinIO.")
+        LOGGER.debug(f"Se descargaron {len(cutout_names)} recortes de MinIO.")
     except Exception as e:
         raise Exception(f"Error al descargar recortes de MinIO: {e}")
 
@@ -318,6 +334,7 @@ def download_image_cutouts_from_minio(
         _download_objects_by_prefix(metadata_prefix, cutouts_metadata_folder, MINIO_BUCKET, S3CLIENT)
 
     return output_folder
+
 
 @app.command()
 def download_images_cutouts_from_minio(

@@ -1,19 +1,21 @@
-# $env:ENVIRONMENT="dev"; vagrant up
-
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
 Vagrant.configure("2") do |config|
   config.vm.box = "bento/ubuntu-24.04"
   config.vm.box_version = "202502.21.0"
+  # config.vm.box = "gutehall/ubuntu24-04"
+  # config.vm.box_version = "2025.02.20"
   config.vm.hostname = "ceia-proyecto-final-develop"
+
+  config.vm.boot_timeout = 600 # Tiempo de espera para el arranque de la VM
   
   # Configuración de red bridge (eth1)
   config.vm.network "public_network",
     bridge: "Intel(R) Wi-Fi 6E AX211 160MHz",
     use_dhcp_assigned_default_route: true  # Prioriza esta interfaz
 
-  config.vm.disk :disk, size: "50GB", primary: true
+  config.vm.disk :disk, size: "100GB", primary: true
 
   config.vm.provider "virtualbox" do |vb|
     vb.cpus = 4 # Número de CPUs asignadas a la VM
@@ -22,7 +24,7 @@ Vagrant.configure("2") do |config|
 
     # Deshabilita la interfaz NAT (eth0) como ruta predeterminada
     vb.customize ["modifyvm", :id, "--nic1", "nat"]
-    vb.customize ["modifyvm", :id, "--nicpromisc1", "deny"] 
+    vb.customize ["modifyvm", :id, "--nicpromisc1", "deny"]
   end
 
   config.vm.provision "setup-vm-network", type: "shell", path: "vagrant-scripts/01-setup-network.sh"
