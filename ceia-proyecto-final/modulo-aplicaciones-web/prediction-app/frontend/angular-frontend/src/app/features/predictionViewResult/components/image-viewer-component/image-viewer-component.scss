@@ -1,0 +1,24 @@
+article {
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+img {
+    height: 100%;
+    max-width: 100%;
+    width: 100%;
+    object-fit: scale-down;
+}
+
+.zoom-controls {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    top: 10px;
+    left: 10px;
+    z-index: 10;
+}

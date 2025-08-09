@@ -1,0 +1,12 @@
+<section class="container">
+    <app-prediction-buttons-bar-component class="item" (predictionButonClicked)="onPredictionButtonClick()"
+        [dissableButton]="isButtonDisabled()"></app-prediction-buttons-bar-component>
+    @if (isLoading()) {
+    <div class="spinner-wrapper">
+        <mat-spinner class="spinner"></mat-spinner>
+    </div>
+    } @else {
+    <app-upload-image-component class="item"></app-upload-image-component>
+    <app-upload-jgw-component class="item"></app-upload-jgw-component>
+    }
+</section>

@@ -312,6 +312,10 @@ ceia-proyecto-final/modulo-etiquetado-datos/cvat/**
 *.pt
 data
 
-prediction-app
+# PostgreSQL (Keyclack)
+postgres_data
 
 mlruns
+
+# Forntend app
+mock-data

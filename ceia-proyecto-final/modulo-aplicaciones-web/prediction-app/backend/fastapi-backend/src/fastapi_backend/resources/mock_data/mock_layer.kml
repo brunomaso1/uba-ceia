@@ -1,0 +1,44 @@
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document id="docid">
+    <description>PalmTrees</description>
+    <Folder id="palmeras_folder">
+      <name>Palmeras</name>
+      <Placemark id="palmera_0">
+        <name>palmera-sana</name>
+        <Point>
+          <coordinates>-56.15194919937624,-34.8820558530833</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="palmera_1">
+        <name>palmera-sana</name>
+        <Point>
+          <coordinates>-56.15200279709967,-34.88200254427881</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="palmera_2">
+        <name>palmera-sana</name>
+        <Point>
+          <coordinates>-56.1520172255995,-34.88207222076812</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="palmera_3">
+        <name>palmera-sana</name>
+        <Point>
+          <coordinates>-56.15202449423616,-34.882135002397035</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="palmera_4">
+        <name>palmera-sana</name>
+        <Point>
+          <coordinates>-56.15195434465065,-34.882102410663336</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="palmera_5">
+        <name>palmera-sana</name>
+        <Point>
+          <coordinates>-56.151950894012835,-34.882148393775715</coordinates>
+        </Point>
+      </Placemark>
+    </Folder>
+  </Document>
+</kml>

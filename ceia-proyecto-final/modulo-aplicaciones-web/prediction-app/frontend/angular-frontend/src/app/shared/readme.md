@@ -1,0 +1,1 @@
+En esta carpeta se encuentra código que es compartido entre diferentes módulos de la aplicación. Por ejemplo, componentes reutilizables, servicios compartidos, etc.

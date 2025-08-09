@@ -1,0 +1,27 @@
+section {
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.card {
+    height: 100%;
+    max-width: 600px;
+    overflow: auto;
+}
+
+.header-image {
+    background-image: url('/assets/iconos-palmeras/palmera-verde.png');
+    background-size: cover;
+}
+
+img {
+    height: 50%;
+    margin: 0 auto;
+    max-width: 100%;
+    width: 100%;
+    object-fit: scale-down;
+}

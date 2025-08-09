@@ -1,0 +1,17 @@
+<mat-toolbar class="container" color="primary">
+  <button matIconButton class="item" aria-label="Toggle navigation" [routerLinkActive]="['active']"
+    [routerLink]="['/']">
+    <mat-icon>menu</mat-icon>
+  </button>
+  <button matIconButton class="item" aria-label="Logo IM" [routerLinkActive]="['active']" [routerLink]="['/']">
+    <mat-icon>home</mat-icon>
+  </button>
+  <span>Mis palmeras</span>
+  <span class="spacer"></span>
+  <button matIconButton class="item" aria-label="Datos del usuario" [routerLinkActive]="['active']">
+    <mat-icon>account_circle</mat-icon>
+  </button>
+  <button matIconButton class="item" aria-label="Salir" (click)="logout()">
+    <mat-icon>logout</mat-icon>
+  </button>
+</mat-toolbar>

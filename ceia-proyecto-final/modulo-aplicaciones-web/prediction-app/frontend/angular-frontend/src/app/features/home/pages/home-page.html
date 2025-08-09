@@ -1,0 +1,27 @@
+<section>
+    <mat-card class="card" appearance="outlined">
+        <mat-card-header>
+            <div mat-card-avatar class="header-image"></div>
+            <mat-card-title>Bienvenido</mat-card-title>
+            <mat-card-subtitle>Nueva predicción</mat-card-subtitle>
+        </mat-card-header>
+        <img mat-card-image src="/assets/images/home-card-background-image.png" alt="Ejemplo de ortomosaico">
+        <mat-card-content>
+            <p>
+                Realiza una nueva predicción de palmeras ingresando los datos necesarios. Previamente, deberías tener el
+                ortomosaico y el archivo JGW de la zona de interés.
+                <br>
+                Al realizar una predicción, el sistema analizará la imagen y generará un resultado que podrás visualizar
+                en
+                la sección de resultados.
+                <br>
+                También se permitirá exportar los resultados a un KML (Keyhole Markup Language) para su uso en
+                aplicaciones
+                de mapas.
+            </p>
+        </mat-card-content>
+        <mat-card-actions align="end">
+            <button matButton routerLink="/prediction">Nueva predicción</button>
+        </mat-card-actions>
+    </mat-card>
+</section>

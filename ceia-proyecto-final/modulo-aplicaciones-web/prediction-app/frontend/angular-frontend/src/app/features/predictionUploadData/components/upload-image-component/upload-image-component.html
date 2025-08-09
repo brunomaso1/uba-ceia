@@ -1,0 +1,16 @@
+<article>
+    <mat-card class="card" appearance="outlined">
+        <mat-card-header>
+            <input type="file" (change)="onFileSelected($event)" #fileUpload style="display: none"
+                accept="image/png, image/jpeg" />
+            <button matButton="elevated" (click)="fileUpload.click()">Subir imagen</button>
+        </mat-card-header>
+        @if (isImageTooLarge()) {
+        <p>La imagen es demasiado grande para previsualizar, sin embargo, se ha cargado y se realizará la predicción
+            sobre ella.</p>
+        } @else {
+        <img mat-card-image [src]="imageUrl ? imageUrl :'assets/images/upload-placeholder.png'" fill
+            alt="Imagen cargada" priority />
+        }
+    </mat-card>
+</article>

@@ -1,0 +1,14 @@
+.container {
+  display: flex;
+  justify-content: space-between;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.title {
+  margin-left: 8px;
+  font-weight: bold;
+  font-size: 18px;
+}

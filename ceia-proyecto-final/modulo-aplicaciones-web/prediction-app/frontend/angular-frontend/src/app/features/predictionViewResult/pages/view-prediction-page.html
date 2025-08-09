@@ -1,0 +1,8 @@
+<section class="container">
+    <app-buttons-bar-component class="item" 
+        (exportZipClicked)="onExportZipClicked()"
+        (exportKMLClicked)="onExportKMLClicked()"
+        (downloadImageClicked)="onDownloadImageClicked()">
+    </app-buttons-bar-component>
+    <app-map-component class="item" [geoJSONData]="geoJSONData"></app-map-component>
+</section>

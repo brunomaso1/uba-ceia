@@ -1,0 +1,9 @@
+<article>
+    <div class="zoom-controls">
+        <button (click)="zoomIn()">+</button>
+        <button (click)="zoomOut()">−</button>
+    </div>
+    <img [ngSrc]="imageUrl" [style.transform]="getTransform()" draggable="false" (mousedown)="startDrag($event)"
+        (mousemove)="onDrag($event)" (mouseup)="endDrag()" (mouseleave)="endDrag()" (wheel)="onWheel($event)"
+        (dblclick)="resetTransform()" fill priority />
+</article>

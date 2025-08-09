@@ -1,0 +1,144 @@
+{
+    "type": "FeatureCollection",
+    "name": "annotations",
+    "crs": {
+        "type": "name",
+        "properties": {
+            "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+        }
+    },
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "palmera-sana",
+                "annotation_id": 1,
+                "bbox_x": 3012.5874633789062,
+                "bbox_y": 1743.7192077636719,
+                "bbox_width": 102.2662353515625,
+                "bbox_height": 102.5052490234375,
+                "global_tl_x": 577495.34589578374,
+                "global_tl_y": 6139710.9163844623,
+                "global_br_x": 577500.45920755132,
+                "global_br_y": 6139705.7911220109
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -56.15194919937624,
+                    -34.882055853083301
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "palmera-sana",
+                "annotation_id": 2,
+                "bbox_x": 2916.1277465820312,
+                "bbox_y": 1631.989143371582,
+                "bbox_width": 101.26434326171875,
+                "bbox_height": 87.832695007324219,
+                "global_tl_x": 577490.52290994395,
+                "global_tl_y": 6139716.5028876811,
+                "global_br_x": 577495.58612710703,
+                "global_br_y": 6139712.1112529309
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -56.152002797099669,
+                    -34.882002544278812
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "palmera-sana",
+                "annotation_id": 3,
+                "bbox_x": 2902.9403686523438,
+                "bbox_y": 1797.2005004882812,
+                "bbox_width": 72.280364990234375,
+                "bbox_height": 66.04364013671875,
+                "global_tl_x": 577489.86354104744,
+                "global_tl_y": 6139708.242319826,
+                "global_br_x": 577493.477559297,
+                "global_br_y": 6139704.9401378185
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -56.152017225599501,
+                    -34.882072220768123
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "palmera-sana",
+                "annotation_id": 4,
+                "bbox_x": 2889.1026611328125,
+                "bbox_y": 1933.0138549804688,
+                "bbox_width": 71.028411865234375,
+                "bbox_height": 72.68701171875,
+                "global_tl_x": 577489.17165567144,
+                "global_tl_y": 6139701.4516521012,
+                "global_br_x": 577492.72307626472,
+                "global_br_y": 6139697.8173015155
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -56.152024494236159,
+                    -34.882135002397035
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "palmera-sana",
+                "annotation_id": 5,
+                "bbox_x": 3020.3028564453125,
+                "bbox_y": 1868.436279296875,
+                "bbox_width": 66.2789306640625,
+                "bbox_height": 59.4381103515625,
+                "global_tl_x": 577495.73166543711,
+                "global_tl_y": 6139704.6805308852,
+                "global_br_x": 577499.04561197024,
+                "global_br_y": 6139701.7086253678
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -56.151954344650647,
+                    -34.882102410663336
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "palmera-sana",
+                "annotation_id": 6,
+                "bbox_x": 3026.9374389648438,
+                "bbox_y": 1969.1365356445312,
+                "bbox_width": 63.8966064453125,
+                "bbox_height": 62.122299194335938,
+                "global_tl_x": 577496.06339456304,
+                "global_tl_y": 6139699.6455180682,
+                "global_br_x": 577499.25822488533,
+                "global_br_y": 6139696.5394031079
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -56.151950894012835,
+                    -34.882148393775715
+                ]
+            }
+        }
+    ]
+}
