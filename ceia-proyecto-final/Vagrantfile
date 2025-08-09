@@ -8,7 +8,7 @@ Vagrant.configure("2") do |config|
   # config.vm.box_version = "2025.02.20"
   config.vm.hostname = "ceia-proyecto-final-develop"
 
-  config.vm.boot_timeout = 600 # Tiempo de espera para el arranque de la VM
+  config.vm.boot_timeout = 1200 # Tiempo de espera para el arranque de la VM
   
   # Configuración de red bridge (eth1)
   config.vm.network "public_network",
@@ -18,8 +18,8 @@ Vagrant.configure("2") do |config|
   config.vm.disk :disk, size: "100GB", primary: true
 
   config.vm.provider "virtualbox" do |vb|
-    vb.cpus = 4 # Número de CPUs asignadas a la VM
-    vb.memory = "8192" # 32 GB de RAM asignados a la VM
+    vb.cpus = 6 # Número de CPUs asignadas a la VM
+    vb.memory = "16384" # 16 GB de RAM asignados a la VM
     vb.name = "ceia-proyecto-final-develop" # Nombre de la VM en VirtualBox
 
     # Deshabilita la interfaz NAT (eth0) como ruta predeterminada

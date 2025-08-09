@@ -6,10 +6,10 @@
 
 <div align="center">
 
-| Subtitulo       | Sistema de monitoreo de Rhynchophorus ferrugineus en palmeras de montevideo                                         |
-| --------------- | --------------------------------------------------------------------- |
+| Subtitulo       | Sistema de monitoreo de Rhynchophorus ferrugineus en palmeras de montevideo                                |
+| --------------- | ---------------------------------------------------------------------------------------------------------- |
 | **Descrpción**  | Presentación del trabajo final de CEIA que consiste en un sistema de monitoreo de la plaga del picudo rojo |
-| **Integrantes** | Bruno Masoller (brunomaso1@gmail.com)                                 |
+| **Integrantes** | Bruno Masoller (brunomaso1@gmail.com)                                                                      |
 
 </div>
 
@@ -72,7 +72,7 @@ docker volume rm $(docker volume ls -q)
 docker logs traefik-entrypoint | sed 's/\x1b\[[0-9;]*m//g' > traefik-entrypoint-20250610.log
 ```
 
-#### Comandos útiles poetry
+#### Poetry
 
 - Instalar proyecto:
 ```bash
@@ -184,6 +184,7 @@ df -h
 - Verificar uso de memoria:
 ```bash
 free -h
+watch -n 5 free -m
 ```
 
 - Verificar uso de CPU:
@@ -199,4 +200,76 @@ cat /proc/cpuinfo # Verifica si AVX está habilitado
 grep -m1 -o 'avx[^ ]*' /proc/cpuinfo
 grep -E 'avx' /proc/cpuinfo
 egrep "svm|vmx" /proc/cpuinfo
+```
+
+#### MLFlow
+
+- Limpiar experimentos:
+```bash
+mlflow gc --tracking-uri "http://localhost:5000" --backend-store-uri "sqlite:////mlruns/mlruns.db" --experiment-id 4
+```
+
+#### Fiftyone
+
+- Cargar un dataset en formato YOLO:
+```python
+# Se carga con el split "val" por defecto. Si se desea otro split, se debe especificar
+# con el parámetro `split`. Ej: split="full"
+import fiftyone as fo
+dataset = fo.Dataset.from_dir(
+    dataset_dir="path/to/dataset",
+    dataset_type=fo.types.YOLOv5Dataset,
+    name="my_yolo_dataset",
+    overwrite=True
+)
+```
+
+- Cargar con varios splits (train, val, test):
+```python
+import fiftyone as fo
+dataset = fo.Dataset(name=dataset_name, overwrite=True)
+for split in ["train", "val", "test", "full"]:
+    try:
+        dataset.add_dir(
+            dataset_dir=dataset_path, dataset_type=fo.types.YOLOv5Dataset, split=split, tags=[split]
+        )
+    except Exception as e:
+        LOGGER.warning(f'Advertencia: no se pudo agregar el split "{split}" al dataset. Error: {e}')
+        pass
+```
+
+- Obtener los esquemas de un dataset:
+```python
+dataset.get_field_schema()
+```
+
+- Inspeccionar estructura de un ejemplo:
+```python
+sample = dataset.first()
+print(sample)
+```
+
+- Obtener información sobre un campo:
+```python
+field_info = dataset.get_field("ground_truth")
+print(field_info)
+```
+
+- Explorar las propiedades del objeto de detección:
+```python
+sample_with_detections = dataset.match(F("ground_truth.detections").length() > 0).first()
+if sample_with_detections:
+    detection = sample_with_detections.ground_truth.detections[0]
+
+    # Common detection fields
+    print(f"Label: {detection.label}")
+    print(f"Confidence: {getattr(detection, 'confidence', 'N/A')}")
+    print(f"Bounding box: {detection.bounding_box}")
+    print(f"ID: {getattr(detection, 'id', 'N/A')}")
+
+    # Get all attributes
+    print("All detection attributes:")
+    for attr in dir(detection):
+        if not attr.startswith("_"):
+            print(f"  {attr}: {getattr(detection, attr, 'N/A')}")
 ```
