@@ -1,0 +1,47 @@
+name: picudo-rojo-project
+
+services:
+  keycloak_web:
+    image: quay.io/keycloak/keycloak:${KEYCLOAK_VERSION:-26.3} 
+    container_name: keycloak_web
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloakdb:5432/keycloak
+      KC_DB_USERNAME: ${KC_DB_USERNAME}
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
+
+      KC_HOSTNAME: ${KC_HOSTNAME:-localhost}
+      KC_HOSTNAME_PORT: 8080
+      KC_HOSTNAME_STRICT: false
+      KC_HOSTNAME_STRICT_HTTPS: false
+
+      KC_LOG_LEVEL: info
+      KC_METRICS_ENABLED: true
+      KC_HEALTH_ENABLED: true
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+    command: start-dev
+    # command: start # Uncomment for production use, but needs to configure HTTPS keys/certificates
+    depends_on:
+      - keycloakdb
+    ports:
+      - 7000:8080
+    networks:
+      - main
+
+  keycloakdb:
+    image: postgres:${POSTGRES_VERSION:-17.5}
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: ${KC_DB_USERNAME}
+      POSTGRES_PASSWORD: ${KC_DB_PASSWORD}
+    networks:
+      - main
+
+volumes:
+  postgres_data:
+
+networks:
+  main:
