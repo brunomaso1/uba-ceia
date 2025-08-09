@@ -1,0 +1,23 @@
+# Aumentos geométricos
+translate: 0.05 # Desplazamiento leve
+scale: 0.1 # Zoom in/out moderado
+fliplr: 0.5 # Flip horizontal (razonable para palmeras)
+flipud: 0.0 # Flip vertical desactivado (menos realista en este contexto)
+degrees: 5.0 # Rotaciones pequeñas
+shear: 2.0 # Deformación ligera, útil para variación angular
+
+# Aumentos de color y brillo
+hsv_h: 0.015 # Ligeros cambios de tono
+hsv_s: 0.7 # Saturación más flexible
+hsv_v: 0.4 # Variaciones en brillo (luminosidad)
+
+# Técnicas de composición
+mosaic: 1.0 # Mosaic activo (muy útil en YOLO, mejora la generalización)
+mixup: 0.1 # Combinación de imágenes para generalizar mejor
+copy_paste: 0.0 # No lo recomiendo para palmeras, salvo que lo ajustes manualmente
+
+# AutoAugment y otros
+auto_augment: randaugment # Usa estrategias modernas de augmentación (si hay soporte)
+
+# Erasing
+erasing: 0.1 # Borrado aleatorio, simula oclusiones leves
