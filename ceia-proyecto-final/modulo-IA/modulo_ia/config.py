@@ -38,22 +38,21 @@ class FoldersConfig:
         self.external_data_folder: Path = self.data_folder / "external"
         self.interim_data_folder: Path = self.data_folder / "interim"
         self.processed_data_folder: Path = self.data_folder / "processed"
+        self.temp_data_folder: Path = self.data_folder / "temp"
 
 
 @dataclass
 class NamesConfig:
-    palm_detection_dataset_name: str = "coco_palm_detection_dataset"
-    cutouts_dataset_name: str = "coco_cutouts_dataset"
-    partial_dataset_name: str = "coco_rpw_dataset_partial"
-    rpw_detection_dataset_name: str = "rpw_dataset_name"
-
+    palm_dataset_name: str = "coco_palm_dataset"
 
 @dataclass
 class VersionsConfig:
-    detection_dataset_version: str = "v1.0"
-    cutouts_dataset_version: str = "v1.0"
-    partial_dataset_name: str = "v1.0"
-    rpw_dataset_version: str = "v1.0"
+    palm_dataset_name: str = "v1.0"
+
+@dataclass
+class DatasetsProcessedFormatConfig:
+    yolo: str = "yolo"
+    huggingface: str = "huggingface"
 
 
 @dataclass
@@ -86,6 +85,7 @@ class Config:
         self.folders = FoldersConfig()
         self.names = NamesConfig()
         self.versions = VersionsConfig()
+        self.datasets_processed_format = DatasetsProcessedFormatConfig()
         self.fiftyone = self._get_fiftyone_config()
         self.mlflow = self._get_mlflow_config()
 

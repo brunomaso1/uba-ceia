@@ -1,136 +1,43 @@
 from collections import defaultdict
-from dataclasses import dataclass
 from pathlib import Path
-import random
-from typing import Dict, List, Optional, Tuple, Union
+import shutil
+from matplotlib import pyplot as plt
+import numpy as np
+import random, yaml
 
 from loguru import logger as LOGGER
 from modulo_ia.config import config as CONFIG
 
 import cv2  # Debe venir después de la importación del config por configuraciones de variables de entorno.
 
-import yaml
-
 import typer
 
-import torch
 from tqdm import tqdm
 import typer
 
-from PIL import Image
-
-from transformers import ViTImageProcessor, ViTImageProcessorFast
-
-# Transformaciones de imágenes (Torchvision)
-from torchvision.transforms import (
-    Compose,
-    Normalize,
-    ToTensor,
-    RandomResizedCrop,
-    RandomHorizontalFlip,
-    Resize,
-    CenterCrop,
-    RandomApply,
-    RandomRotation,
-    RandomCrop,
-    ColorJitter,
-)
-
 from modulo_ia.utils.types import DatasetFormat
 import modulo_apps.utils.helpers as Helpers
+
+import fiftyone as fo
+from fiftyone import ViewField as F
+
+from deprecated import deprecated
 
 RAW_DATA_FOLDER = CONFIG.folders.raw_data_folder
 EXTERNAL_DATA_FOLDER = CONFIG.folders.external_data_folder
 INTERIM_DATA_FOLDER = CONFIG.folders.interim_data_folder
 PROCESSED_DATA_FOLDER = CONFIG.folders.processed_data_folder
+TEMP_DATA_FOLDER = CONFIG.folders.temp_data_folder
 
-FULL_DATASET_NAME = CONFIG.names.palm_detection_dataset_name
-FULL_DATASET_VERSION = CONFIG.versions.detection_dataset_version
-
-PARTIAL_DATASET_NAME = CONFIG.names.partial_dataset_name
-PARTIAL_DATASET_VERSION = CONFIG.versions.detection_dataset_version
-
-CUTOUTS_DATASET_NAME = CONFIG.names.cutouts_dataset_name
-CUTOUTS_DATASET_VERSION = CONFIG.versions.cutouts_dataset_version
+DATASET_NAME = CONFIG.names.palm_dataset_name
+DATASET_VERSION = CONFIG.versions.palm_dataset_name
 
 app = typer.Typer()
 
 
-class SwinV2Transforms:
-
-    def __init__(self, image_processor: Union[ViTImageProcessor, ViTImageProcessorFast]) -> None:
-        self.image_processor = image_processor
-        self.mean = image_processor.image_mean
-        self.std = image_processor.image_std
-
-        if "height" in image_processor.size:
-            self.size = (image_processor.size["height"], image_processor.size["width"])
-            self.crop_size = self.size
-            self.max_size = None
-        elif "shortest_edge" in image_processor.size:
-            self.size = image_processor.size["shortest_edge"]
-            self.crop_size = (self.size, self.size)
-            self.max_size = image_processor.size.get("longest_edge")
-
-        self.train_transforms = Compose(
-            [
-                RandomResizedCrop(self.crop_size),
-                RandomHorizontalFlip(),
-                ToTensor(),
-                Normalize(mean=self.mean, std=self.std),
-            ]
-        )
-
-        self.val_transforms = Compose(
-            [
-                Resize(self.size),
-                CenterCrop(self.crop_size),
-                ToTensor(),
-                Normalize(mean=self.mean, std=self.std),
-            ]
-        )
-
-        self._unnormalize = Normalize(
-            mean=[-m / s for m, s in zip(self.mean, self.std)],
-            std=[1 / s for s in self.std],
-        )
-
-    def __call__(self, batch, train=True):
-        return self.transforms(batch, train)
-
-    def transforms(self, batch, train=True):
-        batch["pixel_values"] = (
-            [self.train_transforms(img) for img in batch["image"]]
-            if train
-            else [self.val_transforms(img) for img in batch["image"]]
-        )
-        del batch["image"]
-
-        return batch
-
-    def unnormalize(self, img: torch.Tensor) -> torch.Tensor:
-        return self._unnormalize(img)
-
-    def transforms_to_string(self) -> str:
-        def format_compose(compose):
-            return "\n  - " + "\n  - ".join(str(t) for t in compose.transforms)
-
-        return (
-            f"Transformaciones de entrenamiento:{format_compose(self.train_transforms)}\n\n"
-            f"Transformaciones de validacion:{format_compose(self.val_transforms)}"
-        )
-
-    def transforms_to_dict(self) -> dict:
-        """Devuelve un diccionario con las transformaciones de entrenamiento y validación."""
-        return {
-            "train_transforms": [str(t) for t in self.train_transforms],
-            "val_transforms": [str(t) for t in self.val_transforms],
-        }
-
-
 @app.command()
 def crop_dataset(
-    dataset_path: Path = INTERIM_DATA_FOLDER / f"{FULL_DATASET_NAME}_{FULL_DATASET_VERSION}_{DatasetFormat.YOLO.value}",
+    dataset_path: Path,
     dataset_format: DatasetFormat = DatasetFormat.YOLO,
     image_size: int = 640,
     overlap: int = 200,
@@ -321,9 +228,13 @@ def _crop_and_adjust_annotations(
     return num_crops
 
 
+@deprecated(
+    version="1.0.0",
+    reason="Esta función está obsoleta y será eliminada en futuras versiones. Usa balance_dataset_v1 en su lugar.",
+)
 @app.command()
 def balance_dataset(
-    dataset_path: Path = INTERIM_DATA_FOLDER / f"{FULL_DATASET_NAME}_{FULL_DATASET_VERSION}_{DatasetFormat.YOLO.value}",
+    dataset_path: Path,
     dataset_format: DatasetFormat = DatasetFormat.YOLO,
     all_classes: bool = False,
 ) -> None:
@@ -358,8 +269,7 @@ def balance_dataset(
           el balanceo por clase.
     """
     if not dataset_path.exists():
-        LOGGER.error(f"El dataset {dataset_path} no existe.")
-        return
+        raise FileNotFoundError(f"El dataset {dataset_path} no existe.")
 
     if dataset_format != DatasetFormat.YOLO:
         raise NotImplementedError(
@@ -370,32 +280,39 @@ def balance_dataset(
     labels_dir = dataset_path / "labels" / "full"
     dataset_yaml_path = dataset_path / "dataset.yaml"
 
-    if not images_dir.exists() or not labels_dir.exists():
-        LOGGER.error(f"Las carpetas 'images' o 'labels' no se encontraron en {dataset_path}.")
-        return
+    if not images_dir.exists():
+        raise FileNotFoundError(f"La carpeta 'images' no se encontró en {dataset_path}.")
+    if not labels_dir.exists():
+        raise FileNotFoundError(f"La carpeta 'labels' no se encontró en {dataset_path}.")
 
     class_names = []
     try:
         with open(dataset_yaml_path, "r") as f:
             data = yaml.safe_load(f)
             class_names = data.get("names", [])
+            if all_classes and not class_names:
+                raise ValueError(
+                    f"No se encontraron nombres de clases en {dataset_yaml_path}. Necesario para balancear por clase."
+                )
     except FileNotFoundError:
-        LOGGER.error(f"No se encontró dataset.yaml en {dataset_path}. Necesario para balancear por clase.")
         if all_classes:  # Si se pide balanceo por clase y no hay YAML, salimos
-            return
+            raise FileNotFoundError(
+                f"No se encontró dataset.yaml en {dataset_path}. Necesario para balancear por clase."
+            )
+        LOGGER.warning(f"No se encontró dataset.yaml en {dataset_path}. Balanceo entre imágenes con y sin detecciones.")
     except yaml.YAMLError as e:
-        LOGGER.error(f"Error al parsear dataset.yaml: {e}")
         if all_classes:  # Si se pide balanceo por clase y hay error de YAML, salimos
-            return
+            raise ValueError(f"Error al parsear dataset.yaml en {dataset_path}: {e}")
+        LOGGER.warning(f"Error al parsear dataset.yaml en {dataset_path}: {e}")
 
     # 1. Recopilar todas las imágenes y clasificar
     image_files = list(images_dir.glob("*.jpg")) + list(images_dir.glob("*.png"))
 
-    # Key: class_id (int), Value: List[Tuple[Path, Path]] (lista de (image_file, label_file))
-    images_by_class: Dict[int, List[Tuple[Path, Path]]] = defaultdict(list)
+    # Key: class_id (int), Value: list[tuple[Path, Path]] (lista de (image_file, label_file))
+    images_by_class: dict[int, list[tuple[Path, Path]]] = defaultdict(list)
 
-    images_with_detections: List[Tuple[Path, Path]] = []
-    images_without_detections: List[Tuple[Path, Path]] = []
+    images_with_detections: list[tuple[Path, Path]] = []
+    images_without_detections: list[tuple[Path, Path]] = []
 
     LOGGER.debug("Clasificando imágenes por presencia de anotaciones y por clase...")
 
@@ -506,5 +423,198 @@ def balance_dataset(
         LOGGER.success(f"Balanceo de dataset completado en {dataset_path}")
 
 
+@app.command()
+def balance_dataset_v1(
+    dataset_path: Path,
+    output_path: Path,
+    dataset_format: DatasetFormat = DatasetFormat.YOLO,
+    background_precentage: float = 0.1,
+    all_classes: bool = False,
+):
+    """
+    Balancea un dataset de detección de objetos en formato YOLO, permitiendo igualar la cantidad de imágenes por clase
+    y controlar la proporción de imágenes sin detecciones (background).
+
+    Args:
+        dataset_path : Path
+            Ruta al directorio raíz del dataset original. Debe contener las carpetas 'images/full' y 'labels/full'.
+        output_path : Path
+            Ruta donde se guardará el dataset balanceado. Si es igual a dataset_path, los archivos originales serán reemplazados.
+        dataset_format : DatasetFormat, opcional
+            Formato del dataset. Actualmente solo se soporta DatasetFormat.YOLO.
+        background_precentage : float, opcional
+            Proporción de imágenes sin detecciones (background) que se incluirán en el dataset balanceado, respecto a la cantidad de imágenes con detecciones.
+        all_classes : bool, opcional
+            Si es True, balancea el dataset igualando la cantidad de imágenes por cada clase. Requiere que exista un archivo dataset.yaml con los nombres de las clases.
+
+    Raises:
+        FileNotFoundError
+            Si no se encuentran las carpetas necesarias o el archivo dataset.yaml (cuando all_classes=True).
+        NotImplementedError
+            Si se especifica un formato de dataset distinto a YOLO.
+        ValueError
+            Si hay errores al parsear el archivo dataset.yaml o no se pueden obtener los nombres de las clases.
+
+    Notes:
+    - Utiliza FiftyOne para manipular y exportar el dataset.
+    - Si output_path es igual a dataset_path, los archivos originales serán sobrescritos.
+    - Permite controlar el balance entre imágenes con y sin detecciones, así como entre clases.
+    """
+    if not dataset_path.exists():
+        raise FileNotFoundError(f"El dataset {dataset_path} no existe.")
+    if not output_path.exists():
+        Path(output_path).mkdir(parents=True, exist_ok=True)
+        LOGGER.debug(f"Creando carpeta de salida {output_path}.")
+    if dataset_format != DatasetFormat.YOLO:
+        raise NotImplementedError(
+            f"El formato de dataset {dataset_format} no está implementado para el balanceo de imágenes."
+        )
+
+    images_dir = dataset_path / "images" / "full"
+    labels_dir = dataset_path / "labels" / "full"
+    dataset_yaml_path = dataset_path / "dataset.yaml"
+
+    if not images_dir.exists():
+        raise FileNotFoundError(f"La carpeta 'images' no se encontró en {dataset_path}.")
+    if not labels_dir.exists():
+        raise FileNotFoundError(f"La carpeta 'labels' no se encontró en {dataset_path}.")
+
+    class_names = []
+    try:
+        with open(dataset_yaml_path, "r") as f:
+            data = yaml.safe_load(f)
+            class_names = data.get("names", [])
+            if all_classes and not class_names:
+                raise ValueError(
+                    f"No se encontraron nombres de clases en {dataset_yaml_path}. Necesario para balancear por clase."
+                )
+    except FileNotFoundError:
+        if all_classes:  # Si se pide balanceo por clase y no hay YAML, salimos
+            raise FileNotFoundError(
+                f"No se encontró dataset.yaml en {dataset_path}. Necesario para balancear por clase."
+            )
+        LOGGER.warning(f"No se encontró dataset.yaml en {dataset_path}. Balanceo entre imágenes con y sin detecciones.")
+    except yaml.YAMLError as e:
+        if all_classes:  # Si se pide balanceo por clase y hay error de YAML, salimos
+            raise ValueError(f"Error al parsear dataset.yaml en {dataset_path}: {e}")
+        LOGGER.warning(f"Error al parsear dataset.yaml en {dataset_path}: {e}")
+
+    same_folder = False
+    if output_path == dataset_path:
+        same_folder = True
+        LOGGER.warning(
+            "La ruta de salida es la misma que la del dataset original. "
+            "Se eliminarán imágenes y etiquetas originales."
+        )
+
+    dataset_name = "temp_dataset"
+    dataset = fo.Dataset.from_dir(
+        dataset_dir=dataset_path,
+        dataset_type=fo.types.YOLOv5Dataset,
+        overwrite=True,
+        name=dataset_name,
+        split="full",
+        label_field="ground_truth",
+    )
+    export_view = None
+
+    no_detections_view = dataset.filter_field("ground_truth", F("detections").length() == 0)
+    no_detections_samples_id = no_detections_view.values("id")
+    no_detections_count = no_detections_view.count()
+    with_detections_view = dataset.filter_field("ground_truth", F("detections").length() > 0)
+    with_detections_count = with_detections_view.count()
+    LOGGER.debug(
+        f"Imágenes con detecciones: {with_detections_count}, " f"Imágenes sin detecciones: {no_detections_count}"
+    )
+
+    no_detections_to_add = 0
+    if not all_classes:
+        # Eliminamos las imágenes sin detecciones.
+        export_view = dataset.exclude(no_detections_samples_id)
+    else:
+        # Obtener la clase con menos imágenes
+        class_counts = dataset.count_values("ground_truth.detections.label")
+        min_class = min(class_counts, key=class_counts.get)
+        min_class_count = class_counts[min_class]
+        LOGGER.debug(f"Clase con menos detecciones: {min_class} ({min_class_count} detecciones)")
+
+        limits = {class_name: min_class_count for class_name in dataset.default_classes}
+        for label, limit in limits.items():
+            # Creamos una vista con las imágenes de la clase actual
+            view = dataset.filter_labels("ground_truth", F("label") == label)
+            label_ids = view.values("ground_truth.detections.id", unwind=True)
+
+            # Mezclamos los ID...
+            random.shuffle(label_ids)
+
+            # Seleccionamos el "exceso" de los IDs según el límite y le ponemos
+            # el tag "extra" para luego excuirlos.
+            view.select_labels(ids=label_ids[limit:]).tag_labels("extra")
+
+        # Omitir labels con el tag "extra" en la vista de exportación
+        export_view = dataset.exclude_labels(tags="extra")
+        with_detections_count = export_view.count()
+
+    if not export_view:
+        raise ValueError(
+            "No se pudo crear una vista de exportación. Asegúrate de que el dataset tenga imágenes con detecciones."
+        )
+
+    # Agregamos el porcentaje de imágenes sin detecciones si se especifica
+    if background_precentage > 0:
+        random.shuffle(no_detections_samples_id)
+        no_detections_to_add = int(with_detections_count * background_precentage)
+        if no_detections_to_add > no_detections_count:
+            LOGGER.warning(
+                f"Se solicitó agregar {no_detections_to_add} imágenes sin detecciones, "
+                f"pero solo hay {no_detections_count} disponibles. Se agregarán todas."
+            )
+            no_detections_to_add = no_detections_count
+        else:
+            LOGGER.debug(f"Se agregarán {no_detections_to_add} imágenes sin detecciones al dataset balanceado.")
+        no_detections_samples_id = no_detections_samples_id[:no_detections_to_add]
+        no_detections_view = dataset.select(no_detections_samples_id)
+        export_view += no_detections_view
+
+    # Finalmente, exportamos el dataset balanceado
+    if same_folder:
+        temp_path = TEMP_DATA_FOLDER / "temp_dataset"
+        export_view.export(
+            export_dir=str(temp_path),
+            dataset_type=fo.types.YOLOv5Dataset,
+            label_field="ground_truth",
+            overwrite=True,
+            split="full",
+        )
+        LOGGER.debug(f"Eliminando archivos originales en {dataset_path}.")
+        shutil.rmtree(dataset_path)
+
+        LOGGER.debug(f"Copiando archivos balanceados a {output_path}.")
+        shutil.copytree(temp_path, output_path, dirs_exist_ok=True)
+
+        LOGGER.debug(f"Actualizando dataset.yaml en {output_path}.")
+        dataset_yaml = output_path / "dataset.yaml"
+        with open(dataset_yaml, "r") as f:
+            yaml_data = yaml.safe_load(f)
+        yaml_data["path"] = str(output_path)
+        with open(dataset_yaml, "w") as f:
+            yaml.safe_dump(yaml_data, f)
+
+        LOGGER.debug(f"Eliminando carpeta temporal {temp_path}.")
+        shutil.rmtree(temp_path)
+    else:
+        export_view.export(
+            export_dir=str(output_path),
+            dataset_type=fo.types.YOLOv5Dataset,
+            label_field="ground_truth",
+            overwrite=True,
+            split="full",
+        )
+
+
 if __name__ == "__main__":
-    app()
+    # app()
+    dataset_path = INTERIM_DATA_FOLDER / "coco_palm_dataset_v1.0_step"
+    output_path = dataset_path
+
+    balance_dataset_v1(dataset_path=dataset_path, output_path=output_path, all_classes=False)

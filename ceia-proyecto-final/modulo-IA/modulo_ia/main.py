@@ -6,6 +6,15 @@ def main():
     try:
         logger.debug("Iniciando la importación de módulos...")
         logger.debug(f"Ambiente actual: {MODULO_IA_CONFIG.environment}")
+        from modulo_ia import dataset
+        from modulo_ia import features
+
+        from modulo_ia.utils import gpu
+        from modulo_ia.utils import metrics
+        from modulo_ia.utils import types
+        from modulo_ia.utils import yolo_utils
+
+        from modulo_ia.modeling import predict
         logger.debug("Todos los módulos se importaron correctamente.")
     except ImportError as e:
         logger.error(f"Error al importar un módulo: {e}")

@@ -1,6 +1,9 @@
 from dataclasses import dataclass
+import os
 from pathlib import Path
-from typing import Any, Optional, Tuple, List
+from typing import Any, Optional
+from modulo_ia.config import config as CONFIG
+from loguru import logger as LOGGER
 
 import cv2
 import numpy as np
@@ -12,11 +15,15 @@ from supervision import Detections, InferenceSlicer, OverlapFilter, BoxAnnotator
 
 import modulo_apps.labeling.procesador_anotaciones_coco_dataset as CocoDatasetProcessor
 
+LOGGER.debug(
+    f"Ambiente actual: {CONFIG.environment}"
+)  # No eliminar. Esta linea permite cargar el CONFIG antes de importar otros módulos.
+
 
 @dataclass
 class PredictionResult:
     detections: Results | Detections
-    img_size_hw: Tuple[int, int]
+    img_size_hw: tuple[int, int]
 
     def __post_init__(self):
         if isinstance(self.detections, Results):
@@ -54,7 +61,7 @@ class PredictionResult:
 
     def as_coco_annotations(
         self, pic_name: str, should_download: Optional[bool] = None, output_filename: Optional[Path] = None
-    ) -> List[dict]:
+    ) -> list[dict]:
         if self.detections.is_empty():
             return []
 
@@ -72,17 +79,17 @@ class PredictionResult:
 @dataclass
 class DetectionModelPredictor:
     model: Path | Any
-    target_img_size_wh: Tuple[int, int] = (640, 640)
-    overlap_ratio_wh: Tuple[float, float] = (0.4, 0.4)
+    target_img_size_wh: tuple[int, int] = (640, 640)
+    overlap_ratio_wh: tuple[float, float] = (0.4, 0.4)
     overlap_filter: OverlapFilter = OverlapFilter.NON_MAX_MERGE
     iou_threshold: float = 0.5
 
     def __post_init__(self):
-        if not hasattr(self.model, "predict"):
-            raise ValueError("El modelo debe tener un método 'predict'.")
         if isinstance(self.model, Path):
             self.model = self._load_model(self.model)
-        self.overlap_wh: Tuple[int, int] = (
+        if not hasattr(self.model, "predict"):
+            raise ValueError("El modelo debe tener un método 'predict'.")
+        self.overlap_wh: tuple[int, int] = (
             int(self.overlap_ratio_wh[0] * self.target_img_size_wh[0]),
             int(self.overlap_ratio_wh[1] * self.target_img_size_wh[1]),
         )

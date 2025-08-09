@@ -1,6 +1,6 @@
 from pathlib import Path
 import shutil
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
@@ -14,7 +14,7 @@ from modulo_ia.config import config as CONFIG
 from modulo_apps.database_comunication.mongodb_client import mongodb as DB
 
 import modulo_apps.s3_comunication.procesador_s3 as ProcesadorS3
-import modulo_apps.labeling.procesador_anotaciones_mongodb as ProcesadorCocoDataset
+import modulo_apps.labeling.procesador_anotaciones_mongodb as ProcesadorAnotacionesMongoDB
 import modulo_apps.labeling.procesador_recortes as ProcesadorRecortes
 from modulo_ia.utils.types import DatasetFormat
 
@@ -25,14 +25,8 @@ PROCESSED_DATA_FOLDER = CONFIG.folders.processed_data_folder
 
 DATA_QUALITY_FOLDER = CONFIG.fiftyone.data_quality_folder
 
-FULL_DATASET_NAME = CONFIG.names.palm_detection_dataset_name
-FULL_DATASET_VERSION = CONFIG.versions.detection_dataset_version
-
-PARTIAL_DATASET_NAME = CONFIG.names.partial_dataset_name
-PARTIAL_DATASET_VERSION = CONFIG.versions.detection_dataset_version
-
-CUTOUTS_DATASET_NAME = CONFIG.names.cutouts_dataset_name
-CUTOUTS_DATASET_VERSION = CONFIG.versions.cutouts_dataset_version
+DATASET_NAME = CONFIG.names.palm_dataset_name
+DATASET_VERSION = CONFIG.versions.palm_dataset_name
 
 RANDOM_SEED = CONFIG.seed
 
@@ -41,35 +35,28 @@ app = typer.Typer()
 
 @app.command()
 def download_full_raw_dataset(
+    output_folder: Path,
     for_patches: bool = False,
-    output_folder: Path = RAW_DATA_FOLDER,
     with_annotations: bool = True,
     annotations_field_name: str = "cvat",
     annotations_output_filename: str = None,
-) -> List[str]:
+) -> list[str]:
     """
+    TODO: Refactorizar para descargar todas las imágenes aunque no tengan anotaciones.
     Descarga el conjunto de datos bruto completo desde la base de datos y el almacenamiento S3.
     La descarga se realiza en formato COCO, ya sea de imágenes o parches.
 
     Args:
-        for_patches (bool, optional): Indica si se deben descargar parches en lugar de imágenes.
-            Por defecto es False.
-        folder_path (Optional[Path], optional): Ruta de la carpeta donde se almacenará el conjunto
-            de datos descargado. Si no se proporciona, se utiliza la carpeta predeterminada
-            configurada en RAW_DATA_FOLDER.
-        with_annotations (bool, optional): Indica si se deben descargar las anotaciones junto con
-            las imágenes o parches. Por defecto es True.
-        annotations_field_name (str, optional): Nombre del campo en la base de datos que contiene
-            las anotaciones. Por defecto es "cvat".
-        annotations_output_filename (str, optional): Nombre del archivo donde se guardarán las
-            anotaciones descargadas. Si no se proporciona, se utiliza "labels.json" en la carpeta
-            destino.
+        output_folder (Path): Ruta de la carpeta donde se almacenará el conjunto de datos descargado.
+        for_patches (bool): Si es True, descarga parches en lugar de imágenes. Por defecto es False.
+        with_annotations (bool): Indica si se deben descargar las anotaciones junto con las imágenes o parches.
+        annotations_field_name (str): Nombre del campo en la base de datos que contiene las anotaciones. Por defecto es "cvat".
+        annotations_output_filename (str, optional): Nombre del archivo donde se guardarán las anotaciones descargadas.
 
     Returns:
-        List[str]: Lista de nombres de imágenes o parches descargados, dependiendo del valor de
+        list[str]: Lista de nombres de imágenes o parches descargados, dependiendo del valor de
         for_patches.
     """
-    output_folder /= f"{FULL_DATASET_NAME}_{FULL_DATASET_VERSION}"
     output_folder.mkdir(parents=True, exist_ok=True)
     annotations_output_filename = (
         output_folder / "labels.json" if annotations_output_filename is None else annotations_output_filename
@@ -78,21 +65,23 @@ def download_full_raw_dataset(
     data_folder_path = output_folder / "data"
     data_folder_path.mkdir(parents=True, exist_ok=True)
     if not for_patches:
-        images_names = ProcesadorCocoDataset.list_images_w_ann_from_mongodb()
+        # TODO: Refactorizar para descargar todas las imágenes aunque no tengan anotaciones.
+        images_names = ProcesadorAnotacionesMongoDB.list_images_w_ann_from_mongodb()
         ProcesadorS3.download_images_from_minio(images_names, data_folder_path)
     else:
-        patch_names = ProcesadorCocoDataset.list_patches_w_ann_from_mongodb()
+        # TODO: Refactorizar para descargar todas las imágenes aunque no tengan anotaciones.
+        patch_names = ProcesadorAnotacionesMongoDB.list_patches_w_ann_from_mongodb()
         ProcesadorS3.download_patches_from_minio(patch_names, data_folder_path)
 
     if with_annotations:
         if for_patches:
-            ProcesadorCocoDataset.download_annotations_as_coco_from_mongodb(
+            ProcesadorAnotacionesMongoDB.download_annotations_as_coco_from_mongodb(
                 patches_names=patch_names,
                 field_name=annotations_field_name,
                 output_filename=annotations_output_filename,
             )
         else:
-            ProcesadorCocoDataset.download_annotations_as_coco_from_mongodb(
+            ProcesadorAnotacionesMongoDB.download_annotations_as_coco_from_mongodb(
                 field_name=annotations_field_name,
                 images_names=images_names,
                 output_filename=annotations_output_filename,
@@ -103,20 +92,20 @@ def download_full_raw_dataset(
 
 @app.command()
 def download_partial_raw_dataset(
-    patches_names: List[str] = typer.Option(None, help="Lista de nombres de parches"),
-    images_names: List[str] = typer.Option(None, help="Lista de nombres de imágenes"),
+    patches_names: list[str] = typer.Option(None, help="Lista de nombres de parches"),
+    images_names: list[str] = typer.Option(None, help="Lista de nombres de imágenes"),
     output_folder: Path = RAW_DATA_FOLDER,
     with_annotations: bool = True,
     annotations_field_name: str = "cvat",
     annotations_output_filename: str = None,
-) -> List[str]:
+) -> list[str]:
     """
     Descarga un conjunto de datos parcial desde la base de datos y el almacenamiento S3.
     La descarga se realiza en formato COCO, ya sea de imágenes o parches.
 
     Args:
-        images_names (List[str], optional): Lista de nombres de imágenes a descargar. Por defecto es None.
-        patches_names (List[str], optional): Lista de nombres de parches a descargar. Por defecto es None.
+        images_names (list[str], optional): Lista de nombres de imágenes a descargar. Por defecto es None.
+        patches_names (list[str], optional): Lista de nombres de parches a descargar. Por defecto es None.
         folder_path (Optional[Path], optional): Ruta de la carpeta donde se almacenará el conjunto
             de datos descargado. Si no se proporciona, se utiliza la carpeta predeterminada
             configurada en RAW_DATA_FOLDER.
@@ -133,12 +122,12 @@ def download_partial_raw_dataset(
             proporcionan ambas listas al mismo tiempo.
 
     Returns:
-        List[str]: Lista de nombres de imágenes o parches descargados, dependiendo de los argumentos
+        list[str]: Lista de nombres de imágenes o parches descargados, dependiendo de los argumentos
         proporcionados.
     """
     if bool(patches_names is None) == bool(images_names is None):  # xor
         raise ValueError("Se debe proporcionar una lista de nombres de parches o imágenes.")
-    output_folder /= f"{FULL_DATASET_NAME}_{FULL_DATASET_VERSION}"
+    output_folder /= f"{DATASET_NAME}_{DATASET_VERSION}"
     output_folder.mkdir(parents=True, exist_ok=True)
     annotations_output_filename = (
         output_folder / "labels.json" if annotations_output_filename is None else annotations_output_filename
@@ -153,13 +142,13 @@ def download_partial_raw_dataset(
 
     if with_annotations:
         if patches_names:
-            ProcesadorCocoDataset.download_annotations_as_coco_from_mongodb(
+            ProcesadorAnotacionesMongoDB.download_annotations_as_coco_from_mongodb(
                 patches_names=patches_names,
                 field_name=annotations_field_name,
                 output_filename=annotations_output_filename,
             )
         else:
-            ProcesadorCocoDataset.download_annotations_as_coco_from_mongodb(
+            ProcesadorAnotacionesMongoDB.download_annotations_as_coco_from_mongodb(
                 field_name=annotations_field_name,
                 images_names=images_names,
                 output_filename=annotations_output_filename,
@@ -174,16 +163,16 @@ def download_cutouts_raw_dataset(
     with_annotations: bool = True,
     annotations_field_name: str = "cvat",
     annotations_output_filename: str = None,
-) -> List[str]:
+) -> list[str]:
     raise NotImplementedError()
 
 
 @app.command()
 def convert_dataset_to_model_format(
-    dataset_path: Path = RAW_DATA_FOLDER / f"{FULL_DATASET_NAME}_{FULL_DATASET_VERSION}",
-    dataset_name: str = FULL_DATASET_NAME,
+    dataset_path: Path,
+    output_dir: Path,
+    dataset_name: str = DATASET_NAME,
     output_format: DatasetFormat = DatasetFormat.YOLO,
-    output_dir: Optional[Path] = None,
     delete_previous_data: bool = True,
     clean: bool = False,
 ):
@@ -234,13 +223,7 @@ def convert_dataset_to_model_format(
         LOGGER.error(f"El directorio de entrada no existe: {dataset_path}")
         raise typer.Exit(1)
 
-    if not output_dir:
-        LOGGER.debug(
-            f"No se especificó un directorio de salida, se usará el predeterminado para el fomato {output_format.value.upper()}"
-        )
-        output_dir = INTERIM_DATA_FOLDER / f"{FULL_DATASET_NAME}_{FULL_DATASET_VERSION}_{output_format.value}"
-
-    # Eliminar datos anteriores si se especifica
+    output_dir.mkdir(parents=True, exist_ok=True)
     if delete_previous_data and output_dir.exists():
         LOGGER.info(f"Eliminando datos anteriores en el directorio de salida: {output_dir}")
         try:
@@ -249,8 +232,6 @@ def convert_dataset_to_model_format(
         except Exception as e:
             LOGGER.warning(f"Error al eliminar los datos anteriores: {e}")
             raise typer.Exit(1)
-
-    output_dir.mkdir(parents=True, exist_ok=True)
 
     LOGGER.info(f"Convirtiendo dataset a formato {output_format.value.upper()}")
     LOGGER.info(f"Entrada: {dataset_path}")
@@ -299,12 +280,12 @@ def _convert_to_huggingface(input_path: Path, output_path: Path):
 
 @app.command()
 def split_dataset(
-    dataset_path: Path = INTERIM_DATA_FOLDER / f"{FULL_DATASET_NAME}_{FULL_DATASET_VERSION}_{DatasetFormat.YOLO.value}",
+    dataset_path: Path,
+    output_dir: Path,
     input_format: DatasetFormat = DatasetFormat.YOLO,
-    output_dir: Optional[Path] = None,
     delete_previous_data: bool = True,
     clean: bool = False,
-    ratios: Tuple[float, float, float] = (0.8, 0.1, 0.1),
+    ratios: tuple[float, float, float] = (0.8, 0.1, 0.1),
 ) -> None:
     """
     Divide un dataset en formato YOLO en conjuntos de entrenamiento, validación y prueba,
@@ -320,13 +301,7 @@ def split_dataset(
         LOGGER.error(f"El directorio de entrada no existe: {dataset_path}")
         raise typer.Exit(1)
 
-    if not output_dir:
-        LOGGER.debug(
-            f"No se especificó un directorio de salida, se usará el predeterminado para el fomato {input_format.value.upper()}"
-        )
-        output_dir = PROCESSED_DATA_FOLDER / f"{FULL_DATASET_NAME}_{FULL_DATASET_VERSION}_{input_format.value}"
-
-    # Eliminar datos anteriores si se especifica
+    output_dir.mkdir(parents=True, exist_ok=True)
     if delete_previous_data and output_dir.exists():
         LOGGER.info(f"Eliminando datos anteriores en el directorio de salida: {output_dir}")
         try:
@@ -335,8 +310,6 @@ def split_dataset(
         except Exception as e:
             LOGGER.warning(f"Error al eliminar los datos anteriores: {e}")
             raise typer.Exit(1)
-
-    output_dir.mkdir(parents=True, exist_ok=True)
 
     train_split, val_split, test_split = ratios
     if not (0 < train_split < 1 and 0 <= val_split < 1 and 0 <= test_split < 1):
@@ -413,16 +386,6 @@ def split_dataset(
                     shutil.copy2(str(ruta_etiqueta_origen), str(ruta_etiqueta_destino))
                 pbar.update(1)
 
-    if clean:
-        # Remover el directorio dataset_path y todo su contenido
-        LOGGER.info(f"Limpieza del directorio de entrada: {dataset_path}")
-        try:
-            shutil.rmtree(dataset_path, ignore_errors=True)
-            LOGGER.info(f"Directorio de entrada limpiado: {dataset_path}")
-        except Exception as e:
-            LOGGER.warning(f"Error al limpiar el directorio de entrada: {e}")
-            raise typer.Exit(1)
-
     # Copiar el archivo dataset.yaml
     yaml_dataset_path_input = dataset_path / "dataset.yaml"
     yaml_dataset_path_output = output_dir / "dataset.yaml"
@@ -448,30 +411,36 @@ def split_dataset(
             f"Advertencia: No se encontró el archivo {yaml_dataset_path_input}. Deberás actualizar las rutas manualmente."
         )
 
+    if clean:
+        # Remover el directorio dataset_path y todo su contenido
+        LOGGER.info(f"Limpieza del directorio de entrada: {dataset_path}")
+        try:
+            shutil.rmtree(dataset_path, ignore_errors=True)
+            LOGGER.info(f"Directorio de entrada limpiado: {dataset_path}")
+        except Exception as e:
+            LOGGER.warning(f"Error al limpiar el directorio de entrada: {e}")
+            raise typer.Exit(1)
+
     LOGGER.success("División del dataset YOLO completada (archivos copiados).")
     return None
 
 
 @app.command()
 def get_dataset_metrics(
-    dataset_path: Path = PROCESSED_DATA_FOLDER
-    / f"{FULL_DATASET_NAME}_{FULL_DATASET_VERSION}_{DatasetFormat.YOLO.value}",
-    dataset_name: str = f"{FULL_DATASET_NAME}_{FULL_DATASET_VERSION}_{DatasetFormat.YOLO.value}",
-    dataset_format: DatasetFormat = DatasetFormat.YOLO,
-) -> Dict[str, Any]:
+    dataset_path: Path,
+    dataset_name: str,
+    dataset_format: DatasetFormat,
+) -> dict[str, Any]:
     """
     Obtiene métricas del dataset especificado.
 
     Args:
-        dataset_path (Path): Ruta al directorio del dataset procesado. Por defecto, utiliza la ruta generada
-            a partir de las constantes `PROCESSED_DATA_FOLDER`, `FULL_DATASET_NAME`, `FULL_DATASET_VERSION`
-            y el formato del dataset (`DatasetFormat.YOLO.value`).
-        dataset_name (str): Nombre del dataset. Por defecto, utiliza el nombre generado a partir de las
-            constantes `FULL_DATASET_NAME`, `FULL_DATASET_VERSION` y el formato del dataset (`DatasetFormat.YOLO.value`).
+        dataset_path (Path): Ruta al directorio del dataset procesado.
+        dataset_name (str): Nombre del dataset.
         dataset_format (DatasetFormat): Formato del dataset. Actualmente, solo se admite el formato YOLO.
 
     Returns:
-        Dict[str, Any]: Diccionario con las métricas del dataset, incluyendo:
+        dict[str, Any]: Diccionario con las métricas del dataset, incluyendo:
             - "train_count": Número de elementos en el conjunto de entrenamiento.
             - "val_count": Número de elementos en el conjunto de validación.
             - "test_count": Número de elementos en el conjunto de prueba.
@@ -481,36 +450,92 @@ def get_dataset_metrics(
         typer.Exit: Si el directorio del dataset no existe.
         NotImplementedError: Si el formato del dataset no es YOLO.
 
-    Advertencias:
+    Notas:
         - Si no se puede agregar algún split ("train", "val", "test") al dataset, se registra una advertencia
           en el log y se continúa con el procesamiento de los demás splits.
     """
     if not dataset_path.exists():
         LOGGER.error(f"El directorio del dataset no existe: {dataset_path}")
         raise typer.Exit(1)
-    if dataset_format != DatasetFormat.YOLO:
-        raise NotImplementedError(f"Formato {dataset_format} no implementado aún")
 
-    dataset = fo.Dataset(dataset_name, overwrite=True)
-    for split in ["train", "val", "test"]:
-        try:
-            dataset.add_dir(dataset_dir=dataset_path, dataset_type=fo.types.YOLOv5Dataset, split=split, tags=[split])
-        except Exception as e:
-            LOGGER.warning(f'Advertencia: no se pudo agregar el split "{split}" al dataset. Error: {e}')
-            pass
+    metrics = {}
+    match dataset_format:
+        case DatasetFormat.YOLO:
+            dataset = fo.Dataset(name=dataset_name, overwrite=True)
+            for split in ["train", "val", "test", "full"]:
+                try:
+                    dataset.add_dir(
+                        dataset_dir=dataset_path, dataset_type=fo.types.YOLOv5Dataset, split=split, tags=[split]
+                    )
+                except Exception as e:
+                    LOGGER.warning(f'Advertencia: no se pudo agregar el split "{split}" al dataset. Error: {e}')
+                    pass
 
-    train_view = dataset.match_tags("train")
-    val_view = dataset.match_tags("val")
-    test_view = dataset.match_tags("test")
-    metrics = {
-        "train_count": train_view.count(),
-        "val_count": val_view.count(),
-        "test_count": test_view.count(),
-        "total_count": dataset.count(),
-    }
+            total_class_count = dataset.count_values("ground_truth.detections.label")
+            train_view = dataset.match_tags("train")
+            train_class_count = train_view.count_values("ground_truth.detections.label")
+            val_view = dataset.match_tags("val")
+            val_class_count = val_view.count_values("ground_truth.detections.label")
+            test_view = dataset.match_tags("test")
+            test_class_count = test_view.count_values("ground_truth.detections.label")
+            metrics = {
+                "train_count": train_view.count(),
+                "train_class_count": train_class_count,
+                "val_count": val_view.count(),
+                "val_class_count": val_class_count,
+                "test_count": test_view.count(),
+                "test_class_count": test_class_count,
+                "total_count": dataset.count(),
+                "total_class_count": total_class_count,
+            }
+        case DatasetFormat.COCO:
+            dataset = fo.Dataset.from_dir(
+                dataset_type=fo.types.COCODetectionDataset,
+                dataset_dir=dataset_path,
+                name=dataset_name,
+                overwrite=True,
+            )
+            class_count = dataset.count_values("detections.detections.label")
+            metrics = {
+                "total_count": dataset.count(),
+                "class_count": class_count,
+            }
+        case _:
+            LOGGER.error(f"Formato {dataset_format} no implementado aún")
 
     return metrics
 
+def get_dataset_stats(dataset_path: Path,
+    dataset_name: str,
+    dataset_format: DatasetFormat,
+) -> Optional[dict]:
+    if not dataset_path.exists():
+        LOGGER.error(f"El directorio del dataset no existe: {dataset_path}")
+        raise typer.Exit(1)
+    
+    dataset = None
+    match dataset_format:
+        case DatasetFormat.YOLO:
+            dataset = fo.Dataset(name=dataset_name, overwrite=True)
+            for split in ["train", "val", "test", "full"]:
+                try:
+                    dataset.add_dir(
+                        dataset_dir=dataset_path, dataset_type=fo.types.YOLOv5Dataset, split=split, tags=[split]
+                    )
+                except Exception as e:
+                    LOGGER.warning(f'Advertencia: no se pudo agregar el split "{split}" al dataset. Error: {e}')
+                    pass
+        case DatasetFormat.COCO:
+            dataset = fo.Dataset.from_dir(
+                dataset_type=fo.types.COCODetectionDataset,
+                dataset_dir=dataset_path,
+                name=dataset_name,
+                overwrite=True,
+            )            
+        case _:
+            LOGGER.error(f"Formato {dataset_format} no implementado aún")
+
+    return dataset.stats(include_media=True)
 
 @app.command()
 def copy_dataset_to_quality(dataset_path: Path, dataset_name: str, quality_folder: Path = DATA_QUALITY_FOLDER):
@@ -525,7 +550,7 @@ def copy_dataset_to_quality(dataset_path: Path, dataset_name: str, quality_folde
         Exception: Si ocurre un error al copiar el dataset o al procesar el archivo YAML.
     Notas:
         - Si el archivo `dataset.yaml` existe en el dataset copiado, se actualiza el valor de la clave `path`
-          y se reemplazan las barras invertidas (`\`) por barras normales (`/`) en las rutas relevantes.
+          y se reemplazan las barras invertidas por barras normales en las rutas relevantes.
         - Si el archivo `dataset.yaml` no se encuentra, se registra un mensaje de error en el log.
         - En caso de errores al procesar el archivo YAML, se registra el error en el log.
     """

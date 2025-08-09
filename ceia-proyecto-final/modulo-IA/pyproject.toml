@@ -4,8 +4,10 @@ version = "0.1.0"
 description = ""
 authors = [{ name = "brunomaso1", email = "brunomaso1@hotmail.com" }]
 requires-python = ">=3.13,<4.0"
+# https://python-poetry.org/docs/dependency-specification/#path-project
+# https://python-poetry.org/docs/cli/
+# poetry add --editable "E:/Documentos/Git Repositories/uba-ceia-proy-final/ceia-proyecto-final/modulo-apps"
 dependencies = [
-    # "modulo-apps @file://E:/Documentos/Git Repositories/uba-ceia-proy-final/ceia-proyecto-final/modulo-apps/dist/modulo_apps-0.1.0-py3-none-any.whl",
     "tqdm (>=4.67.1,<5.0.0)",
     "loguru (>=0.7.3,<0.8.0)",
     "scikit-learn (>=1.7.0,<2.0.0)",
@@ -22,18 +24,17 @@ dependencies = [
     "supervision (>=0.25.1,<0.26.0)",
     "opencv-python (==4.11.0.86)",
     "deprecated (>=1.2.18,<2.0.0)",
+    # "modulo-apps @file://E:/Documentos/Git Repositories/uba-ceia-proy-final/ceia-proyecto-final/modulo-apps/dist/modulo_apps-0.1.0-py3-none-any.whl",
+    "modulo-apps @ file:///E:/Documentos/Git%20Repositories/uba-ceia-proy-final/ceia-proyecto-final/modulo-apps"
 ]
 
 [tool.poetry]
 packages = [{ include = "modulo_ia" }]
 
 [tool.poetry.dependencies]
-modulo-apps = "^0.1.0"
 torch = {source = "pytorch_gpu"}
 torchvision = {source = "pytorch_gpu"}
-
-[tool.poetry.group.local.dependencies]
-modulo-apps = { path = "../modulo-apps", develop = true }
+modulo-apps = {develop = true}
 
 
 [[tool.poetry.source]]
