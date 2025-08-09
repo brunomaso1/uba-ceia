@@ -72,7 +72,7 @@ services:
     depends_on:
       mongodb:
         condition: service_healthy
-    restart: unless-stopped
+    restart: on-failure
 
 networks:
   main:
