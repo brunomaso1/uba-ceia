@@ -1,12 +1,13 @@
 import shutil, zipfile
 
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
-
+from typing import Any, Optional
 
 
 from cvat_sdk import make_client
 from cvat_sdk.core.proxies.types import Location
+
+from tqdm import tqdm
 
 import typer
 
@@ -27,6 +28,7 @@ DOWNLOAD_TASKS_FOLDER = CONFIG.folders.download_tasks_folder
 
 app = typer.Typer()
 
+
 @app.command()
 def test_connection():
     """Prueba la conexión con el servidor de CVAT."""
@@ -39,6 +41,7 @@ def test_connection():
             LOGGER.debug("Conexión a CVAT exitosa.")
     except Exception as e:
         raise ConnectionError(f"Error al conectar con CVAT: {e}")
+
 
 @app.command()
 def download_annotations_from_cvat(
@@ -134,10 +137,10 @@ def download_annotations_from_cvat(
     return output_json_file
 
 
-def load_annotations_from_cvat(
-    task_id: int = None, job_id: int = None, clean_files: bool = True
-) -> Dict[str, Any]:
-    """Carga las anotaciones desde CVAT.
+def load_annotations_from_cvat(task_id: int = None, job_id: int = None, clean_files: bool = True) -> dict[str, Any]:
+    """TODO: Modificar para cargar las anotaciones desde un proyecto recorriendo todos las tareas. Por referncia,
+    ver el método fetch_frame_data_with_label_name.
+    Carga las anotaciones desde CVAT.
 
     Este método permite descargar y cargar anotaciones desde CVAT, ya sea para una tarea
     específica o un trabajo específico. Las anotaciones se descargan en formato JSON y
@@ -152,7 +155,7 @@ def load_annotations_from_cvat(
         ValueError: Si no se proporciona ni un task_id ni un job_id.
 
     Returns:
-        Dict[str, Any]: Diccionario con las anotaciones cargadas en formato COCO.
+        dict[str, Any]: Diccionario con las anotaciones cargadas en formato COCO.
     """
     if bool(task_id is None) == bool(job_id is None):  # xor
         raise ValueError("Se debe proporcionar un task_id o un job_id.")
@@ -180,8 +183,8 @@ def load_annotations_from_cvat(
 
 
 def convert_image_annotations_to_cvat_annotations(
-    images: Dict[str, Any], annotations: Dict[str, Any]
-) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    images: dict[str, Any], annotations: dict[str, Any]
+) -> tuple[dict[str, Any], dict[str, Any]]:
     """Esta función convierte las anotaciones de las imágenes a un formato igual al que se descarga de CVAT. O sea, en base a los parches de la imagen.
 
     De CVAT se descargan las anotaciones en base a los parches (o sea, las imágenes de las anotaciones de COCO son parches). Este método hace lo contrario.
@@ -196,11 +199,11 @@ def convert_image_annotations_to_cvat_annotations(
     pero todo esto en concordancia con los bboxes de la imagen original.
 
     Args:
-        images (Dict[str, Any]): Diccionario que contiene las imágenes y sus metadatos.
-        annotations (Dict[str, Any]): Diccionario que contiene las anotaciones y sus metadatos.
+        images (dict[str, Any]): Diccionario que contiene las imágenes y sus metadatos.
+        annotations (dict[str, Any]): Diccionario que contiene las anotaciones y sus metadatos.
 
     Returns:
-        Tuple[Dict[str, Any], Dict[str, Any]]: imágenes y anotaciones convertidas al formato de CVAT.
+        tuple[dict[str, Any], dict[str, Any]]: imágenes y anotaciones convertidas al formato de CVAT.
     """
     output_images = []
     output_annotations = []
@@ -276,8 +279,8 @@ def convert_image_annotations_to_cvat_annotations(
 
 
 def convert_patch_annotations_to_cvat_annotations(
-    images: Dict[str, Any], annotations: Dict[str, Any]
-) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    images: dict[str, Any], annotations: dict[str, Any]
+) -> tuple[dict[str, Any], dict[str, Any]]:
     """Esta función convierte las anotaciones de los parches a un formato igual al que se descarga de CVAT.
 
     Se utiliza para cargar directamente las anotaciones en que las imágenes son parches, por lo que están
@@ -296,11 +299,11 @@ def convert_patch_annotations_to_cvat_annotations(
     ya esté en el formato correcto.
 
     Args:
-        images (Dict[str, Any]): Diccionario con las imágenes y sus metadatos.
-        annotations (Dict[str, Any]): Diccionario con las anotaciones y sus metadatos.
+        images (dict[str, Any]): Diccionario con las imágenes y sus metadatos.
+        annotations (dict[str, Any]): Diccionario con las anotaciones y sus metadatos.
 
     Returns:
-        Tuple[Dict[str, Any], Dict[str, Any]]: imagenes y anotaciones convertidas al formato de CVAT.
+        tuple[dict[str, Any], dict[str, Any]]: imagenes y anotaciones convertidas al formato de CVAT.
     """
     imagenes = DB.get_collection("imagenes")
     for image in images:
@@ -315,6 +318,69 @@ def convert_patch_annotations_to_cvat_annotations(
         image["file_name"] = f"{MINIO_PATCHES_PATH}/{image_name['id']}/{image["file_name"]}"
 
     return images, annotations
+
+
+@app.command()
+def fetch_frame_data_in_jobs(image_name: str) -> Optional[dict]:
+    with make_client(host=CVAT_URL, credentials=(CVAT_USER, CVAT_PASSWORD)) as client:
+        jobs = client.jobs.list()
+
+        for job in jobs:
+            job_id = job.id
+            task_id = job.task_id
+            try:
+                frames_info = job.get_frames_info()
+                for frame_id, frame in enumerate(frames_info):
+                    if image_name in frame["name"]:
+                        return {
+                            "job_id": job_id,
+                            "task_id": task_id,
+                            "frame_id": frame_id,
+                            "image_path": frame["name"],
+                            "cvat_url": f"{CVAT_URL}/tasks/{task_id}/jobs/{job_id}",
+                        }
+            except Exception as e:
+                print(f"Error leyendo frames del job {job_id}: {e}")
+    return None
+
+
+@app.command()
+def fetch_frame_data_with_label_name(label_name: str) -> list[dict]:
+    results = []
+    with make_client(host=CVAT_URL, credentials=(CVAT_USER, CVAT_PASSWORD)) as client:
+        tasks = client.tasks.list()
+        total_tasks = len(tasks)
+        with tqdm(total=total_tasks, desc="Procesando tareas") as pbar:
+            for task in tasks:
+                jobs = task.get_jobs()
+                tqdm.write(
+                    f"Buscando en {len(jobs)} jobs de la tarea {task.id} - {task.name} para la etiqueta '{label_name}'"
+                )
+
+                for job in jobs:
+                    annotations = job.get_annotations()
+                    for ann in annotations["shapes"]:
+                        label = ann["label_id"]
+                        # Obtener información de la etiqueta
+                        label_info = next((lbl for lbl in job.get_labels() if lbl["id"] == label), None)
+                        if label_info and label_info["name"] == label_name:
+                            result = {
+                                "task_id": task.id,
+                                "task_name": task.name,
+                                "job_id": job.id,
+                                "frame": ann["frame"],
+                                "label_name": label_name,
+                                "task_url": f"{CVAT_URL}/tasks/{task.id}",
+                                "job_url": f"{CVAT_URL}/jobs/{job.id}",
+                            }
+                            results.append(result)
+                            tqdm.write(
+                                f"→ Encontrado en job {job.id}, frame {ann['frame']} (Total encontrados: {len(results)})"
+                            )
+                pbar.update(1)
+
+    return results
+
 
 if __name__ == "__main__":
     app()

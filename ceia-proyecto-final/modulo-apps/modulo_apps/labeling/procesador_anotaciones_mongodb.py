@@ -1,7 +1,7 @@
 import copy, datetime, json
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 from pymongo import UpdateOne
 
@@ -14,7 +14,7 @@ from modulo_apps.utils.types import AnnotationType
 
 import modulo_apps.labeling.procesador_anotaciones_coco_dataset as CocoDatasetUtils
 import modulo_apps.labeling.convertor_cordenadas as ConvertorCoordenadas
-import modulo_apps.labeling.procesador_anotaciones_cvat as ProcesadorCVAT
+import modulo_apps.labeling.procesador_anotaciones_cvat as ProcesadorAnotacionesCVAT
 
 MINIO_PATCHES_PATH = CONFIG.minio.paths.patches
 DOWNLOAD_COCO_ANNOTATIONS_FOLDER = CONFIG.folders.download_coco_annotations_folder
@@ -40,7 +40,7 @@ def test_connection():
 
 
 def save_coco_annotations(
-    coco_annotations: Dict[str, Any],
+    coco_annotations: dict[str, Any],
     field_name: str,
     annotation_type: AnnotationType = "cvat",
 ) -> bool:
@@ -73,9 +73,9 @@ def save_coco_annotations(
     upsert_operations = []
 
     if annotation_type == "images":
-        images, annotations = ProcesadorCVAT.convert_image_annotations_to_cvat_annotations(images, annotations)
+        images, annotations = ProcesadorAnotacionesCVAT.convert_image_annotations_to_cvat_annotations(images, annotations)
     elif annotation_type == "patches":
-        images, annotations = ProcesadorCVAT.convert_patch_annotations_to_cvat_annotations(images, annotations)
+        images, annotations = ProcesadorAnotacionesCVAT.convert_patch_annotations_to_cvat_annotations(images, annotations)
 
     for image in images:
         file_name = image["file_name"]
@@ -152,11 +152,11 @@ def save_coco_annotations(
 
 
 def _create_patch_fields(
-    db_image: Dict[str, Any],
+    db_image: dict[str, Any],
     field_name: str,
-    category_map: Dict[str, Any],
+    category_map: dict[str, Any],
     patch_name: str,
-) -> Optional[Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]]:
+) -> Optional[tuple[list[dict[str, Any]], list[dict[str, Any]]]]:
     """
     Crea anotaciones en formato COCO para un parche específico.
 
@@ -165,14 +165,14 @@ def _create_patch_fields(
     información de la imagen asociada al parche.
 
     Args:
-        db_image (Dict[str, Any]): Documento de la imagen en la base de datos que contiene
+        db_image (dict[str, Any]): Documento de la imagen en la base de datos que contiene
                                 información sobre los parches y sus anotaciones.
         field_name (str): Nombre del campo en la base de datos que contiene las anotaciones.
-        category_map (Dict[str, Any]): Mapeo de nombres de categorías a sus IDs en formato COCO.
+        category_map (dict[str, Any]): Mapeo de nombres de categorías a sus IDs en formato COCO.
         patch_name (str): Nombre del parche cuyas anotaciones se desean procesar.
 
     Returns:
-        Optional[Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]]:
+        Optional[tuple[list[dict[str, Any]], list[dict[str, Any]]]]:
             Una tupla que contiene:
             - Una lista de anotaciones en formato COCO.
             - Una lista con la información de la imagen asociada al parche.
@@ -211,11 +211,11 @@ def _create_patch_fields(
 
 
 def _create_images_fields(
-    db_image: Dict[str, Any],
+    db_image: dict[str, Any],
     field_name: str,
-    category_map: Dict[str, Any],
+    category_map: dict[str, Any],
     image_name: str,
-) -> Optional[Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]]:
+) -> Optional[tuple[list[dict[str, Any]], list[dict[str, Any]]]]:
     """
     Crea anotaciones en formato COCO para una imagen específica.
 
@@ -224,14 +224,14 @@ def _create_images_fields(
     categorías y la información de la imagen.
 
     Args:
-        db_image (Dict[str, Any]): Documento de la imagen en la base de datos que contiene
+        db_image (dict[str, Any]): Documento de la imagen en la base de datos que contiene
                                 información sobre los parches y sus anotaciones.
         field_name (str): Nombre del campo en la base de datos que contiene las anotaciones.
-        category_map (Dict[str, Any]): Mapeo de nombres de categorías a sus IDs en formato COCO.
+        category_map (dict[str, Any]): Mapeo de nombres de categorías a sus IDs en formato COCO.
         image_name (str): Nombre de la imagen cuyas anotaciones se desean procesar.
 
     Returns:
-        Optional[Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]]:
+        Optional[tuple[list[dict[str, Any]], list[dict[str, Any]]]]:
             Una tupla que contiene:
             - Una lista de anotaciones en formato COCO.
             - Una lista con la información de la imagen asociada.
@@ -373,7 +373,7 @@ def _load_coco_annotation_from_mongodb(
     patch_name: Optional[str] = None,
     image_name: Optional[str] = None,
     clean_files: bool = True,
-) -> Optional[Dict[str, Any]]:
+) -> Optional[dict[str, Any]]:
     """
     Carga anotaciones desde MongoDB en formato COCO.
 
@@ -398,7 +398,7 @@ def _load_coco_annotation_from_mongodb(
         FileNotFoundError: Si no se encuentra el archivo de anotaciones descargado.
 
     Returns:
-        Optional[Dict[str, Any]]: Diccionario con las anotaciones cargadas en formato COCO.
+        Optional[dict[str, Any]]: Diccionario con las anotaciones cargadas en formato COCO.
                                 Devuelve None si no se encuentran anotaciones.
     """
     if bool(patch_name is None) == bool(image_name is None):
@@ -427,8 +427,8 @@ def _load_coco_annotation_from_mongodb(
 
 
 def _create_patches_coco_annotations(
-    field_name: str, patches_names: List[str]
-) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    field_name: str, patches_names: list[str]
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """
     Crea anotaciones en formato COCO para una lista de parches.
 
@@ -438,10 +438,10 @@ def _create_patches_coco_annotations(
 
     Args:
         field_name (str): Nombre del campo en la base de datos que contiene las anotaciones.
-        patches_names (List[str]): Lista de nombres de los parches cuyas anotaciones se desean procesar.
+        patches_names (list[str]): Lista de nombres de los parches cuyas anotaciones se desean procesar.
 
     Returns:
-        Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+        tuple[list[dict[str, Any]], list[dict[str, Any]]]:
             Una tupla que contiene:
             - Una lista de anotaciones en formato COCO.
             - Una lista con la información de las imágenes asociadas a los parches.
@@ -468,8 +468,8 @@ def _create_patches_coco_annotations(
 
 
 def _create_images_coco_annotations(
-    field_name: str, images_names: List[str]
-) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    field_name: str, images_names: list[str]
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """
     Crea anotaciones en formato COCO para una lista de imágenes.
 
@@ -479,10 +479,10 @@ def _create_images_coco_annotations(
 
     Args:
         field_name (str): Nombre del campo en la base de datos que contiene las anotaciones.
-        images_names (List[str]): Lista de nombres de las imágenes cuyas anotaciones se desean procesar.
+        images_names (list[str]): Lista de nombres de las imágenes cuyas anotaciones se desean procesar.
 
     Returns:
-        Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+        tuple[list[dict[str, Any]], list[dict[str, Any]]]:
             Una tupla que contiene:
             - Una lista de anotaciones en formato COCO.
             - Una lista con la información de las imágenes asociadas.
@@ -511,8 +511,8 @@ def _create_images_coco_annotations(
 @app.command()
 def download_annotations_as_coco_from_mongodb(
     field_name: str = "cvat",
-    patches_names: List[str] = None,
-    images_names: List[str] = None,
+    patches_names: list[str] = None,
+    images_names: list[str] = None,
     output_filename: Optional[Path] = None,
 ) -> Path:
     """
@@ -572,10 +572,10 @@ def download_annotations_as_coco_from_mongodb(
 
 def load_coco_annotations_from_mongodb(
     field_name: str = "cvat",
-    patches_names: Optional[List[str]] = None,
-    images_names: Optional[List[str]] = None,
+    patches_names: Optional[list[str]] = None,
+    images_names: Optional[list[str]] = None,
     clean_files: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     if bool(patches_names is None) == bool(images_names is None):  # xor
         raise ValueError("Se debe proporcionar una lista de nombres de parches o imágenes.")
 
@@ -607,7 +607,7 @@ def load_jgw_file_from_mongodb(
     patch_name: Optional[str] = None,
     should_download: bool = False,
     output_filename: Path = DOWNLOAD_JGW_FOLDER / "jgw_data.json",
-) -> Optional[Dict[str, Any]]:
+) -> Optional[dict[str, Any]]:
     """
     Carga un archivo JGW desde MongoDB.
 
@@ -626,7 +626,7 @@ def load_jgw_file_from_mongodb(
         ValueError: Si no se proporciona ni `image_name` ni `patch_name`.
 
     Returns:
-        Optional[Dict[str, Any]]: Diccionario con la información del archivo JGW.
+        Optional[dict[str, Any]]: Diccionario con la información del archivo JGW.
                                 Devuelve None si no se encuentra el archivo.
     """
     if bool(image_name is None) == bool(patch_name is None):  # xor
@@ -678,7 +678,7 @@ def load_jgw_file_from_mongodb(
     return jgw_data
 
 
-def list_patches_w_ann_from_mongodb(field_name: str = "cvat") -> List[str]:
+def list_patches_w_ann_from_mongodb(field_name: str = "cvat") -> list[str]:
     """
     Lista los nombres de los patches que tienen anotaciones en el campo especificado.
 
@@ -710,7 +710,7 @@ def list_patches_w_ann_from_mongodb(field_name: str = "cvat") -> List[str]:
     return patch_names
 
 
-def list_images_w_ann_from_mongodb(field_name: str = "cvat") -> List[str]:
+def list_images_w_ann_from_mongodb(field_name: str = "cvat") -> list[str]:
     """
     Lista los nombres de las imágenes que tienen anotaciones en el campo especificado.
 
@@ -742,8 +742,23 @@ def list_images_w_ann_from_mongodb(field_name: str = "cvat") -> List[str]:
 
     return image_names
 
+def list_images_from_mongodb(field_name: str = "cvat") -> list[str]:
+    """
+    Lista los nombres de las imágenes que tienen el campo especificado.
 
-def get_patch_metadata_from_mongodb(patch_name: str) -> Optional[Dict[str, Any]]:
+    Args:
+        field_name (str, optional): Nombre base del campo a buscar en cada imagen.
+            Por defecto es "cvat", lo que buscará el campo "cvat_annotations".
+
+    Returns:
+        list: Lista de nombres de imágenes que contienen el campo especificado.
+    """
+    raise NotImplementedError("TODO: Función no implementada aún.")
+
+    return image_names
+
+
+def get_patch_metadata_from_mongodb(patch_name: str) -> Optional[dict[str, Any]]:
     """
     Obtiene la metadata de un parche específico desde MongoDB.
 
@@ -751,7 +766,7 @@ def get_patch_metadata_from_mongodb(patch_name: str) -> Optional[Dict[str, Any]]
         patch_name (str): Nombre del parche cuya metadata se desea obtener.
 
     Returns:
-        Optional[Dict[str, Any]]: Diccionario con la metadata del parche.
+        Optional[dict[str, Any]]: Diccionario con la metadata del parche.
                                 Devuelve None si no se encuentra el parche.
     """
     imagenes = DB.get_collection("imagenes")
@@ -767,7 +782,6 @@ def get_patch_metadata_from_mongodb(patch_name: str) -> Optional[Dict[str, Any]]
         return None
 
     return patch_metadata
-
 
 if __name__ == "__main__":
     app()

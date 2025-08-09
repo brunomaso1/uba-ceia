@@ -12,7 +12,7 @@ import geopandas as gpd
 from fastkml import kml
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional, TextIO, Tuple
+from typing import Any, Optional, TextIO
 
 from shapely.geometry import Point, Polygon
 
@@ -168,12 +168,12 @@ def convert_kml_to_geojson_from_path(
 
 def create_geojson_from_annotations(
     pic_name: str,
-    coco_annotations: Dict[str, Any],
-    jgw_data: Dict[str, Any],
+    coco_annotations: dict[str, Any],
+    jgw_data: dict[str, Any],
     should_download: bool = False,
     output_filename: Path = DOWNLOAD_GEOJSON_FOLDER / "annotations.geojson",
     upload_to_drive: bool = False,
-    geo_sistema_referencia: str = CONFIG.georeferenciacion.codigo_epsg,
+    epsg_code: str = CONFIG.georeferenciacion.codigo_epsg,
 ) -> gpd.GeoDataFrame:
     """
     Crea un GeoDataFrame a partir de las anotaciones COCO y los datos de georreferenciación (JGW),
@@ -181,9 +181,9 @@ def create_geojson_from_annotations(
 
     Args:
         pic_name (str): Nombre de la imagen para la cual se generarán las anotaciones geográficas.
-        coco_annotations (Dict[str, Any]): Diccionario con las anotaciones en formato COCO, incluyendo
+        coco_annotations (dict[str, Any]): Diccionario con las anotaciones en formato COCO, incluyendo
             categorías, imágenes y anotaciones.
-        jgw_data (Dict[str, Any]): Diccionario con los datos de georreferenciación provenientes del archivo JGW.
+        jgw_data (dict[str, Any]): Diccionario con los datos de georreferenciación provenientes del archivo JGW.
         should_download (bool, opcional): Indica si el GeoDataFrame generado debe guardarse como un archivo GeoJSON.
             Por defecto es False.
         output_filename (Path, opcional): Ruta del archivo donde se guardará el GeoJSON si `should_download` es True.
@@ -255,7 +255,7 @@ def create_geojson_from_annotations(
         geometries.append(point)
         properties.append(
             {
-                "category": category_name,
+                "name": category_name,
                 "annotation_id": annotation.get("id", None),
                 "bbox_x": bbox[0],
                 "bbox_y": bbox[1],
@@ -275,9 +275,19 @@ def create_geojson_from_annotations(
     gdf = gpd.GeoDataFrame(properties_df, geometry=geometries)
 
     # 8 - Configurar el sistema de coordenadas (CRS)
-    gdf.crs = geo_sistema_referencia
+    gdf.crs = epsg_code
 
-    # 9 - Guardar como GeoJSON si se proporciona un nombre de archivo
+    # 9 - Reproyectar a EPSG:4326 si es necesario
+    # Reproyectar a WGS84 (EPSG:4326) si no está ya en ese CRS
+    if gdf.crs is not None and gdf.crs != "EPSG:4326":
+        try:
+            gdf = gdf.to_crs(epsg=4326)
+            LOGGER.debug("GeoDataFrame reproyectado a EPSG:4326.")
+        except Exception as e:
+            raise ValueError(
+                f"Error al reproyectar el GeoDataFrame a EPSG:4326: {e}. Asegúrate de que el CRS original sea válido."
+            )
+
     if should_download:
         output_filename.parent.mkdir(parents=True, exist_ok=True)
         gdf.to_file(output_filename, driver="GeoJSON")
@@ -341,9 +351,8 @@ def generate_geojson_from_annotations_from_path(
 
 def generate_kml_from_geojson(
     gdf: gpd.GeoDataFrame,
-    category_column: str = "category",
+    category_column: str = "name",
     target_category: Optional[str] = None,
-    reproject: bool = True,
     should_download: bool = False,
     output_filename: Path = DOWNLOAD_KMLS_FOLDER / "palmeras.kml",
 ) -> Optional[kml.KML]:
@@ -354,7 +363,6 @@ def generate_kml_from_geojson(
         gdf (gpd.GeoDataFrame): GeoDataFrame que contiene las geometrías y atributos.
         category_column (str): Nombre de la columna que contiene las categorías. Por defecto es "category".
         target_category (Optional[str]): Categoría específica que se desea filtrar. Si es None, se incluyen todas las categorías.
-        reproject (bool): Indica si se debe reproyectar el GeoDataFrame a WGS84 (EPSG:4326). Por defecto es True.
         should_download (bool): Indica si el archivo KML generado debe guardarse en disco. Por defecto es False.
         output_filename (Path): Ruta y nombre del archivo KML a guardar. Por defecto es "palmeras.kml" en la carpeta definida por DOWNLOAD_KMLS_FOLDER.
 
@@ -396,7 +404,7 @@ def generate_kml_from_geojson(
         return None
 
     # Reproyectar a WGS84 (EPSG:4326) si no está ya en ese CRS
-    if reproject and palm_gdf.crs is not None and palm_gdf.crs != "EPSG:4326":
+    if palm_gdf.crs is not None and palm_gdf.crs != "EPSG:4326":
         try:
             palm_gdf = palm_gdf.to_crs(epsg=4326)
             LOGGER.debug("GeoDataFrame reproyectado a EPSG:4326 para el KML.")
@@ -409,7 +417,7 @@ def generate_kml_from_geojson(
         if row.geometry.geom_type == "Point":
             coords = (row.geometry.x, row.geometry.y)
             point = Point(coords)
-            p = kml.Placemark(ns, id=f"palmera_{index}", name=f"{row.category}", geometry=point)
+            p = kml.Placemark(ns, id=f"palmera_{index}", name=f"{row[category_column]}", geometry=point)
             palm_folder.append(p)
         else:
             LOGGER.warning(f"La geometría del elemento con índice {index} no es un Point. No se agregará al KML.")
@@ -488,22 +496,22 @@ def _load_gdf_from_path(
 
 
 def _process_single_patch(
-    imagen: Dict[str, Any],
-    patch: Dict[str, Any],
+    imagen: dict[str, Any],
+    patch: dict[str, Any],
     gdf: gpd.GeoDataFrame,
-    bbox_size: Tuple[float, float] = (CONFIG.bbox_size.width, CONFIG.bbox_size.height),
-) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
+    bbox_size: tuple[float, float] = (CONFIG.bbox_size.width, CONFIG.bbox_size.height),
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """
     Procesa un solo parche de imagen y genera las anotaciones COCO correspondientes para los puntos del GeoDataFrame que caen dentro del parche.
 
     Args:
-        imagen (Dict[str, Any]): Diccionario con información de la imagen original, incluyendo metadatos y datos de georreferenciación (jgw_data).
-        patch (Dict[str, Any]): Diccionario con información del parche, incluyendo nombre, dimensiones y posición dentro de la imagen.
+        imagen (dict[str, Any]): Diccionario con información de la imagen original, incluyendo metadatos y datos de georreferenciación (jgw_data).
+        patch (dict[str, Any]): Diccionario con información del parche, incluyendo nombre, dimensiones y posición dentro de la imagen.
         gdf (gpd.GeoDataFrame): GeoDataFrame con puntos georreferenciados (por ejemplo, palmeras) a ser anotados.
-        bbox_size (Tuple[float, float], optional): Tamaño del bounding box (ancho, alto) en píxeles para cada anotación. Por defecto, se toma de la configuración.
+        bbox_size (tuple[float, float], optional): Tamaño del bounding box (ancho, alto) en píxeles para cada anotación. Por defecto, se toma de la configuración.
 
     Returns:
-        Tuple[Dict[str, Any], List[Dict[str, Any]]]: Una tupla con el diccionario de la imagen (formato COCO) y una lista de anotaciones COCO generadas para el parche.
+        tuple[dict[str, Any], list[dict[str, Any]]]: Una tupla con el diccionario de la imagen (formato COCO) y una lista de anotaciones COCO generadas para el parche.
     """
     image = {
         "width": patch["width"],
@@ -598,7 +606,7 @@ def generate_coco_annotations_from_geojson(
     output_filename: Optional[Path] = None,
     use_parallel: bool = True,
     max_workers: int = 10,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Crea anotaciones en formato COCO a partir de un GeoDataFrame.
 
     Este método procesa un GeoDataFrame que contiene puntos georreferenciados y genera
@@ -615,7 +623,7 @@ def generate_coco_annotations_from_geojson(
         max_workers (int, optional): Número máximo de procesos paralelos a utilizar. Defaults to 10.
 
     Returns:
-        Dict[str, Any]: Diccionario con las anotaciones en formato COCO, incluyendo las imágenes, categorías y bounding boxes.
+        dict[str, Any]: Diccionario con las anotaciones en formato COCO, incluyendo las imágenes, categorías y bounding boxes.
     """
     coco_annotations = {
         "info": COCO_DATASET_DATA["info"],
@@ -711,7 +719,7 @@ def generate_coco_annotations_from_geojson_from_path(
     output_filename: Optional[Path] = None,
     use_parallel: bool = None,
     max_workers: int = None,
-) -> Optional[Dict[str, Any]]:
+) -> Optional[dict[str, Any]]:
     """
     Genera anotaciones en formato COCO a partir de un archivo GeoJSON especificado por su ruta.
 
@@ -725,7 +733,7 @@ def generate_coco_annotations_from_geojson_from_path(
             Solo se utiliza si `use_parallel` es True. Por defecto es None.
 
     Returns:
-        Optional[Dict[str, Any]]: Diccionario con las anotaciones en formato COCO generadas.
+        Optional[dict[str, Any]]: Diccionario con las anotaciones en formato COCO generadas.
         Si el archivo GeoJSON está vacío o no existe, se devuelve None.
 
     Raises:

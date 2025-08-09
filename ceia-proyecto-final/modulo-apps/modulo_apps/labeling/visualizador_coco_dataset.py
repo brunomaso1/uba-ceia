@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 import layoutparser as lp
 
 import cv2 as cv
@@ -15,7 +15,7 @@ from modulo_apps.config import config as CONFIG
 import modulo_apps.labeling.procesador_anotaciones_coco_dataset as CocoDatasetUtils
 
 
-def _load_coco_annotations(annotations: List[Dict[str, Any]], coco: Any = None):
+def _load_coco_annotations(annotations: list[dict[str, Any]], coco: Any = None):
     """Carga las anotaciones en formato COCO y las convierte en un objeto Layout de LayoutParser.
 
     Args:
@@ -46,9 +46,9 @@ def show_anotated_image(
     image_path: Optional[Path] = None,
     image: Optional[np.ndarray] = None,
     image_name: Optional[str] = None,
-    coco_annotations: Optional[Dict[str, Any]] = None,
+    coco_annotations: Optional[dict[str, Any]] = None,
     annotation_path: Optional[Path] = None,
-    fig_size: Optional[Tuple[int, int]] = None,
+    fig_size: Optional[tuple[int, int]] = None,
     use_layoutparser: bool = False,
 ) -> None:
     """Muestra una imagen anotada con las anotaciones proporcionadas en formato COCO.

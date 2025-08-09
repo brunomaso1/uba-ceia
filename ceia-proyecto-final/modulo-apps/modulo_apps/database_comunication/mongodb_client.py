@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional
+from typing import Optional
 
 from pymongo import MongoClient
 from pymongo.database import Database

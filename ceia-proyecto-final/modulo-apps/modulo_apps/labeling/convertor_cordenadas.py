@@ -1,5 +1,5 @@
 # TODO: Definir el tipo jgw_data
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Optional
 
 import numpy as np
     
@@ -65,7 +65,7 @@ def convert_bbox_image_to_patch(
     return [xl, yl, w, h]
 
 
-def get_bbox_center(bbox: list) -> Tuple[float, float]:
+def get_bbox_center(bbox: list) -> tuple[float, float]:
     """Calcula el centro de un bounding box (bbox) en formato COCO.
 
     Args:
@@ -80,7 +80,7 @@ def get_bbox_center(bbox: list) -> Tuple[float, float]:
     return (x_center, y_center)
 
 
-def convert_bbox_image_to_world(bbox: list, jgw_data: Dict[str, Any]) -> Dict[str, tuple]:
+def convert_bbox_image_to_world(bbox: list, jgw_data: dict[str, Any]) -> dict[str, tuple]:
     """Convierte un bounding box de coordenadas de imagen a coordenadas del mundo.
 
     Este método transforma las coordenadas de un bounding box definido en el sistema
@@ -89,7 +89,7 @@ def convert_bbox_image_to_world(bbox: list, jgw_data: Dict[str, Any]) -> Dict[st
 
     Args:
     bbox (list): Bounding box en coordenadas de la imagen en formato [x_min, y_min, width, height].
-    jgw_data (Dict[str, Any]): Diccionario con los parámetros de transformación del archivo JGW.
+    jgw_data (dict[str, Any]): Diccionario con los parámetros de transformación del archivo JGW.
                     Debe contener las claves:
                     - "x_pixel_size": Tamaño del píxel en X.
                     - "y_rotation": Rotación en Y.
@@ -99,7 +99,7 @@ def convert_bbox_image_to_world(bbox: list, jgw_data: Dict[str, Any]) -> Dict[st
                     - "y_origin": Origen en Y.
 
     Returns:
-    Dict[str, tuple]: Bounding box en coordenadas del mundo. Cada clave representa un vértice
+    dict[str, tuple]: Bounding box en coordenadas del mundo. Cada clave representa un vértice
                 del bounding box ("tl", "tr", "br", "bl") y su valor es una tupla (X, Y).
     """
     A = jgw_data["x_pixel_size"]
@@ -127,7 +127,7 @@ def convert_bbox_image_to_world(bbox: list, jgw_data: Dict[str, Any]) -> Dict[st
     return world_bbox
 
 
-def convert_bbox_world_to_image(world_bbox: list, jgw_data: Dict[str, Any]) -> list:
+def convert_bbox_world_to_image(world_bbox: list, jgw_data: dict[str, Any]) -> list:
     """Convierte un bounding box en coordenadas del mundo a coordenadas de la imagen.
 
     Este método transforma las coordenadas de un bounding box definido en el sistema de coordenadas del mundo
@@ -200,7 +200,7 @@ def convert_bbox_world_to_image(world_bbox: list, jgw_data: Dict[str, Any]) -> l
     return [x_min, y_min, x_max - x_min, y_max - y_min]
 
 
-def convert_point_patch_to_image(point: Tuple[float, float], x_start: int, y_start: int) -> Tuple[float, float]:
+def convert_point_patch_to_image(point: tuple[float, float], x_start: int, y_start: int) -> tuple[float, float]:
     """Convierte las coordenadas de un punto de un parche a coordenadas de la imagen.
 
     Este método transforma las coordenadas locales de un punto dentro de un parche
@@ -220,7 +220,7 @@ def convert_point_patch_to_image(point: Tuple[float, float], x_start: int, y_sta
 
 
 def convert_point_image_to_patch(
-    point: Tuple[float, float], x_start: int, y_start: int, patch_width: int, patch_height: int
+    point: tuple[float, float], x_start: int, y_start: int, patch_width: int, patch_height: int
 ) -> tuple:
     """Convierte las coordenadas de un punto de la imagen a coordenadas locales de un parche.
 
@@ -251,7 +251,7 @@ def convert_point_image_to_patch(
     return xl, yl
 
 
-def convert_point_image_to_world(point: Tuple[float, float], jgw_data: Dict[str, Any]) -> tuple:
+def convert_point_image_to_world(point: tuple[float, float], jgw_data: dict[str, Any]) -> tuple:
     """
     Convierte un punto de coordenadas de la imagen a coordenadas del mundo.
 
@@ -261,7 +261,7 @@ def convert_point_image_to_world(point: Tuple[float, float], jgw_data: Dict[str,
 
     Args:
         point (tuple): Coordenadas del punto en la imagen en formato (x, y).
-        jgw_data (Dict[str, Any]): Diccionario con los parámetros de transformación del archivo JGW.
+        jgw_data (dict[str, Any]): Diccionario con los parámetros de transformación del archivo JGW.
                                 Debe contener las claves:
                                 - "x_pixel_size": Tamaño del píxel en X.
                                 - "y_rotation": Rotación en Y.
@@ -286,7 +286,7 @@ def convert_point_image_to_world(point: Tuple[float, float], jgw_data: Dict[str,
     return X, Y
 
 
-def convert_point_world_to_image(point: Tuple[float, float], jgw_data: Dict[str, Any]) -> Tuple[float, float]:
+def convert_point_world_to_image(point: tuple[float, float], jgw_data: dict[str, Any]) -> tuple[float, float]:
     """
     Convierte un punto de coordenadas del mundo a coordenadas de la imagen.
 
@@ -296,7 +296,7 @@ def convert_point_world_to_image(point: Tuple[float, float], jgw_data: Dict[str,
 
     Args:
         point (tuple): Coordenadas del punto en el sistema del mundo en formato (X, Y).
-        jgw_data (Dict[str, Any]): Diccionario con los parámetros de transformación del archivo JGW.
+        jgw_data (dict[str, Any]): Diccionario con los parámetros de transformación del archivo JGW.
                                 Debe contener las claves:
                                 - "x_pixel_size": Tamaño del píxel en X.
                                 - "y_rotation": Rotación en Y.

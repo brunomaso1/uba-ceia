@@ -1,4 +1,4 @@
-from typing import List, Literal, Tuple
+from typing import Literal
 from pydantic import BaseModel, Field
 
 
@@ -14,7 +14,7 @@ class Patch(BaseModel):
 
 class Metadata(BaseModel):
     pic_name: str
-    image_shape: Tuple[int, int] = Field(..., description="Forma de la imagen (alto, ancho)")
-    patches: List[Patch]
+    image_shape: tuple[int, int] = Field(..., description="Forma de la imagen (alto, ancho)")
+    patches: list[Patch]
 
 AnnotationType = Literal["images", "patches", "cvat"]

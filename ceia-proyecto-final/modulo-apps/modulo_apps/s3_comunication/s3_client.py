@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 import sys, os
-from typing import Any, Dict, Optional
+from typing import Optional
 
 import boto3
 from botocore.exceptions import ClientError

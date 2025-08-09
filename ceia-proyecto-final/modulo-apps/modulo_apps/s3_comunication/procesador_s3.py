@@ -1,6 +1,5 @@
 import re
 from pathlib import Path
-from typing import List
 
 from tqdm import tqdm
 import typer
@@ -74,7 +73,7 @@ def download_image_from_minio(
 
 
 @app.command()
-def download_images_from_minio(images_name: List[str], output_folder: Path = DOWNLOAD_IMAGES_FOLDER) -> bool:
+def download_images_from_minio(images_name: list[str], output_folder: Path = DOWNLOAD_IMAGES_FOLDER) -> bool:
     """Descarga una lista de imágenes desde MinIO.
 
     Este método permite descargar múltiples imágenes desde el almacenamiento MinIO y guardarlas
@@ -150,7 +149,7 @@ def download_patch_from_minio(patch_name: str, output_folder: Path = DOWNLOAD_PA
 
 
 @app.command()
-def download_patches_from_minio(patch_names: List[str], output_folder: Path = DOWNLOAD_PATCHES_FOLDER) -> None:
+def download_patches_from_minio(patch_names: list[str], output_folder: Path = DOWNLOAD_PATCHES_FOLDER) -> None:
     """Descarga una lista de parches desde MinIO.
 
     Este método permite descargar múltiples parches desde el almacenamiento MinIO y guardarlos
@@ -221,7 +220,7 @@ def download_cutout_from_minio(
 
 @app.command()
 def download_cutouts_from_minio(
-    cutout_names: List[str],
+    cutout_names: list[str],
     output_folder: Path = DOWNLOAD_CUTOUTS_FOLDER,
 ) -> None:
     """Descarga una lista de recortes desde MinIO.
@@ -338,7 +337,7 @@ def download_image_cutouts_from_minio(
 
 @app.command()
 def download_images_cutouts_from_minio(
-    image_names: List[str],
+    image_names: list[str],
     with_metadata: bool = False,
     output_base_folder: Path = DOWNLOAD_CUTOUTS_FOLDER,
 ) -> None:
@@ -346,7 +345,7 @@ def download_images_cutouts_from_minio(
     Descarga recortes (y opcionalmente metadatos) para una lista de imágenes desde MinIO.
 
     Args:
-        image_names (List[str]): Una lista de nombres de imágenes para las cuales se desean descargar los recortes.
+        image_names (list[str]): Una lista de nombres de imágenes para las cuales se desean descargar los recortes.
         with_metadata (bool, optional): Indica si también se deben descargar los metadatos. Defaults to False.
         output_base_folder (Path, optional): La carpeta base donde se guardarán todos los recortes.
                                            Si es None, se usará DOWNLOAD_CUTOUTS_FOLDER.

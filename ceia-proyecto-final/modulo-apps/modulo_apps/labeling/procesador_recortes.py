@@ -1,7 +1,7 @@
 import datetime, json, os
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 import numpy as np
 
 from loguru import logger as LOGGER
@@ -47,7 +47,7 @@ def cut_bbox_from_image(image: np.ndarray, bbox: list) -> np.ndarray:
 
 def cut_palms_from_image(
     image: np.ndarray,
-    coco_annotations: Dict[str, Any],
+    coco_annotations: dict[str, Any],
     pic_name: str,
     with_metadata: bool = True,
     output_folder: Path = DOWNLOAD_CUTOUTS_FOLDER,
@@ -206,7 +206,7 @@ def cut_palms_from_image_path(
 
 @app.command()
 def cut_palms_from_images_path(
-    images_paths: List[Path] = typer.Option(..., help="Lista de rutas de imágenes a recortar"),
+    images_paths: list[Path] = typer.Option(..., help="Lista de rutas de imágenes a recortar"),
     coco_annotations_path: Path = typer.Option(..., help="Ruta del archivo de anotaciones en formato COCO"),
     with_metadata: bool = True,
     output_folder: Path = DOWNLOAD_CUTOUTS_FOLDER,

@@ -1,9 +1,8 @@
-from typing import Tuple
 import cv2
 import numpy as np
 
 
-def is_white_image(image: np.ndarray, threshold_percent=50, white_threshold=250) -> Tuple[bool, float]:
+def is_white_image(image: np.ndarray, threshold_percent=50, white_threshold=250) -> tuple[bool, float]:
     """
     Detecta imágenes blancas basándose en un porcentaje de píxeles blancos.
 
