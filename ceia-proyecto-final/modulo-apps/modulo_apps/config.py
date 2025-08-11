@@ -86,6 +86,8 @@ class FoldersConfig:
         self.download_cutouts_metadata_folder: Path = self.download_folder / "cutouts_metadata"
         self.download_geojson_folder: Path = self.download_folder / "geojson"
         self.download_jgw_folder: Path = self.download_folder / "jgw"
+        self.download_zip_folder: Path = self.download_folder / "zips"
+        self.download_extract_folder: Path = self.download_folder / "extract"
 
 
 @dataclass

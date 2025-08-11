@@ -33,7 +33,7 @@ def test_connection():
     """
     try:
         DB.command("ping")
-        LOGGER.debug("Conexión a la base de datos MongoDB exitosa.")
+        LOGGER.success("Conexión a la base de datos MongoDB exitosa.")
     except Exception as e:
         LOGGER.error(f"Error al conectar a la base de datos MongoDB: {e}")
         raise e

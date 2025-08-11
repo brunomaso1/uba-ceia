@@ -286,26 +286,9 @@ ceia-proyecto-final/modulo-respaldo/backup*
 # Cuando se modifica o incluye un archivo, hay que agregar la excepción aca.
 ceia-proyecto-final/modulo-etiquetado-datos/cvat/**
 
-!ceia-proyecto-final/modulo-etiquetado-datos/cvat/csrf-ddns-settings.py
-!ceia-proyecto-final/modulo-etiquetado-datos/cvat/csrf-ngrok-settings.py
-!ceia-proyecto-final/modulo-etiquetado-datos/cvat/ldap-csrf-ddns-settings.py
-!ceia-proyecto-final/modulo-etiquetado-datos/cvat/ldap-local-settings.py
 !ceia-proyecto-final/modulo-etiquetado-datos/cvat/custom-settings.py
-
-!ceia-proyecto-final/modulo-etiquetado-datos/cvat/docker-compose.ddns.minio.yml
-!ceia-proyecto-final/modulo-etiquetado-datos/cvat/docker-compose.ddns.yml
-!ceia-proyecto-final/modulo-etiquetado-datos/cvat/docker-compose.local.fileserver.yml
-!ceia-proyecto-final/modulo-etiquetado-datos/cvat/docker-compose.local.minio.yml
-!ceia-proyecto-final/modulo-etiquetado-datos/cvat/docker-compose.local.yml
-!ceia-proyecto-final/modulo-etiquetado-datos/cvat/docker-compose.ngrok.minio.yml
-!ceia-proyecto-final/modulo-etiquetado-datos/cvat/docker-compose.ngrok.yml
-!ceia-proyecto-final/modulo-etiquetado-datos/cvat/docker-compose.scaleway.yml
-!ceia-proyecto-final/modulo-etiquetado-datos/cvat/docker-compose.local.ldap.yml
-!ceia-proyecto-final/modulo-etiquetado-datos/cvat/docker-compose.ddns.ldap.yml
 !ceia-proyecto-final/modulo-etiquetado-datos/cvat/docker-compose.custom.yml
-
 !ceia-proyecto-final/modulo-etiquetado-datos/cvat/example*
-
 !ceia-proyecto-final/modulo-etiquetado-datos/cvat/readme.md
 
 # Modelos

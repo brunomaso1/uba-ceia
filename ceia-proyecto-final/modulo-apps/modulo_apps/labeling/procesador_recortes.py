@@ -7,7 +7,7 @@ import numpy as np
 from loguru import logger as LOGGER
 from tqdm import tqdm
 from modulo_apps.config import config as CONFIG
-from modulo_apps.s3_comunication.s3_client import s3client as S3CLIENT
+from modulo_apps.s3_comunication.s3_client import s3client as S3_CLIENT
 
 import modulo_apps.labeling.procesador_anotaciones_coco_dataset as CocoDatasetUtils
 import modulo_apps.labeling.procesador_anotaciones_mongodb as ProcesadorCocoDataset
@@ -260,11 +260,11 @@ def _clear_minio_cutouts_folder(folder: str, is_metadata: bool = False) -> None:
     prefix_key_path = (
         f"{MINIO_CUTOUTS_PATH}/{folder}/" if not is_metadata else f"{MINIO_CUTOUTS_METADATA_PATH}/{folder}/"
     )
-    objects_to_delete = S3CLIENT.list_objects(Bucket=MINIO_BUCKET, Prefix=prefix_key_path)
+    objects_to_delete = S3_CLIENT.list_objects(Bucket=MINIO_BUCKET, Prefix=prefix_key_path)
     delete_keys = {"Objects": []}
     delete_keys["Objects"] = [{"Key": k} for k in [obj["Key"] for obj in objects_to_delete.get("Contents", [])]]
     if delete_keys["Objects"]:
-        S3CLIENT.delete_objects(Bucket=MINIO_BUCKET, Delete=delete_keys)
+        S3_CLIENT.delete_objects(Bucket=MINIO_BUCKET, Delete=delete_keys)
         LOGGER.debug(f"Se eliminaron {len(delete_keys['Objects'])} objetos de MinIO con el prefijo {prefix_key_path}.")
     else:
         LOGGER.debug(f"No se encontraron objetos para eliminar con el prefijo {prefix_key_path}.")
@@ -306,7 +306,7 @@ def upload_cutouts_to_mino(
         # Subir las imágenes a MinIO
         for _, _, files in os.walk(folder_path):
             for filename in files:
-                S3CLIENT.upload_file(
+                S3_CLIENT.upload_file(
                     Filename=os.path.join(folder_path, filename),
                     Bucket=MINIO_BUCKET,
                     Key=f"{MINIO_CUTOUTS_PATH}/{folder}/{filename}",
@@ -324,7 +324,7 @@ def upload_cutouts_to_mino(
             for _, _, files in os.walk(folder_path):
                 for filename in files:
                     # Subir el archivo JSON de metadatos a MinIO
-                    S3CLIENT.upload_file(
+                    S3_CLIENT.upload_file(
                         Filename=os.path.join(folder_path, filename),
                         Bucket=MINIO_BUCKET,
                         Key=f"{MINIO_CUTOUTS_METADATA_PATH}/{folder}/{filename}",

@@ -1,5 +1,7 @@
+import sys
 import cv2
 import numpy as np
+import loguru as LOGGER
 
 
 def is_white_image(image: np.ndarray, threshold_percent=50, white_threshold=250) -> tuple[bool, float]:
@@ -28,3 +30,17 @@ def is_white_image(image: np.ndarray, threshold_percent=50, white_threshold=250)
     white_percentage = (white_pixel_count / total_pixels) * 100
 
     return white_percentage > threshold_percent, white_percentage
+
+def set_log_to_file(log_file: str, level: str) -> None:
+    """
+    Configura el logger para escribir en un archivo.
+
+    Args:
+        log_file: Ruta del archivo de log
+    """
+    try:
+        LOGGER.remove()  # Elimina cualquier configuración previa
+    finally:
+        LOGGER.add(log_file, rotation="500 MB", level=level, backtrace=True, diagnose=True)
+        LOGGER.info(f"Logger configurado para escribir en {log_file}")
+        LOGGER.debug("Logger configurado correctamente.")
