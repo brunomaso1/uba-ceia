@@ -7,7 +7,7 @@ x-services_defaults: &services_defaults
 services:
   mongodb:
     << : *services_defaults
-    image: mongo:8.0.4
+    image: mongo:{MONGODB_VERSION:-8.0.4}
     container_name: ${MONGODB_CONTAINER_NAME:-mongo}
     hostname: mongo
     volumes:

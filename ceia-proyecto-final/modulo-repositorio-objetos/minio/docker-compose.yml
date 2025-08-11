@@ -13,7 +13,7 @@ x-services_defaults: &services_defaults
 services:
   minio:
     << : *services_defaults
-    image: quay.io/minio/minio:RELEASE.2025-02-03T21-03-04Z
+    image: quay.io/minio/minio:${MINIO_VERSION:-RELEASE.2025-07-23T15-54-02Z}
     command: server /data --console-address ":9009"
     restart: unless-stopped
     ports:
