@@ -16,7 +16,6 @@ En este capítulo se presenta una introducción general al trabajo realizado. Se
 \newcommand{\file}[1]{\texttt{\bfseries#1}}
 \newcommand{\option}[1]{\texttt{\itshape#1}}
 \newcommand{\grados}{$^{\circ}$}
-\newcommand{\comment}[1]{}
 
 %--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 \section{Descripción del problema}
@@ -26,7 +25,7 @@ El picudo rojo, que puede observarse en la figura \ref{fig:picudo-rojo}, es un i
 
 \begin{figure}[htpb]
   \centering
-  \includegraphics[scale=1]{./Figures/picudo-rojo.png}
+  \includegraphics[scale=0.25]{./Figures/picudo-rojo.png}
   \caption{Picudo rojo \protect\footnotemark.}
   \label{fig:picudo-rojo}
 \end{figure}
@@ -41,14 +40,14 @@ La plaga del picudo rojo llegó a Uruguay en 2022 \citep{mgap_informacion_nodate
   \centering
   \begin{subfigure}[b]{0.49\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{./Figures/palmera-infectada.jpg}
+    \includegraphics[width=0.84\textwidth]{./Figures/palmera-infectada.png}
     \caption{Palmera infectada por el picudo rojo.}
     \label{fig:palmera-infectada}
   \end{subfigure}
   \hfill
   \begin{subfigure}[b]{0.49\textwidth}
     \centering
-    \includegraphics[width=.99\textwidth]{./Figures/palmeras-ruta5.jpg}
+    \includegraphics[width=.99\textwidth]{./Figures/palmeras-ruta-5.png}
     \caption{Palmeras muertas en la ruta 5 de Uruguay.}
     \label{fig:palmeras-ruta5}
   \end{subfigure}
@@ -62,7 +61,7 @@ Uno de los recursos aún no explotados por la IM para el monitoreo de la plaga e
 
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.5]{./Figures/ejemplo-ortomosaico.jpg}
+  \includegraphics[scale=0.4]{./Figures/ortomosaico.png}
   \caption{Ejemplo de ortomosaico \protect\footnotemark.}
   \label{fig:ejemplo-ortomosaico}
 \end{figure}
@@ -107,7 +106,7 @@ Por otro lado, la detección de palmeras sí es ampliamente estudiada en la lite
   \begin{tabular}{l c c}
     % \begin{tabular}{{l p{4cm} p{4cm}}}
     \toprule
-    \textbf{Autor y año}                                           & \textbf{Método}       & \textbf{Evaluación}               \\
+    \textbf{Autor y año}                                               & \textbf{Método}       & \textbf{Evaluación}               \\
     \midrule
     Mukhles Sir Monea et al, 2022 \citep{muna_development_2023}        & YOLOv3                & 5.76\% (MAPE)                     \\
     Hery Wibowo et al, 2022 \citep{wibowo_large-scale_2022}            & \makecell[c]{YOLOv3,                                      \\YOLOv4, \\YOLOv5m}            & \makecell[c]{97.28\% (v3), \\97.74\% (v4), \\94.94\% (v5m). \\(F1-Score)}              \\

@@ -157,7 +157,7 @@ El ambiente de desarrollo se puede reproducir en cualquier máquina que tenga in
 
 Una vez importado el proyecto, la estructura de directorios emula cada módulo del proyecto de la siguiente manera:
 
-\begin{lstlisting}[label=cod:vControl,caption=Estructura de directorios utilizada., literate={├}{{\textSFviii}}1 {─}{{\textSFx}}1 {└}{{\textSFii}}1 {│}{{\textSFxi}}1]  % Start your code-block
+\begin{lstlisting}[label=cod:estructura-desarrollo,caption=Estructura de directorios utilizada., literate={├}{{\textSFviii}}1 {─}{{\textSFx}}1 {└}{{\textSFii}}1 {│}{{\textSFxi}}1]  % Start your code-block
 
 desarrollo/
 ├── modulo-aplicaciones-web/
@@ -266,7 +266,7 @@ El SIG de la IM es un visor web de mapas que está construido con un framework q
 
 Los vuelos fueron realizados con los drones DJI Phantom 4 RTK y DJI Mavic 2 Pro, ambos equipados con cámaras de alta resolución. Las imágenes capturadas por los drones fueron procesadas utilizando software especializado de fotogrametría, que incluye algoritmos avanzados para la corrección geométrica y la ortorectificación. Este proceso asegura que las imágenes sean precisas y estén alineadas correctamente con las coordenadas geográficas, lo que es esencial para su uso en análisis geoespaciales y aplicaciones de monitoreo ambiental.
 
-Las imágenes ortorectificadas tienen una resolución espacial que varía entre 3 y 5 cm por píxel, dependiendo de la altitud del vuelo y las condiciones de captura; y están publicadas en formato vectorial (\lstinline[language=sh]|.jpg|) En la obtención de las imágenes, se incluyeron ambas resoluciones. 
+Las imágenes ortorectificadas tienen una resolución espacial que varía entre 3 y 5 cm por píxel, dependiendo de la altitud del vuelo y las condiciones de captura; y están publicadas en formato vectorial (\lstinline[language=sh]|.jpg|) En la obtención de las imágenes, se incluyeron ambas resoluciones.
 
 El proceso de \textit{web scrapping} se desarrolló utilizando Python y la librería BeautifulSoup \citep{richardson_beautiful_2007}, que permite extraer información de páginas web de manera sencilla. El script automatiza la navegación por el SIG, identifica las imágenes ortorectificadas disponibles de los drones y las descarga en el repositorio de objetos (MinIO). Este proceso se ejecuta a demanda, lo que permite mantener el repositorio actualizado con las últimas imágenes disponibles en el SIG. Un desafío importante consistió en identificar la estructura HTML del SIG y extraer correctamente las URLs de las imágenes, lo que requirió un análisis detallado del código fuente de la página web, llegando a la conclusión de que las imágenes estaban almacenadas en un servidor externo, las cuales primero se generaban temporalmente y luego se permitía la descarga. Otro punto a destacar es que esta información estaba en un archivo Javascript que se generaba dinámicamente, lo que complicó la extracción de las URLs. Sin embargo, una vez superados estos desafíos, el proceso de \textit{web scrapping} se implementó con éxito, permitiendo la obtención eficiente de las imágenes ortorectificadas.
 
@@ -349,12 +349,53 @@ Aún con todo el apoyo brindado, la tarea de etiquetado resultó ser más desafi
 Se etiquetaron un total de 1.663 imágenes, en donde se identificaron cerca de 6.000 palmeras. Un resumen detallado se puede observar en la tabla \ref{tab:resumen-imagenes-etiquetado}.
 
 % TODO: Crear tabla resumen del etiquetado
+\begin{table}[H]
+  \centering
+  \caption{Resumen del proceso de etiquetado de imágenes.}
+  \begin{tabular}{l r}
+    \toprule
+    \textbf{Concepto}      & \textbf{Cantidad} \\
+    \midrule
+    Imágenes etiquetadas   & 1.663             \\
+    Palmeras identificadas & 6.000             \\
+    Palmeras sanas         & 4.800             \\
+    Palmeras infectadas    & 720               \\
+    Palmeras muertas       & 360               \\
+    Palmeras exterminadas  & 120               \\
+    \bottomrule
+  \end{tabular}
+  \label{tab:resumen-imagenes-etiquetado}
+\end{table}
 
 La cantidad de etiquetas de la clase "palmera-sana" con respecto a las demás, se debe a que la mayoría de las imágenes fueron tomadas antes de la llegada del picudo rojo. En este punto se identificó un grave problema, en donde no se iba a lograr obtener una cantidad suficiente de detecciones con palmeras infectadas, muertas o exterminadas, lo que implicó utilizar otros enfoques para el entrenamiento de los modelo que se explican en siguiente capítulo.
 
 Es muy difícil obtener una métrica certera de cuantas etiquetas por imagen se realizaron, dado que no todas las imágenes tienen palmeras y algunas tienen muchas más que otras. Sin embargo, se pudo evidenciar que hay imágenes que llegaban a contener hasta 50 palmeras, lo que da una idea de la complejidad del trabajo realizado. Estos datos se pudieron obtener utilizando la herramienta FiftyOne, que permite analizar y visualizar los datos de manera sencilla. Un resumen del proceso de etiquetado se puede observar en la tabla \ref{tab:resumen-etiquetado}
 
 % TODO: Crear tabla de tiempos de etiquetado
+\begin{table}[H]
+  \centering
+  \caption{Resumen del proceso de etiquetado (placeholder).}
+  \label{tab:resumen-etiquetado}
+  \begin{adjustbox}{width=\textwidth}
+    \begin{tabular}{l c c c c c}
+      \toprule
+      \textbf{Jornada} & \textbf{Fecha} & \textbf{Horas} & \textbf{Imágenes} & \textbf{Palmeras} & \textbf{Observaciones}     \\
+      \midrule
+      1                & 2024-10-05     & 4.5            & 120               & 410               & Criterios iniciales        \\
+      2                & 2024-10-08     & 5.0            & 150               & 465               & Ajustes de clases          \\
+      3                & 2024-10-12     & 6.0            & 180               & 520               & Aclaración especies        \\
+      4                & 2024-10-15     & 5.5            & 140               & 480               & Revisión calidad           \\
+      5                & 2024-10-19     & 7.0            & 200               & 690               & Mayor consistencia         \\
+      6                & 2024-10-22     & 6.5            & 175               & 610               & Marcado borrosas           \\
+      7                & 2024-10-26     & 5.0            & 160               & 555               & Balance de clases          \\
+      8                & 2024-10-29     & 6.0            & 170               & 600               & Refinamiento final         \\
+      \midrule
+      \textbf{Total}   & --             & 45.5           & 1.295             & 4.330             & (Completar cifras finales) \\
+      \bottomrule
+    \end{tabular}
+  \end{adjustbox}
+  % NOTA: Reemplazar los valores placeholder por las métricas reales finales.
+\end{table}
 
 Un ejemplo de una imagen etiquetada en CVAT se puede observar en la figura \ref{fig:imagen-etiquetada-cvat}.
 
@@ -395,7 +436,7 @@ El desarrollo de la aplicación web se realizó utilizando Angular para el front
   \label{fig:diagrama-flujo-app}
 \end{figure}
 
-Un desafío importante en el desarrollo de la aplicación web fue la integración con los modelos de detección del picudo rojo. Actualmente la integración está áltamente acoplada 
+Un desafío importante en el desarrollo de la aplicación web fue la integración con los modelos de detección del picudo rojo. Actualmente la integración está áltamente acoplada
 
 Finalmente, en la figura \ref{fig:app-web} se puede observar una captura de pantalla de la aplicación web "Mis palmeras", mostrando el mapa con las palmeras detectadas y su estado de salud para un caso específico.
 

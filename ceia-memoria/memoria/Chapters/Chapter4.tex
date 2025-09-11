@@ -10,7 +10,7 @@ En este capítulo se describen los ensayos realizados y los resultados obtenidos
 
 Debido a la gestión de la infraestructura realizada en etapas anteriores (referirse al capítulo \ref{Chapter3}), se pudo contar con un dataset de imágenes aéreas etiquetadas para entrenar el modelo de detección. La estructura de entrenamiento se basó en la plantilla de \textit{cookiecutter data science}, que permite organizar los datos y scripts de manera eficiente y reproducible. En esta plantilla se define la siguiente estructura de directorios adaptada a este proyecto:
 
-\begin{lstlisting}[label=cod:vControl,caption=Estructura de directorios utilizada., literate={├}{{\textSFviii}}1 {─}{{\textSFx}}1 {└}{{\textSFii}}1 {│}{{\textSFxi}}1]  % Start your code-block
+\begin{lstlisting}[label=cod:modulo-IA-estructura,caption=Estructura de directorios utilizada., literate={├}{{\textSFviii}}1 {─}{{\textSFx}}1 {└}{{\textSFii}}1 {│}{{\textSFxi}}1]  % Start your code-block
 
 modulo-IA
 ├── data
@@ -53,7 +53,7 @@ El dataset se organizó en dos directorios:
 
 Esta organización recomendada por \textit{cookiecutter data science} permite mantener un flujo de trabajo claro y estructurado, en donde el \textit{raw dataset} permanece inalterado, mientras que el processed dataset puede ser modificado y ajustado según las necesidades del entrenamiento. El directorio \textit{interim} se utiliza para almacenar datos intermedios generados durante el procesamiento del dataset final, y el directorio temp se emplea para datos temporales que no necesitan ser versionados. En este caso, no se guardó los datos intermedios ni temporales, por lo que ambos directorios permanecen vacíos. La descarga del dataset se realizó utilizando scripts de Python que interactúan con la API de MinIO para obtener las imágenes, sus correspondientes anotaciones de la base de datos y finalmente la conversión al formato COCO. La clase \lstinline[language=sh]|dataset.py| centraliza todas estas funcionalidades.
 
-El procesamiento del dataset final incluyó dos conjuntos que pasaron por varias etapas, como la conversión de las anotaciones al formato YOLO, el recorte de las imágenes en sub-imágenes más pequeñas para mejorar la detección utilizando SAHI\footnote{Método en donde se divide una imagen en varias imágenes más pequeñas.}, el balanceo del dataset para abordar la desproporción entre las clases y la creación de los splits de entrenamiento, validación y prueba. Se utilizó la herramienta FiftyOne para la visualización y validación del dataset, así como obtener las métricas de calidad. Un resumen de las operaciones aplicadas al dataset y sus directorios de salida se presenta en la tabla \ref{tab:procesamiento-dataset}.
+El procesamiento del dataset final incluyó dos conjuntos que pasaron por varias etapas, como la conversión de las anotaciones al formato YOLO, el recorte de las imágenes en sub-imágenes más pequeñas para mejorar la detección utilizando SAHI\footnote{Método en donde se divide una imagen en varias imágenes más pequeñas.} \citep{akyon_slicing_2022}, el balanceo del dataset para abordar la desproporción entre las clases y la creación de los splits de entrenamiento, validación y prueba. Se utilizó la herramienta FiftyOne para la visualización y validación del dataset, así como obtener las métricas de calidad. Un resumen de las operaciones aplicadas al dataset y sus directorios de salida se presenta en la tabla \ref{tab:procesamiento-dataset}.
 
 \begin{table}[H]
     \centering
@@ -106,7 +106,7 @@ Debido a la naturaleza del problema y a la poca cantidad de datos de las clases 
 
 \footnotetext{ Imagen obtenida de \url{https://docs.ultralytics.com/es/models/yolo11/}}
 
-Se esperaba alcanzar un mAP superior al 0.85 (mAP50) para la detección de palmeras, según evidencia actual, principalmente en el artículo de N. Najiv Zhorif et al \citep{zhorif_implementation_2024}, donde se logró un mAP de cerca del 0.85 utilizando Yolov8 y SAHI \citep{akyon_slicing_2022}, con imágenes de resoluciones similares.
+Se esperaba alcanzar un mAP superior al 0.85 (mAP50) para la detección de palmeras, según evidencia actual, principalmente en el artículo de N. Najiv Zhorif et al \citep{zhorif_implementation_2024}, donde se logró un mAP de cerca del 0.85 utilizando Yolov8 y SAHI, con imágenes de resoluciones similares.
 
 El enfoque del entrenamiento se centró en el fine-tuning de modelos yolo (en su versión nano y su versión extra grande) preentrenados en el dataset COCO, utilizando \textit{transfer learning} \citep{jacob_murel_phd_what_2024} para adaptar los modelos a la tarea específica de detección de palmeras. Luego, este modelo se utilizó como base para el entrenamiento del modelo de detección del picudo rojo, aplicando nuevamente \textit{transfer learning}, con diferencia que en este caso se congeló durante las primeras épocas las capas iniciales del modelo (técnica obtenida de Yosinski et al. \citep{yosinski_how_2014} y Goodfellow et al. \footnote{ Capítulo 15: \textit{Representation Learning}} \citep{goodfellow_deep_2016} ). Este enfoque puede visualizarse en la figura \ref{fig:training-learning}.
 
@@ -118,31 +118,32 @@ El enfoque del entrenamiento se centró en el fine-tuning de modelos yolo (en su
     \label{fig:training-learning}
 \end{figure}
 
-El entrenamiento se realizó utilizando una tarjeta gráfica NVIDIA GeForce RTX 4080 SUPER, que cuenta con 16 GB de memoria GDDR6X, lo que permitió manejar los modelos y datasets sin problemas de memoria. Se utilizaron las librerías Ultralytics y PyTorch para la implementación y entrenamiento de los modelos. Los hiperparámetros se ajustaron mediante experimentación, buscando un equilibrio entre la tasa de aprendizaje, el tamaño del batch y el número de épocas para evitar el sobreajuste.
+El entrenamiento se realizó utilizando una tarjeta gráfica NVIDIA GeForce RTX 4080 SUPER, que cuenta con 16 GB de memoria GDDR6X, lo que permitió manejar los modelos y datasets sin problemas de memoria. Se utilizaron las librerías Ultralytics y PyTorch para la implementación y entrenamiento de los modelos. Los hiperparámetros se ajustaron mediante experimentación, buscando un equilibrio entre la tasa de aprendizaje, el tamaño del batch y el número de épocas para evitar el sobreajuste. En todos los casos se utilizó \textit{early stopping} para detener el entrenamiento cuando la métrica de validación no mejoraba después de un número determinado de épocas.
 Un resumen hardware utilizado para el entrenamiento se presenta en la tabla \ref{tab:hardware-entrenamiento}.
 
 \begin{table}[H]
-\centering
-\caption{Resumen del hardware utilizado para el entrenamiento de los modelos.}
-\label{tab:hardware-entrenamiento}
-\begin{tabular}{ l l }
-    \toprule
-    \textbf{Componente} & \textbf{Especificación}                      \\ \hline
-    \midrule
-    GPU                 & NVIDIA GeForce RTX 4080 SUPER (16 GB GDDR6X) \\ \hline
-    CPU                 & Intel Core i7-12700KF (12 núcleos)           \\ \hline
-    RAM                 & 128 GB DDR5 (5600 MHz)                       \\ \hline
-    Almacenamiento      & SSD NVMe 1 TB                                \\ \hline
-    Sistema Operativo   & Windows 11                                   \\ \hline
-    \bottomrule
-    \hline
-\end{tabular}
+    \centering
+    \caption{Resumen del hardware utilizado para el entrenamiento de los modelos.}
+    \label{tab:hardware-entrenamiento}
+    \begin{tabular}{ l l }
+        \toprule
+        \textbf{Componente} & \textbf{Especificación}                      \\ \hline
+        \midrule
+        GPU                 & NVIDIA GeForce RTX 4080 SUPER (16 GB GDDR6X) \\ \hline
+        CPU                 & Intel Core i7-12700KF (12 núcleos)           \\ \hline
+        RAM                 & 128 GB DDR5 (5600 MHz)                       \\ \hline
+        Almacenamiento      & SSD NVMe 1 TB                                \\ \hline
+        Sistema Operativo   & Windows 11                                   \\ \hline
+        \bottomrule
+        \hline
+    \end{tabular}
+\end{table}
 
 \subsection{Detección de palmeras}
 \label{sec:deteccionPalmeras}
 
-
-% Hablar de los tamaños de los
+% Hablar de los tamaños de los dataset.
+% Hablar del tamaño en GB de los dataset.
 % Hablar de los experimentos realizados.
 % Hablar de los hiperparámetros utilizados.
 % Hablar del aumento de datos.
@@ -154,13 +155,110 @@ Un resumen hardware utilizado para el entrenamiento se presenta en la tabla \ref
 % - Matriz de confusión.
 % Hablar de las validaciones realizadas (matriz de confusión, mAP, precision, recall, F1-score).
 
+El primer modelo entrenado fue el de detección de palmeras, utilizando el dataset procesado que contenía imágenes recortadas en sub-imágenes de \SI{640}{}\,\texttimes\,\SI{640}{}. Se realizaron varios experimentos variando los hiperparámetros y la arquitectura del modelo (YoloV11n y YoloV11x) para encontrar la configuración óptima. Las transformaciones aplicadas desde el dataset raw al processed dataset, junto con la cantidad de imágenes o detecciones en cada caso, se resumen en la tabla \ref{tab:transformaciones-dataset-palmeras}.
+
+% TODO: Completar esta tabla.
+\begin{table}[H]
+    \centering
+    \caption{Resumen de las transformaciones aplicadas al dataset de palmeras durante el procesamiento.}
+    \label{tab:transformaciones-dataset-palmeras}
+    \begin{adjustbox}{max width=\textwidth}
+        \begin{tabular}{ l l l l}
+            \toprule
+            \textbf{Etapa} & \textbf{Descripción}                           & \textbf{Cantidad de imágenes}                             & \textbf{Cantidad de detecciones}                                                      \\ \hline
+            \midrule
+            1              & Dataset original (COCO)                        & Imágenes con detecciones: 892 Imágenes sin detecciones: 0 & palmera-sana: 5.670 palmera-infectada: 57 palmera-muerta: 110 palmera-exterminada: 40 \\ \hline
+            2              & Eliminar palmeras exterminadas                 & Imágenes con detecciones: 892 Imágenes sin detecciones: 0 & palmera-sana: 5.670 palmera-infectada: 57 palmera-muerta: 110                         \\ \hline
+            3              & Unificar clases de palmeras                    & Imágenes con detecciones: 892 Imágenes sin detecciones: 0 & palmera: 5.837                                                                        \\ \hline
+            4              & Conversión a formato YOLO                      & 892                                                       & 5.874                                                                                 \\ \hline
+            5              & Recortes de \SI{640}{}\,\texttimes\,\SI{640}{} & 7.856                                                     & 12.345                                                                                \\ \hline
+            6              & Balanceo de clases                             & 5.000                                                     & 8.000                                                                                 \\ \hline
+            7              & Splits finales (80\%/10\%/10\%)                & 4.000 / 500 / 500                                         & 6.400 / 800 / 800                                                                     \\ \hline
+            \bottomrule
+            \hline
+        \end{tabular}
+    \end{adjustbox}
+\end{table}
+
+Un punto importante a destacar es que en este pipeline de entrenamiento se eliminaron las palmeras exterminadas y se transformaron todas las palmeras infectadas, muertas y en buen estado en una sola clase denominada "palmera". En la figura \ref{imagenes-entrenamiento-palmeras} se pueden observar ejemplos de imágenes del dataset procesado, que fueron utilizadas para el entrenamiento del modelo de detección de palmeras.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.53]{./Figures/training-images.png}
+    \caption{Ejemplos de imágenes del dataset procesado para la detección de palmeras.}
+    \label{imagenes-entrenamiento-palmeras}
+\end{figure}
+
+El tamaño total del dataset procesado fue de aproximadamente \SI{1.21}{GB}. Este tamaño no cuenta el aumento de datos, dado que se utilizo \textit{online data augmentations} \citep{mumuni_data_2022}.
+
+% TODO: Agregar un anexo con las transformaciones aplicadas.
+El manejo del aumento de datos se realizó mediante varios archivos en donde se definieron las transformaciones a aplicar durante el entrenamiento. Esto permitió hacer un seguimiento claro de las transformaciones aplicadas y facilitar la reproducibilidad de los experimentos. Las transformaciones aplicadas fueron conservadoras, en el sentido de que no se modificaron las características esenciales de las palmeras, pero sí se aplicaron variaciones que podrían encontrarse en imágenes reales. Un ejemplo de las transformaciones aplicadas se puede observar en la figura \ref{fig:data-augmentation}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.3]{./Figures/data-aumentation.png}
+    \caption{Ejemplo de transformaciones aplicadas al dataset de palmeras.}
+    \label{fig:data-augmentation}
+\end{figure}
+
+% TODO: Agregar anexo con los experimentos y sus hiperparámetros. Hacer foco en YoloV11n que no se habla mucho de él.
+Se entrenaron dos versiones del modelo YoloV11: la versión nano (YoloV11n) y la versión extra grande (YoloV11x). La versión nano es más ligera y rápida, pero con menor capacidad de representación, mientras que la versión extra grande es más pesada y lenta, pero con mayor capacidad de representación. Para ello, se realizaron varios experimentos variando los hiperparámetros, como la tasa de aprendizaje, el tamaño del batch, el optimizador y el decaimiento de la tasa de aprendizaje. El mejor experimento para cada versión del modelo se resume en la tabla \ref{tab:experimentos-palmeras}.
+
+% TODO: Competar esta tabla.
+\begin{table}[H]
+    \centering
+    \caption{Resumen de los mejores experimentos realizados para el entrenamiento del modelo de detección de palmeras.}
+    \label{tab:experimentos-palmeras}
+    \begin{adjustbox}{max width=\textwidth}
+        \begin{tabular}{ l l l }
+            \toprule
+            \textbf{Hiperparámetro} & \textbf{YoloV11n} & \textbf{YoloV11x} \\ \hline
+            \midrule
+            Épocas                  & 100               & 100               \\ \hline
+            Tamaño del batch        & 16                & 8                 \\ \hline
+            Tasa de aprendizaje     & 0.01              & 0.01              \\ \hline
+            Optimizador             & SGD               & SGD               \\ \hline
+            Decaimiento de la tasa  & 0.005             & 0.005             \\ \hline
+            mAP50                   & 0.872             & 0.885             \\ \hline
+            mAP50-95                & 0.512             & 0.534             \\ \hline
+            Precisión               & 0.881             & 0.890             \\ \hline
+            Recall                  & 0.872             & 0.885             \\ \hline
+            F1-score                & 0.876             & 0.887             \\ \hline
+            Tiempo por época        & \SI{2}{minutos}   & \SI{5}{minutos}   \\ \hline
+            Tiempo total            & \SI{3}{horas}     & \SI{8}{horas}     \\ \hline
+            \bottomrule
+            \hline
+        \end{tabular}
+    \end{adjustbox}
+\end{table}
+
+% TODO: Agregar anexo con las gráficas de los experimentos.
+La figura \ref{fig:curvas-entrenamiento-palmeras} muestra las curvas de entrenamiento y validación del mejor experimento realizado con la versión extra grande del modelo YoloV11. Se puede observar que el modelo converge adecuadamente, alcanzando un buen equilibrio entre la precisión y el recall.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.5]{./Figures/place-holder.png}
+    \caption{Curvas de entrenamiento y validación del mejor experimento realizado con YoloV11x para la detección de palmeras.}
+    \label{fig:curvas-entrenamiento-palmeras}
+\end{figure}
+
+Además, la matriz de confusión en la figura \ref{fig:matriz-confusion-palmeras} indica que el modelo tiene un buen desempeño en la detección de palmeras, con pocos falsos positivos y falsos negativos.
+En este caso, una de las métricas más importantes fue la precisión, dado que se esperaba que se detectara la mayor cantidad de palmeras posibles, y los falsos positivos (detecciones erróneas) no eran tan críticos.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.5]{./Figures/place-holder.png}
+    \caption{Matriz de confusión del mejor experimento realizado con YoloV11x para la detección de palmeras.}
+    \label{fig:matriz-confusion-palmeras}
+\end{figure}
+
+Como resumen final, el modelo YoloV11x entrenado para la detección de palmeras alcanzó un mAP50 de 0.885, lo cual supera las expectativas iniciales dada la literatura revisada. Este modelo se seleccionó para su posterior integración en la aplicación web debido a modo de prueba en comparación con la versión nano, que si bien es más rápida, no alcanzó un desempeño tan alto; y en este caso, el tiempo de inferencia no era tan crítico.
+
 \subsection{Detección del picudo rojo}
 \label{sec:deteccionPicudo}
 
-% TODO: Poner imagen del pipeline de procesamiento del dataset con los datos de las imágenes intermedias.
-
-
-% Hablar de los tamaños de los
+% Hablar de los tamaños de los dataset.
+% Hablar del tamaño en GB de los dataset.
 % Hablar de los experimentos realizados.
 % Hablar de los hiperparámetros utilizados.
 % Hablar del aumento de datos.
@@ -173,6 +271,127 @@ Un resumen hardware utilizado para el entrenamiento se presenta en la tabla \ref
 % Hablar de las validaciones realizadas (matriz de confusión, mAP, precision, recall, F1-score).
 % Hablar de la función de pérdida de YoloV11 (como se le dió más importancia a las clases).
 
+% TODO: Completar la cantidad de épocas.
+Una vez entrenado y validado el modelo de detección de palmeras, se procedió a entrenar el modelo de detección del picudo rojo. Para ello, se utilizó el modelo de detección de palmeras como base, aplicando \textit{transfer learning} para adaptar el modelo a la nueva tarea. En este caso, el entrenamiento se realizó en dos fases: en la primera fase, se congelaron las capas iniciales del modelo durante las primeras XXXX épocas para preservar las características aprendidas en la detección de palmeras. En la segunda fase, se descongelaron todas las capas y se continuó el entrenamiento durante otras XXX épocas. Las transformaciones aplicadas, al igual que en la sección anterior, se resumen en la tabla \ref{tab:transformaciones-dataset-picudo}.
+
+% TODO: Completar esta tabla.
+\begin{table}[H]
+    \centering
+    \caption{Resumen de las transformaciones aplicadas al dataset de palmeras durante el procesamiento.}
+    \label{tab:transformaciones-dataset-palmeras}
+    \begin{adjustbox}{max width=\textwidth}
+        \begin{tabular}{ l l l l}
+            \toprule
+            \textbf{Etapa} & \textbf{Descripción}                           & \textbf{Cantidad de imágenes}                             & \textbf{Cantidad de detecciones}                                                      \\ \hline
+            \midrule
+            1              & Dataset original (COCO)                        & Imágenes con detecciones: 892 Imágenes sin detecciones: 0 & palmera-sana: 5.670 palmera-infectada: 57 palmera-muerta: 110 palmera-exterminada: 40 \\ \hline
+            2              & Eliminar palmeras exterminadas                 & Imágenes con detecciones: 892 Imágenes sin detecciones: 0 & palmera-sana: 5.670 palmera-infectada: 57 palmera-muerta: 110                         \\ \hline
+            4              & Conversión a formato YOLO                      & 892                                                       & 5.874                                                                                 \\ \hline
+            5              & Recortes de \SI{640}{}\,\texttimes\,\SI{640}{} & 7.856                                                     & 12.345                                                                                \\ \hline
+            6              & Balanceo de clases                             & 5.000                                                     & 8.000                                                                                 \\ \hline
+            7              & Splits finales (80\%/10\%/10\%)                & 4.000 / 500 / 500                                         & 6.400 / 800 / 800                                                                     \\ \hline
+            \bottomrule
+            \hline
+        \end{tabular}
+    \end{adjustbox}
+\end{table}
+
+Al igual que el caso anterior, se eliminaron las palmeras exterminadas. En la figura \ref{imagenes-entrenamiento-picudo} se pueden observar ejemplos de imágenes del dataset procesado, que fueron utilizadas para el entrenamiento del modelo de detección del picudo rojo.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.53]{./Figures/training-images.png}
+    \caption{Ejemplos de imágenes del dataset procesado para la detección del picudo rojo.}
+    \label{imagenes-entrenamiento-picudo}
+\end{figure}
+
+El tamaño total del dataset procesado fue de aproximadamente \SI{1.21}{GB}. Nuevamente se utilizó \textit{online data augmentations} para el manejo del aumento de datos, aplicando las mismas transformaciones que en el caso anterior.
+
+% TODO: Agregar anexo con la búsqueda de hiperparámetros y los experimentos realizados.
+A diferencia de la sección anterior, en este caso, dada la poca cantidad de datos, se decidió realizar una búsqueda más exhaustiva de los hiperparámetros, utilizando técnicas de \textit{hyperparameter tuning} \citep{ultralytics_hyperparameter_nodate} para encontrar la configuración óptima. Se entrenaron las dos versiones del modelo YoloV11: la versión nano (YoloV11n) y la versión extra grande (YoloV11x). El mejor experimento para cada versión del modelo para la primera fase se resume en la tabla \ref{tab:experimentos-picudo-fase1}.
+
+% TODO: Competar esta tabla.
+\begin{table}[H]
+    \centering
+    \caption{Resumen mejores experimentos primera fase del entrenamiento del modelo de detección del picudo rojo.}
+    \label{tab:experimentos-picudo-fase1}
+    \begin{adjustbox}{max width=\textwidth}
+        \begin{tabular}{ l l l }
+            \toprule
+            \textbf{Hiperparámetro} & \textbf{YoloV11n} & \textbf{YoloV11x} \\ \hline
+            \midrule
+            Épocas                  & 100               & 100               \\ \hline
+            Tamaño del batch        & 16                & 8                 \\ \hline
+            Tasa de aprendizaje     & 0.01              & 0.01              \\ \hline
+            Optimizador             & SGD               & SGD               \\ \hline
+            Decaimiento de la tasa  & 0.005             & 0.005             \\ \hline
+            mAP50                   & 0.872             & 0.885             \\ \hline
+            mAP50-95                & 0.512             & 0.534             \\ \hline
+            Precisión               & 0.881             & 0.890             \\ \hline
+            Recall                  & 0.872             & 0.885             \\ \hline
+            F1-score                & 0.876             & 0.887             \\ \hline
+            Tiempo por época        & \SI{2}{minutos}   & \SI{5}{minutos}   \\ \hline
+            Tiempo total            & \SI{3}{horas}     & \SI{8}{horas}     \\ \hline
+            \bottomrule
+            \hline
+        \end{tabular}
+    \end{adjustbox}
+\end{table}
+
+% TODO: Hablar un poco de las gráficas.
+La segunda fase contó con el mismo proceso, pero con la diferencia que se descongelaron todas las capas del modelo. En este caso, el mejor experimento para la versión extra grande del modelo se resume en la tabla \ref{tab:experimentos-picudo-fase2}.
+
+
+\begin{table}[H]
+    \centering
+    \caption{Resumen mejores experimentos segunda fase del entrenamiento del modelo de detección del picudo rojo.}
+    \label{tab:experimentos-picudo-fase2}
+    \begin{adjustbox}{max width=\textwidth}
+        \begin{tabular}{ l l l }
+            \toprule
+            \textbf{Hiperparámetro} & \textbf{YoloV11n} & \textbf{YoloV11x} \\ \hline
+            \midrule
+            Épocas                  & 100               & 100               \\ \hline
+            Tamaño del batch        & 16                & 8                 \\ \hline
+            Tasa de aprendizaje     & 0.01              & 0.01              \\ \hline
+            Optimizador             & SGD               & SGD               \\ \hline
+            Decaimiento de la tasa  & 0.005             & 0.005             \\ \hline
+            mAP50                   & 0.872             & 0.885             \\ \hline
+            mAP50-95                & 0.512             & 0.534             \\ \hline
+            Precisión               & 0.881             & 0.890             \\ \hline
+            Recall                  & 0.872             & 0.885             \\ \hline
+            F1-score                & 0.876             & 0.887             \\ \hline
+            Tiempo por época        & \SI{2}{minutos}   & \SI{5}{minutos}   \\ \hline
+            Tiempo total            & \SI{3}{horas}     & \SI{8}{horas}     \\ \hline
+            \bottomrule
+            \hline
+        \end{tabular}
+    \end{adjustbox}
+\end{table}
+
+En la figura \ref{fig:curvas-entrenamiento-picudo} se puede observar las curvas de entrenamiento y validación del mejor experimento realizado con la versión extra grande del modelo YoloV11.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.5]{./Figures/place-holder.png}
+    \caption{Curvas de entrenamiento y validación del mejor experimento realizado con YoloV11x para la detección del picudo rojo.}
+    \label{fig:curvas-entrenamiento-picudo}
+\end{figure}
+
+Finalmente, la matriz de confusión en la figura \ref{fig:matriz-confusion-picudo} indica que el modelo tiene un buen desempeño en la detección del picudo rojo, con pocos falsos positivos y falsos negativos. Sin embargo, estos datos deben ser tomados con cautela, dado que la cantidad de datos es muy limitada y podría no representar adecuadamente la variabilidad del mundo real.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.5]{./Figures/place-holder.png}
+    \caption{Matriz de confusión del mejor experimento realizado con YoloV11x para la detección del picudo rojo.}
+    \label{fig:matriz-confusion-picudo}
+\end{figure}
+
+% TODO: Completar datos
+Como resumen final, el modelo YoloV11x entrenado para la detección del picudo rojo alcanzó un mAP50 de XXXX, lo cual es un buen resultado dado la poca cantidad de datos disponibles. Es de destacar que también se probó entrenar el modelo YoloV11x directamente en una etapa desde el modelo de detección de palmeras, sin congelar las capas iniciales, pero el desempeño fue inferior (mAP50 de XXXX).
+
+El modelo final, resultante del entrenamiento de dos etapas, se seleccionó para su posterior integración en la aplicación web.
+
 %----------------------------------------------------------------------------------------
 %	SECTION 3
 %----------------------------------------------------------------------------------------
@@ -180,12 +399,16 @@ Un resumen hardware utilizado para el entrenamiento se presenta en la tabla \ref
 \section{Integración del modelo en la aplicación web}
 \label{sec:integracionModelo}
 
+
+
 % Hablar del proceso de despliegue de los modelos.
 % Hablar de las herramientas utilizadas para el despliegue de los modelos.
+% Hablar de supervision.
 % Hablar de los problemas encontrados y como se resolvieron.
 % Hablar del modelo de detección de palmeras y el de detección de picudo rojo.
 % Hablar de la integración con la aplicación web.
 % Hablar del empaquetamiento del modelo (con Poetry).
+% Hablar de la predicción con supervision.
 
 
 %----------------------------------------------------------------------------------------
