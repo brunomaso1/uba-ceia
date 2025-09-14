@@ -3,6 +3,7 @@ import datetime, json
 from pathlib import Path
 from typing import Any, Optional
 
+from deprecated import deprecated
 from loguru import logger as LOGGER
 from modulo_apps.config import config as CONFIG
 from modulo_apps.utils.types import Metadata
@@ -191,6 +192,7 @@ def _convert_patch_bboxes_to_image(
     return coco_annotations
 
 
+@deprecated(reason="Usar create_coco_annotations_from_detections_v1 en su lugar.", version="1.0")
 def create_coco_annotations_from_detections(
     detections: Detections,
     image_size_hw: tuple[int, int],
@@ -233,6 +235,85 @@ def create_coco_annotations_from_detections(
     }
     if category_map is None:
         category_map = {cat["id"]: cat["name"] for cat in coco_annotations["categories"]}
+    image_height, image_width = image_size_hw
+
+    image = {
+        "id": 1,
+        "width": image_width,
+        "height": image_height,
+        "file_name": f"{pic_name}.jpg",
+        "date_captured": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    }
+
+    coco_annotations["images"] = [image]
+
+    if detections.is_empty():
+        LOGGER.warning("No se encontraron resultados de detección de objetos.")
+        return coco_annotations
+
+    annotations = []
+    for index in range(len(detections)):
+        id = index + 1
+        category_id = int(detections.class_id[index])
+        category_name = category_map.get(category_id, None)
+        if category_id is None:
+            LOGGER.warning(f"Categoría '{category_name}' no encontrada en el mapa de categorías.")
+            continue
+
+        x_min, y_min, x_max, y_max = map(float, detections.xyxy[index])
+        ancho = x_max - x_min
+        alto = y_max - y_min
+        area = ancho * alto
+
+        conf = float(detections.confidence[index])
+        annotation = {
+            "id": id,
+            "image_id": image["id"],
+            "category_id": category_id,
+            "bbox": [x_min, y_min, ancho, alto],
+            "area": area,
+            "iscrowd": 0,
+            "attributes": {
+                "occluded": False,
+                "rotation": 0.0,
+            },
+            "confidence": conf,
+        }
+        annotations.append(annotation)
+
+    coco_annotations["annotations"] = annotations
+
+    if should_download:
+        output_filename.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_filename, "w", encoding="utf-8") as f:
+            json.dump(coco_annotations, f, indent=4, ensure_ascii=False)
+        LOGGER.success(f"Anotaciones COCO guardadas en {output_filename}")
+
+    return coco_annotations
+
+
+def create_coco_annotations_from_detections_v1(
+    detections: Detections,
+    image_size_hw: tuple[int, int],
+    pic_name: str,
+    categories: Optional[list[dict]] = None,
+    should_download: bool = False,
+    output_filename: Path = DOWNLOAD_COCO_ANNOTATIONS_FOLDER / "coco_annotations.json",
+) -> dict[str, Any]:
+    if categories is None:
+        categories = CONFIG.coco_dataset.to_dict()["categories"]
+        LOGGER.debug(
+            "No se proporcionó un mapa de categorías. Se utilizará el mapa de categorías predeterminado del dataset COCO. Categorías: {categories}"
+        )
+
+    coco_annotations = {
+        "info": CONFIG.coco_dataset.to_dict()["info"],
+        "licenses": CONFIG.coco_dataset.to_dict()["licenses"],
+        "categories": categories,
+        "images": [],
+        "annotations": [],
+    }
+    category_map = {cat["id"]: cat["name"] for cat in coco_annotations["categories"]}
     image_height, image_width = image_size_hw
 
     image = {
@@ -451,7 +532,9 @@ def delete_label(
         raise ValueError(f"La etiqueta '{label_to_delete}' no se encuentra en las anotaciones COCO.")
 
     counter = count()
-    new_categories = [{**cat, "id": next(counter)} for i, cat in enumerate(categories) if cat["name"] != label_to_delete]
+    new_categories = [
+        {**cat, "id": next(counter)} for i, cat in enumerate(categories) if cat["name"] != label_to_delete
+    ]
     coco_annotations["categories"] = new_categories
 
     category_id_map = {}

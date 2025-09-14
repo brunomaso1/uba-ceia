@@ -45,11 +45,16 @@ class DownloadFileMetadata(BaseModel):
     patches: list[Patch] | None = None
     has_patches: bool = None
     url_generate_zip: str | None = None
-    
+
     @computed_field
     @property
     def image_name(self) -> str | None:
         return self.file_download_id
+
+
+class ImageMetadata(BaseModel):
+    image_name: str
+    group_id: str
 
 
 AnnotationType = Literal["images", "patches", "cvat"]

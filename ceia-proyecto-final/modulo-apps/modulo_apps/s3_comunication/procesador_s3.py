@@ -11,6 +11,8 @@ from modulo_apps.config import config as CONFIG
 from modulo_apps.database_comunication.mongodb_client import mongodb as DB
 from modulo_apps.s3_comunication.s3_client import s3client as S3_CLIENT
 
+from modulo_apps.utils.types import ImageMetadata
+
 
 DOWNLOAD_FOLDER = CONFIG.folders.download_folder
 DOWNLOAD_IMAGES_FOLDER = CONFIG.folders.download_images_folder
@@ -88,38 +90,37 @@ def download_image_from_s3(
 
 @app.command()
 def download_images_from_s3(
-    images_name: list[str], group_id: str, output_folder: Path = DOWNLOAD_IMAGES_FOLDER, bucket_name: str = S3_BUCKET
+    images_metadata: list[ImageMetadata], output_folder: Path = DOWNLOAD_IMAGES_FOLDER, bucket_name: str = S3_BUCKET
 ) -> bool:
-    """Descarga un conjunto de imágenes desde un bucket de Amazon S3 a un directorio local.
-    Crea el directorio de salida si no existe, muestra una barra de progreso durante la descarga
-    y registra mensajes de depuración. Si ocurre un error en cualquiera de las descargas, se registra
-    y la excepción se vuelve a propagar.
+    """
+    Descarga múltiples imágenes desde S3 a una carpeta local.
+    Esta función descarga una lista de imágenes especificadas por sus metadatos desde un bucket
+    de S3 a una carpeta de destino local. Crea la carpeta de destino si no existe y muestra
+    una barra de progreso durante la descarga.
     Args:
-        images_name (list[str]): Lista de nombres de objetos/archivos de imagen en S3 a descargar.
-        group_id (str): Identificador del grupo o prefijo dentro del bucket que ayuda a localizar las imágenes.
-        output_folder (pathlib.Path, optional): Directorio local de destino donde se guardarán las imágenes.
-            Se crea si no existe. Por defecto, usa la carpeta configurada en la aplicación.
-        bucket_name (str, optional): Nombre del bucket de S3 desde el cual descargar. Por defecto, el configurado en la aplicación.
+        images_metadata (list[ImageMetadata]): Lista de objetos ImageMetadata que contienen
+            la información de las imágenes a descargar (nombre de imagen y group_id).
+        output_folder (Path, optional): Ruta de la carpeta donde se guardarán las imágenes
+            descargadas. Por defecto usa DOWNLOAD_IMAGES_FOLDER.
+        bucket_name (str, optional): Nombre del bucket de S3 desde donde descargar las
+            imágenes. Por defecto usa S3_BUCKET.
     Returns:
-        bool: True si todas las imágenes se descargan correctamente.
+        bool: True si todas las imágenes se descargaron exitosamente.
     Raises:
-        Exception: Cualquier excepción ocurrida durante el proceso de descarga es registrada y vuelta a propagar.
-    Example:
-        >>> from pathlib import Path
-        >>> download_images_from_s3(
-        ...     images_name=["img1.jpg", "img2.png"],
-        ...     group_id="grupo-123",
-        ...     output_folder=Path("/ruta/de/salida"),
-        ...     bucket_name="mi-bucket"
-        ... )
-        True
+        Exception: Si ocurre algún error durante el proceso de descarga de cualquier imagen.
+            El error original se propaga después de ser registrado.
+    Note:
+        La función utiliza tqdm para mostrar el progreso de descarga y registra eventos
+        de debug y error usando el logger configurado.
     """
     output_folder.mkdir(parents=True, exist_ok=True)
-    LOGGER.debug(f"Descargando {len(images_name)} imágenes de S3 a {output_folder}.")
+    LOGGER.debug(f"Descargando {len(images_metadata)} imágenes de S3 a {output_folder}.")
     try:
-        for image_name in tqdm(images_name, desc="Descargando imágenes", unit="MB"):
+        for image_name, group_id in tqdm(
+            ((img.image_name, img.group_id) for img in images_metadata), desc="Descargando imágenes", unit="imagen"
+        ):
             download_image_from_s3(image_name, group_id, output_folder, bucket_name)
-        LOGGER.debug(f"Se descargaron {len(images_name)} imágenes de S3.")
+        LOGGER.debug(f"Se descargaron {len(images_metadata)} imágenes de S3.")
     except Exception as e:
         LOGGER.error(f"Error al descargar imágenes de S3: {e}")
         raise e
@@ -128,30 +129,14 @@ def download_images_from_s3(
 
 @app.command()
 def download_patch_from_s3(
-    patch_name: str, group_id, output_folder: Path = DOWNLOAD_PATCHES_FOLDER, bucket_name: str = S3_BUCKET
+    patch_name: str, group_id: str, output_folder: Path = DOWNLOAD_PATCHES_FOLDER, bucket_name: str = S3_BUCKET
 ) -> Path:
-    """
-    Descarga un parche desde s3 y lo guarda en una carpeta local.
-    Args:
-        patch_name (str): Nombre del parche a descargar.
-        group_id: Identificador del grupo al que pertenece el parche.
-        output_folder (Path, optional): Carpeta de salida donde se guardará el parche.
-            Por defecto es `DOWNLOAD_PATCHES_FOLDER`.
-        bucket_name (str, optional): Nombre del bucket en MinIO. Por defecto es `S3_BUCKET`.
-    Returns:
-        Path: Ruta completa del archivo descargado.
-    Raises:
-        ValueError: Si no se encuentra la imagen asociada al parche en la base de datos.
-        Exception: Si ocurre un error durante la descarga del archivo desde MinIO.
-    Warnings:
-        Si el parche es blanco (`is_white`), se registra una advertencia y no se descarga el archivo.
-    """
     output_folder.mkdir(parents=True, exist_ok=True)
     output_filename = output_folder / f"{patch_name}.jpg"
 
     # Obtener el nombre de la imagen del parche desde mongodb
-    imagenes = DB.get_collection("imagenes")
-    image = imagenes.find_one({"patches.patch_name": patch_name})
+    images_collection = DB.get_collection("imagenes")
+    image = images_collection.find_one({"patches.patch_name": patch_name})
     if not image:
         raise ValueError(f"No se encontró la imagen del parche {patch_name} en la base de datos.")
 
@@ -161,7 +146,7 @@ def download_patch_from_s3(
         LOGGER.warning(f"El parche {patch_name} es blanco, no se descargará.")
         return None
 
-    image_name = image["id"]
+    image_name = image["file_download_id"]
     patch_key = f"{CONFIG.minio.paths.patches}/{group_id}/{image_name}/{patch_name}.jpg"
 
     try:
@@ -175,30 +160,41 @@ def download_patch_from_s3(
 
 @app.command()
 def download_patches_from_s3(
-    patch_names: list[str], group_id: str, output_folder: Path = DOWNLOAD_PATCHES_FOLDER, bucket_name: str = S3_BUCKET
-) -> None:
+    patches_metadata: list[ImageMetadata], output_folder: Path = DOWNLOAD_PATCHES_FOLDER, bucket_name: str = S3_BUCKET
+) -> Path:
     """
-    Descarga una lista de parches desde un bucket de S3 y los guarda en una carpeta local.
+    Descarga múltiples parches de imágenes desde un bucket de S3.
+    Esta función toma metadatos de imagen que contienen información sobre parches
+    y descarga cada parche individualmente desde S3 al directorio de salida especificado.
     Args:
-        patch_names (list[str]): Lista de nombres de los parches a descargar.
-        group_id (str): Identificador del grupo al que pertenecen los parches.
-        output_folder (Path, optional): Carpeta de destino donde se guardarán los parches descargados.
-            Por defecto es `DOWNLOAD_PATCHES_FOLDER`.
-        bucket_name (str, optional): Nombre del bucket de S3 desde donde se descargarán los parches.
-            Por defecto es `S3_BUCKET`.
+        patch_metadata (ImageMetadata): Objeto que contiene los metadatos de la imagen
+            incluyendo la lista de parches a descargar.
+        output_folder (Path, optional): Directorio donde se guardarán los parches descargados.
+            Por defecto es DOWNLOAD_PATCHES_FOLDER.
+        bucket_name (str, optional): Nombre del bucket de S3 desde donde descargar.
+            Por defecto es S3_BUCKET.
     Returns:
-        None
+        None: La función no retorna ningún valor, pero descarga los archivos al
+            directorio especificado.
     Raises:
-        Exception: Si ocurre un error durante la descarga de los parches.
+        Exception: Si ocurre algún error durante el proceso de descarga de parches.
+    Note:
+        - Crea el directorio de salida si no existe
+        - Muestra una barra de progreso durante la descarga
+        - Registra información de debug sobre el número de parches descargados
     """
     output_folder.mkdir(parents=True, exist_ok=True)
     try:
-        for patch_name in tqdm(patch_names, desc="Descargando parches", unit="MB"):
+        for patch_name, group_id in tqdm(
+            ((patch.image_name, patch.group_id) for patch in patches_metadata),
+            desc="Descargando parches",
+            unit="parche",
+        ):
             download_patch_from_s3(patch_name, group_id, output_folder, bucket_name)
-        LOGGER.debug(f"Se descargaron {len(patch_names)} parches de S3.")
+        LOGGER.debug(f"Se descargaron {len(patches_metadata)} parches de S3.")
     except Exception as e:
         raise Exception(f"Error al descargar parches de S3: {e}")
-    return True
+    return output_folder
 
 
 @app.command()

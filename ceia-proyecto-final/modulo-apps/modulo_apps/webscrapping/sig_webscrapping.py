@@ -861,7 +861,7 @@ def scrap_fotos2024_images(images_names: list) -> list[DownloadFileMetadata]:
     """
     download_files_metadata = []
     for image_name in images_names:
-        file_download_id = image_name.prefix("RGB_MVD_2024_")
+        file_download_id = f"RGB_MVD_2024_{image_name}"
         download_files_metadata.append(
             DownloadFileMetadata(
                 file_download_id=file_download_id,

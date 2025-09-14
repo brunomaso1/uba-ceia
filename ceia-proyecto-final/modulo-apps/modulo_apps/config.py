@@ -169,13 +169,12 @@ class COCODatasetConfig:
             COCOLicense(id=1, name="CC BY-NC-SA 4.0", url="https://creativecommons.org/licenses/by-nc-sa/4.0/")
         ]
     )
-    # TODO: Cambiar el nombre a categorias de CVAT...
     categories: List[COCOCategory] = field(
         default_factory=lambda: [
             COCOCategory(id=0, name="palmera-sana"),
             COCOCategory(id=1, name="palmera-infectada"),
-            COCOCategory(id=3, name="palmera-muerta"),
-            COCOCategory(id=5, name="palmera-exterminada"),
+            COCOCategory(id=2, name="palmera-muerta"),
+            COCOCategory(id=3, name="palmera-exterminada"),
         ]
     )
 

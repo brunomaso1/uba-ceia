@@ -208,7 +208,7 @@ def convert_image_annotations_to_cvat_annotations(
     output_images = []
     output_annotations = []
 
-    imagenes = DB.get_collection("imagenes")
+    image_collection = DB.get_collection("imagenes")
     patches_data_list = []
     for image in images:
         image_annotations = [ann for ann in annotations if ann["image_id"] == image["id"]]
@@ -218,15 +218,21 @@ def convert_image_annotations_to_cvat_annotations(
 
         # Obtener los parches asociados a la imagen
         image_name = image["file_name"].split(".")[0]  # Obtenemos el nombre de la imagen sin la extensión
-        db_image = imagenes.find_one({"id": image_name})
+        db_image = image_collection.find_one({"id": image_name})
         if not db_image:
             raise ValueError(
                 f"No se encontraron parches para la imagen {image['id']}. Toda imagen debe tener al menos un parche asociados."
             )
 
+        groupId = db_image.get("group_id", None)
+        if groupId is None:
+            raise ValueError(
+                f"La imagen {image['id']} no tiene un group_id asociado. Todas las imágenes deben tener un group_id."
+            )
+        
         for db_patch in db_image["patches"]:
             patch_data = {}
-            file_name = f"{MINIO_PATCHES_PATH}/{image_name}/{db_patch['patch_name']}.jpg"
+            file_name = f"{MINIO_PATCHES_PATH}/{groupId}/{image_name}/{db_patch['patch_name']}.jpg"
             patch_data["image"] = {
                 "file_name": file_name,
                 "height": db_patch["height"],
@@ -314,8 +320,13 @@ def convert_patch_annotations_to_cvat_annotations(
         image_name = imagenes.find_one({"patches.patch_name": patch_name})
         if not image_name:
             raise ValueError(f"No se encontró la imagen original para el parche {patch_name}.")
+        
+        group_id = image_name.get("group_id", None)
+        if group_id is None:
+            raise ValueError(f"La imagen {image_name['id']} no tiene un group_id asociado. Todas las imágenes deben tener un group_id.")
+        
 
-        image["file_name"] = f"{MINIO_PATCHES_PATH}/{image_name['id']}/{image["file_name"]}"
+        image["file_name"] = f"{MINIO_PATCHES_PATH}/{group_id}/{image_name['file_download_id']}/{image["file_name"]}"
 
     return images, annotations
 

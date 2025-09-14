@@ -227,6 +227,8 @@ def create_geojson_from_annotations(
     for annotation in annotations:
         bbox = annotation["bbox"]
         category_name = category_map.get(annotation["category_id"], "Sin categoría")
+        confidence_raw = annotation.get("confidence", "Sin datos")
+        confidence = str(round(float(confidence_raw), 2)) if confidence_raw != "Sin datos" else None
 
         # 5.1 - Convertir el bbox a coordenadas geográficas utilizando los datos del archivo JGW
         global_coordinates = ConvertorCoordenadas.convert_bbox_image_to_world(bbox, jgw_data)
@@ -257,6 +259,7 @@ def create_geojson_from_annotations(
             {
                 "name": category_name,
                 "annotation_id": annotation.get("id", None),
+                "confidence": confidence,
                 "bbox_x": bbox[0],
                 "bbox_y": bbox[1],
                 "bbox_width": bbox[2],

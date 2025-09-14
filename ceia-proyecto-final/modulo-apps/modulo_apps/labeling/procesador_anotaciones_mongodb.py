@@ -10,11 +10,13 @@ import typer
 from loguru import logger as LOGGER
 from modulo_apps.config import config as CONFIG
 from modulo_apps.database_comunication.mongodb_client import mongodb as DB
+
 from modulo_apps.utils.types import AnnotationType
 
 import modulo_apps.labeling.procesador_anotaciones_coco_dataset as CocoDatasetUtils
 import modulo_apps.labeling.convertor_cordenadas as ConvertorCoordenadas
 import modulo_apps.labeling.procesador_anotaciones_cvat as ProcesadorAnotacionesCVAT
+from modulo_apps.utils.types import ImageMetadata
 
 MINIO_PATCHES_PATH = CONFIG.minio.paths.patches
 DOWNLOAD_COCO_ANNOTATIONS_FOLDER = CONFIG.folders.download_coco_annotations_folder
@@ -73,16 +75,22 @@ def save_coco_annotations(
     upsert_operations = []
 
     if annotation_type == "images":
-        images, annotations = ProcesadorAnotacionesCVAT.convert_image_annotations_to_cvat_annotations(images, annotations)
+        images, annotations = ProcesadorAnotacionesCVAT.convert_image_annotations_to_cvat_annotations(
+            images, annotations
+        )
     elif annotation_type == "patches":
-        images, annotations = ProcesadorAnotacionesCVAT.convert_patch_annotations_to_cvat_annotations(images, annotations)
+        images, annotations = ProcesadorAnotacionesCVAT.convert_patch_annotations_to_cvat_annotations(
+            images, annotations
+        )
+    else:
+        pass
 
     for image in images:
         file_name = image["file_name"]
         image_id = image["id"]
 
         # Obtener el nombre de la imagen y el parche
-        # Ejemplo de file_name: "patches/Barrio17metros_20231212_dji_rtk_pc_5cm/Barrio17metros_20231212_dji_rtk_pc_5cm_patch_4.jpg"
+        # Ejemplo de file_name: "patches/GroupID1/Barrio17metros_20231212_dji_rtk_pc_5cm/Barrio17metros_20231212_dji_rtk_pc_5cm_patch_4.jpg"
         # imagen: quedarme con la subcarpeta de la imagen
         # parche: quedarme con el ultimo elemento del path y quitar la extension
         image_name = file_name.split("/")[-2]
@@ -111,7 +119,7 @@ def save_coco_annotations(
             # Crear operación de actualización para MongoDB
             upsert_operations.append(
                 UpdateOne(
-                    {"id": image_name, "patches.patch_name": patch_name},
+                    {"file_download_id": image_name, "patches.patch_name": patch_name},
                     {
                         "$set": {
                             # Actualizar anotaciones en el patch específico
@@ -128,13 +136,13 @@ def save_coco_annotations(
 
     # Proceder con las operaciones en la base de datos
     if image_patch_pairs:
-        imagenes = DB.get_collection("imagenes")
+        images_collection = DB.get_collection("imagenes")
 
         # Primero, para cada par de imagen/parche, eliminar las anotaciones existentes
         for image_name, patch_name in image_patch_pairs:
             # Utilizar arrayFilters para actualizar sólo el elemento específico del array
-            imagenes.update_one(
-                {"id": image_name, "patches.patch_name": patch_name},
+            images_collection.update_one(
+                {"file_download_id": image_name, "patches.patch_name": patch_name},
                 {"$set": {f"patches.$.{field_name}_annotations": []}},
             )
 
@@ -143,7 +151,7 @@ def save_coco_annotations(
         # Luego realizar las operaciones de actualización/inserción
         if upsert_operations:
             LOGGER.info(f"Se van a ejecutar {len(upsert_operations)} operaciones de actualización.")
-            result = imagenes.bulk_write(upsert_operations, ordered=False)
+            result = images_collection.bulk_write(upsert_operations, ordered=False)
             LOGGER.info(f"Documentos modificados: {result.modified_count}")
         return True
     else:
@@ -241,7 +249,7 @@ def _create_images_fields(
         "id": 1,
         "width": db_image["width"],
         "height": db_image["height"],
-        "file_name": f"{db_image["id"]}.jpg",
+        "file_name": f"{db_image["file_download_id"]}.jpg",
         "date_captured": db_image["date_captured"].strftime("%Y-%m-%d %H:%M:%S"),
     }
 
@@ -327,7 +335,9 @@ def _download_annotation_as_coco_from_mongodb(
 
     db_images = DB.get_collection("imagenes")
     db_image = (
-        db_images.find_one({"patches.patch_name": patch_name}) if patch_name else db_images.find_one({"id": image_name})
+        db_images.find_one({"patches.patch_name": patch_name})
+        if patch_name
+        else db_images.find_one({"file_download_id": image_name})
     )
     if not db_image:
         msg = (
@@ -634,7 +644,9 @@ def load_jgw_file_from_mongodb(
 
     db_images = DB.get_collection("imagenes")
     db_image = (
-        db_images.find_one({"patches.patch_name": patch_name}) if patch_name else db_images.find_one({"id": image_name})
+        db_images.find_one({"patches.patch_name": patch_name})
+        if patch_name
+        else db_images.find_one({"file_download_id": image_name})
     )
     if not db_image:
         msg = (
@@ -678,84 +690,84 @@ def load_jgw_file_from_mongodb(
     return jgw_data
 
 
-def list_patches_w_ann_from_mongodb(field_name: str = "cvat") -> list[str]:
-    """
-    Lista los nombres de los patches que tienen anotaciones en el campo especificado.
+def list_images_w_ann_from_mongodb(field_name: str = "cvat", is_test_split: bool = False) -> list[ImageMetadata]:
+    images_collection = DB.get_collection("imagenes")
+    annotation_field = f"patches.{field_name}_annotations"
+    # Define la condición de match para el campo group_id
+    if is_test_split:
+        group_id_match = {"$match": {"group_id": "test"}}
+    else:
+        # Si no es test, filtra por cualquier valor que no sea 'test'
+        group_id_match = {"$match": {"group_id": {"$ne": "test"}}}
 
-    Args:
-        field_name (str, optional): Nombre base del campo de anotaciones a buscar en cada patch.
-            Por defecto es "cvat", lo que buscará el campo "cvat_annotations".
+    pipeline = [
+        # Desenrollar el array de patches
+        {"$unwind": "$patches"},
+        # Filtrar los parches que tienen anotaciones
+        {"$match": {annotation_field: {"$exists": True, "$ne": []}}},
+        # Filtrar por el split de test o no test
+        group_id_match,
+        # Agrupar por file_download_id
+        {"$group": {"_id": "$file_download_id", "group_id": {"$first": "$group_id"}}},
+        # Proyectar resultado
+        {"$project": {"file_download_id": "$_id", "group_id": 1, "_id": 0}},
+    ]
 
-    Returns:
-        list: Lista de nombres de patches que contienen anotaciones en el campo especificado.
-    """
-    imagenes = DB.get_collection("imagenes")
+    # Ejecutar el pipeline de agregación
+    results = list(images_collection.aggregate(pipeline))
+
+    images_metadata = [ImageMetadata(image_name=doc["file_download_id"], group_id=doc["group_id"]) for doc in results]
+    return images_metadata
+
+
+def list_patches_w_ann_from_mongodb(field_name: str = "cvat", is_test_split: bool = False) -> list[ImageMetadata]:
+    images_collection = DB.get_collection("imagenes")
     field_name += "_annotations"
+    if is_test_split:
+        group_id_match = {"$match": {"group_id": "test"}}
+    else:
+        # Si no es test, filtra por cualquier valor que no sea 'test'
+        group_id_match = {"$match": {"group_id": {"$ne": "test"}}}
+
     pipeline = [
         # Descomponer el array de patches en documentos individuales
         {"$unwind": "$patches"},
         # Filtrar solo los patches que tienen el campo cvat_annotations
         # y que este campo tiene al menos un elemento
         {"$match": {f"patches.{field_name}": {"$exists": True, "$ne": []}}},
-        # Proyectar solo el nombre del patch
+        # Filtrar por el split de test o no test
+        group_id_match,
+        # Proyectar resultado
+        {"$project": {"patch_name": "$patches.patch_name", "group_id": 1, "_id": 0}},
+    ]
+
+    # Ejecutar el pipeline de agregación
+    results = list(images_collection.aggregate(pipeline))
+
+    patches_metadata = [ImageMetadata(image_name=doc["patch_name"], group_id=doc["group_id"]) for doc in results]
+    return patches_metadata
+
+
+def list_patches_in_group(group_id: str, field_name: str = "cvat") -> list[str]:
+    """
+    Lista los nombres de los parches en un grupo específico.
+
+    Args:
+        field_name (str): Nombre del campo en la base de datos que contiene las anotaciones.
+        group_id (str): ID del grupo del cual se desean listar los parches.
+
+    Returns:
+        list[str]: Lista de nombres de los parches en el grupo especificado.
+    """
+    images_collection = DB.get_collection("imagenes")
+    pipeline = [
+        {"$match": {"group_id": group_id}},
+        {"$unwind": "$patches"},
         {"$project": {"patch_name": "$patches.patch_name", "_id": 0}},
     ]
 
-    # Ejecutar el pipeline de agregación
-    resultados = list(imagenes.aggregate(pipeline))
-
-    # Extraer solo los nombres de los patches
-    patch_names = [doc["patch_name"] for doc in resultados]
-
-    return patch_names
-
-
-def list_images_w_ann_from_mongodb(field_name: str = "cvat") -> list[str]:
-    """
-    Lista los nombres de las imágenes que tienen anotaciones en el campo especificado.
-
-    Args:
-        field_name (str, optional): Nombre base del campo de anotaciones a buscar en cada imagen.
-            Por defecto es "cvat", lo que buscará el campo "cvat_annotations".
-
-    Returns:
-        list: Lista de nombres de imágenes que contienen anotaciones en el campo especificado.
-    """
-    imagenes = DB.get_collection("imagenes")
-    annotation_field = f"patches.{field_name}_annotations"
-    pipeline = [
-        # Desenrollar el array de patches para poder filtrar por cada uno
-        {"$unwind": "$patches"},
-        # Filtrar los parches que tienen el campo de anotaciones y que no está vacío
-        {"$match": {annotation_field: {"$exists": True, "$ne": []}}},
-        # Agrupar por el _id de la imagen original para obtener imágenes únicas
-        {"$group": {"_id": "$id"}},
-        # Proyectar solo el nombre de la imagen
-        {"$project": {"image_name": "$_id", "_id": 0}},
-    ]
-
-    # Ejecutar el pipeline de agregación
-    resultados = list(imagenes.aggregate(pipeline))
-
-    # Extraer solo los nombres de las imágenes
-    image_names = [doc["image_name"] for doc in resultados]
-
-    return image_names
-
-def list_images_from_mongodb(field_name: str = "cvat") -> list[str]:
-    """
-    Lista los nombres de las imágenes que tienen el campo especificado.
-
-    Args:
-        field_name (str, optional): Nombre base del campo a buscar en cada imagen.
-            Por defecto es "cvat", lo que buscará el campo "cvat_annotations".
-
-    Returns:
-        list: Lista de nombres de imágenes que contienen el campo especificado.
-    """
-    raise NotImplementedError("TODO: Función no implementada aún.")
-
-    return image_names
+    results = list(images_collection.aggregate(pipeline))
+    return [doc["patch_name"] for doc in results]
 
 
 def get_patch_metadata_from_mongodb(patch_name: str) -> Optional[dict[str, Any]]:
@@ -769,8 +781,8 @@ def get_patch_metadata_from_mongodb(patch_name: str) -> Optional[dict[str, Any]]
         Optional[dict[str, Any]]: Diccionario con la metadata del parche.
                                 Devuelve None si no se encuentra el parche.
     """
-    imagenes = DB.get_collection("imagenes")
-    db_image = imagenes.find_one({"patches.patch_name": patch_name})
+    image_collection = DB.get_collection("imagenes")
+    db_image = image_collection.find_one({"patches.patch_name": patch_name})
     if not db_image:
         LOGGER.warning(f"No se encontró el parche {patch_name} en la base de datos.")
         return None
@@ -782,6 +794,7 @@ def get_patch_metadata_from_mongodb(patch_name: str) -> Optional[dict[str, Any]]
         return None
 
     return patch_metadata
+
 
 if __name__ == "__main__":
     app()
