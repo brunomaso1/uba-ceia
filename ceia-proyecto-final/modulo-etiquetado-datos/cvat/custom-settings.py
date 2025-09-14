@@ -5,8 +5,15 @@ from cvat.settings.production import *
 import ldap
 from django_auth_ldap.config import LDAPSearch, GroupOfUniqueNamesType
 
+SMOKESCREEN_ENABLED = False
+
 if os.environ.get("CSRF_TRUSTED_ORIGINS"):
     CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",")
+
+print("Using custom settings for LDAP authentication")
+# Print CVAT_HOST if it exists
+if "CVAT_HOST" in os.environ:
+    print(f"CVAT_HOST: {os.environ['CVAT_HOST']}")
 
 try:
     CVAT_LDAP_USER = os.environ["CVAT_LDAP_USER"]

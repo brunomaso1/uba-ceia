@@ -27,6 +27,9 @@ http:
         servers:
           # - url: "http://host.docker.internal:8080" # Windows
           - url: "http://traefik:8080"
+          # - url: "http://traefik:80"
+          # - url: "http://cvat_server:8080"
+          # - url: "http://172.18.0.2:8080"
 
     # fiftyone-service:
     #   loadBalancer:

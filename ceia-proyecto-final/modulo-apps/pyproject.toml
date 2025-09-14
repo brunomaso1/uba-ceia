@@ -14,7 +14,7 @@ dependencies = [
     "typer (>=0.16.0,<0.17.0)",
     "numpy (>=2.3.0,<3.0.0)",
     "pydantic (>=2.11.7,<3.0.0)",
-    "cvat-sdk (==2.32.0)",
+    "cvat-sdk (==2.42.0)",
     "kml2geojson (>=5.1.0,<6.0.0)",
     "pandas (>=2.3.0,<3.0.0)",
     "geopandas (>=1.1.0,<2.0.0)",
@@ -29,6 +29,7 @@ dependencies = [
     "pytest (>=8.4.1,<9.0.0)",
     "scikit-learn (>=1.7.1,<2.0.0)",
     "beautifulsoup4 (>=4.13.4,<5.0.0)",
+    "deprecated (>=1.2.18,<2.0.0)",
 ]
 
 [tool.poetry]
