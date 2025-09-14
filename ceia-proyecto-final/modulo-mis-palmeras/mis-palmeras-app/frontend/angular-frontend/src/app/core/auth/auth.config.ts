@@ -3,7 +3,7 @@ import { LogLevel, PassedInitialConfig } from 'angular-auth-oidc-client';
 export const authConfig: PassedInitialConfig = {
   config: {
     // https://www.keycloak.org/securing-apps/oidc-layers
-    authority: 'http://localhost:7000/realms/prediction-app/',
+    authority: 'http://localhost:7000/realms/mis-palmeras-app/',
     redirectUrl: window.location.origin,
     postLogoutRedirectUri: window.location.origin,
     clientId: 'prediction-app-frontend',

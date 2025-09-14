@@ -31,10 +31,10 @@ start_service "/vagrant/modulo-seguridad/lldap" "--env-file .env.prod"
 start_service "/vagrant/modulo-seguridad/ldap-self-service-password" ""
 
 # Landing page
-start_service "/vagrant/modulo-aplicaciones-web/landing-page" ""
+start_service "/vagrant/modulo-mis-palmeras/landing-page" ""
 
 # CVAT
 start_service "/vagrant/modulo-etiquetado-datos/cvat" "--env-file .env.prod -f docker-compose.yml -f docker-compose.custom.yml"
 
 # Entrypoint
-start_service "/vagrant/modulo-aplicaciones-web/entrypoint" "-f docker-compose.traefik.prod.yml"
+start_service "/vagrant/modulo-seguridad/entrypoint" "-f docker-compose.traefik.prod.yml"

@@ -11,7 +11,7 @@ from fastapi_keycloak_middleware import KeycloakConfiguration, setup_keycloak_mi
 
 keycloak_config = KeycloakConfiguration(
     url="http://localhost:7000",
-    realm="prediction-app",
+    realm="mis-palmeras-app",
     client_id="prediction-app-backend",
     client_secret="tKRGTPVME5JN3m4aklYA0EfFGzgDa4Y9",
 )
