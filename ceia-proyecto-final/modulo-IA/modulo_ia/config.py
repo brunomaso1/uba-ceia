@@ -48,6 +48,7 @@ class NamesConfig:
 @dataclass
 class VersionsConfig:
     palm_dataset_name: str = "v1.0"
+    v11: str = "v1.1"
 
 @dataclass
 class DatasetsProcessedFormatConfig:

@@ -2,11 +2,13 @@ from pathlib import Path
 import shutil
 from typing import Any, Optional
 
+from deprecated import deprecated
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 import typer
 
 import fiftyone as fo
+from fiftyone import ViewField as F
 
 from loguru import logger as LOGGER
 import yaml
@@ -34,100 +36,33 @@ app = typer.Typer()
 
 
 @app.command()
-def download_full_raw_dataset(
-    output_folder: Path,
-    for_patches: bool = False,
-    with_annotations: bool = True,
-    annotations_field_name: str = "cvat",
-    annotations_output_filename: str = None,
-) -> list[str]:
-    """
-    TODO: Refactorizar para descargar todas las imágenes aunque no tengan anotaciones.
-    Descarga el conjunto de datos bruto completo desde la base de datos y el almacenamiento S3.
-    La descarga se realiza en formato COCO, ya sea de imágenes o parches.
-
-    Args:
-        output_folder (Path): Ruta de la carpeta donde se almacenará el conjunto de datos descargado.
-        for_patches (bool): Si es True, descarga parches en lugar de imágenes. Por defecto es False.
-        with_annotations (bool): Indica si se deben descargar las anotaciones junto con las imágenes o parches.
-        annotations_field_name (str): Nombre del campo en la base de datos que contiene las anotaciones. Por defecto es "cvat".
-        annotations_output_filename (str, optional): Nombre del archivo donde se guardarán las anotaciones descargadas.
-
-    Returns:
-        list[str]: Lista de nombres de imágenes o parches descargados, dependiendo del valor de
-        for_patches.
-    """
-    output_folder.mkdir(parents=True, exist_ok=True)
-    annotations_output_filename = (
-        output_folder / "labels.json" if annotations_output_filename is None else annotations_output_filename
-    )
-
-    data_folder_path = output_folder / "data"
-    data_folder_path.mkdir(parents=True, exist_ok=True)
-    if not for_patches:
-        # TODO: Refactorizar para descargar todas las imágenes aunque no tengan anotaciones.
-        images_names = ProcesadorAnotacionesMongoDB.list_images_w_ann_from_mongodb()
-        ProcesadorS3.download_images_from_minio(images_names, data_folder_path)
-    else:
-        # TODO: Refactorizar para descargar todas las imágenes aunque no tengan anotaciones.
-        patch_names = ProcesadorAnotacionesMongoDB.list_patches_w_ann_from_mongodb()
-        ProcesadorS3.download_patches_from_minio(patch_names, data_folder_path)
-
-    if with_annotations:
-        if for_patches:
-            ProcesadorAnotacionesMongoDB.download_annotations_as_coco_from_mongodb(
-                patches_names=patch_names,
-                field_name=annotations_field_name,
-                output_filename=annotations_output_filename,
-            )
-        else:
-            ProcesadorAnotacionesMongoDB.download_annotations_as_coco_from_mongodb(
-                field_name=annotations_field_name,
-                images_names=images_names,
-                output_filename=annotations_output_filename,
-            )
-
-    return patch_names if for_patches else images_names
-
-
-@app.command()
-def download_partial_raw_dataset(
-    patches_names: list[str] = typer.Option(None, help="Lista de nombres de parches"),
-    images_names: list[str] = typer.Option(None, help="Lista de nombres de imágenes"),
+def download_images_raw_dataset(
     output_folder: Path = RAW_DATA_FOLDER,
     with_annotations: bool = True,
     annotations_field_name: str = "cvat",
     annotations_output_filename: str = None,
+    test_split: bool = False,
 ) -> list[str]:
     """
-    Descarga un conjunto de datos parcial desde la base de datos y el almacenamiento S3.
-    La descarga se realiza en formato COCO, ya sea de imágenes o parches.
-
+    Descarga imágenes y opcionalmente sus anotaciones desde MongoDB y S3 para crear un dataset raw.
+    Esta función crea la estructura de carpetas necesaria, descarga las imágenes desde S3
+    y opcionalmente descarga las anotaciones en formato COCO desde MongoDB.
     Args:
-        images_names (list[str], optional): Lista de nombres de imágenes a descargar. Por defecto es None.
-        patches_names (list[str], optional): Lista de nombres de parches a descargar. Por defecto es None.
-        folder_path (Optional[Path], optional): Ruta de la carpeta donde se almacenará el conjunto
-            de datos descargado. Si no se proporciona, se utiliza la carpeta predeterminada
-            configurada en RAW_DATA_FOLDER.
-        with_annotations (bool, optional): Indica si se deben descargar las anotaciones junto con
-            las imágenes o parches. Por defecto es True.
-        annotations_field_name (str, optional): Nombre del campo en la base de datos que contiene
-            las anotaciones. Por defecto es "cvat".
-        annotations_output_filename (str, optional): Nombre del archivo donde se guardarán las
-            anotaciones descargadas. Si no se proporciona, se utiliza "labels.json" en la carpeta
-            destino.
-
-    Raises:
-        ValueError: Si no se proporciona una lista de nombres de imágenes o parches, o si se
-            proporcionan ambas listas al mismo tiempo.
-
+        output_folder (Path, optional): Carpeta de destino donde se guardarán las imágenes y anotaciones.
+            Por defecto utiliza RAW_DATA_FOLDER.
+        with_annotations (bool, optional): Si True, descarga también las anotaciones junto con las imágenes.
+            Por defecto es True.
+        annotations_field_name (str, optional): Nombre del campo en MongoDB que contiene las anotaciones.
+            Por defecto es "cvat".
+        annotations_output_filename (str, optional): Nombre del archivo donde se guardarán las anotaciones.
+            Si es None, se utiliza "labels.json" en la carpeta de salida.
+        test_split (bool, optional): Si True, descarga solo las imágenes marcadas como conjunto de prueba.
+            Por defecto es False.
     Returns:
-        list[str]: Lista de nombres de imágenes o parches descargados, dependiendo de los argumentos
-        proporcionados.
+        list[str]: Lista con los nombres de las imágenes descargadas.
+    Raises:
+        Exception: Si ocurre algún error durante la descarga de imágenes o anotaciones desde S3 o MongoDB.
     """
-    if bool(patches_names is None) == bool(images_names is None):  # xor
-        raise ValueError("Se debe proporcionar una lista de nombres de parches o imágenes.")
-    output_folder /= f"{DATASET_NAME}_{DATASET_VERSION}"
     output_folder.mkdir(parents=True, exist_ok=True)
     annotations_output_filename = (
         output_folder / "labels.json" if annotations_output_filename is None else annotations_output_filename
@@ -135,26 +70,62 @@ def download_partial_raw_dataset(
 
     data_folder_path = output_folder / "data"
     data_folder_path.mkdir(parents=True, exist_ok=True)
-    if not patches_names:
-        ProcesadorS3.download_images_from_minio(images_names, data_folder_path)
-    else:
-        ProcesadorS3.download_patches_from_minio(patches_names, data_folder_path)
+    images_metadata = ProcesadorAnotacionesMongoDB.list_images_w_ann_from_mongodb(is_test_split=test_split)
+    ProcesadorS3.download_images_from_s3(images_metadata, data_folder_path)
 
     if with_annotations:
-        if patches_names:
-            ProcesadorAnotacionesMongoDB.download_annotations_as_coco_from_mongodb(
-                patches_names=patches_names,
-                field_name=annotations_field_name,
-                output_filename=annotations_output_filename,
-            )
-        else:
-            ProcesadorAnotacionesMongoDB.download_annotations_as_coco_from_mongodb(
-                field_name=annotations_field_name,
-                images_names=images_names,
-                output_filename=annotations_output_filename,
-            )
+        ProcesadorAnotacionesMongoDB.download_annotations_as_coco_from_mongodb(
+            field_name=annotations_field_name,
+            images_names=[img.image_name for img in images_metadata],
+            output_filename=annotations_output_filename,
+        )
 
-    return patches_names if patches_names else images_names
+
+@app.command()
+def download_patches_raw_dataset(
+    output_folder: Path = RAW_DATA_FOLDER,
+    with_annotations: bool = True,
+    annotations_field_name: str = "cvat",
+    annotations_output_filename: str = None,
+    test_split: bool = False,
+) -> list[str]:
+    """
+    Descarga un dataset de parches de imágenes desde MongoDB y S3 con sus anotaciones opcionales.
+    Esta función descarga metadatos de parches desde MongoDB, descarga las imágenes correspondientes
+    desde S3 y opcionalmente descarga las anotaciones en formato COCO.
+    Args:
+        output_folder (Path, optional): Carpeta de destino donde se guardarán los datos descargados.
+            Por defecto es RAW_DATA_FOLDER.
+        with_annotations (bool, optional): Si True, descarga también las anotaciones junto con las imágenes.
+            Por defecto es True.
+        annotations_field_name (str, optional): Nombre del campo en MongoDB que contiene las anotaciones.
+            Por defecto es "cvat".
+        annotations_output_filename (str, optional): Nombre del archivo donde se guardarán las anotaciones.
+            Si es None, se usa "labels.json" en la carpeta de salida.
+        test_split (bool, optional): Si True, descarga el conjunto de datos de prueba.
+            Si False, descarga el conjunto de entrenamiento. Por defecto es False.
+    Returns:
+        list[str]: Lista con los nombres de los parches descargados.
+    Note:
+        La función crea automáticamente las carpetas necesarias si no existen.
+        Las imágenes se guardan en una subcarpeta llamada "data" dentro de output_folder.
+    """
+    output_folder.mkdir(parents=True, exist_ok=True)
+    annotations_output_filename = (
+        output_folder / "labels.json" if annotations_output_filename is None else annotations_output_filename
+    )
+
+    data_folder_path = output_folder / "data"
+    data_folder_path.mkdir(parents=True, exist_ok=True)
+    patches_metadata = ProcesadorAnotacionesMongoDB.list_patches_w_ann_from_mongodb(is_test_split=test_split)
+    ProcesadorS3.download_patches_from_s3(patches_metadata, data_folder_path)
+
+    if with_annotations:
+        ProcesadorAnotacionesMongoDB.download_annotations_as_coco_from_mongodb(
+            field_name=annotations_field_name,
+            patches_names=[img.image_name for img in patches_metadata],
+            output_filename=annotations_output_filename,
+        )
 
 
 @app.command()
@@ -471,23 +442,27 @@ def get_dataset_metrics(
                     LOGGER.warning(f'Advertencia: no se pudo agregar el split "{split}" al dataset. Error: {e}')
                     pass
 
-            total_class_count = dataset.count_values("ground_truth.detections.label")
+            metrics = {}
+
+            # Calcular métricas para cada split
             train_view = dataset.match_tags("train")
-            train_class_count = train_view.count_values("ground_truth.detections.label")
+            if train_view.count() > 0:
+                train_data = _calculate_metrics(train_view, "train")
+                metrics.update(train_data)
+
             val_view = dataset.match_tags("val")
-            val_class_count = val_view.count_values("ground_truth.detections.label")
+            if val_view.count() > 0:
+                val_data = _calculate_metrics(val_view, "val")
+                metrics.update(val_data)
+
             test_view = dataset.match_tags("test")
-            test_class_count = test_view.count_values("ground_truth.detections.label")
-            metrics = {
-                "train_count": train_view.count(),
-                "train_class_count": train_class_count,
-                "val_count": val_view.count(),
-                "val_class_count": val_class_count,
-                "test_count": test_view.count(),
-                "test_class_count": test_class_count,
-                "total_count": dataset.count(),
-                "total_class_count": total_class_count,
-            }
+            if test_view.count() > 0:
+                test_data = _calculate_metrics(test_view, "test")
+                metrics.update(test_data)
+
+            # Métricas generales del dataset completo
+            overall_data = _calculate_metrics(dataset, "total")
+            metrics.update(overall_data)
         case DatasetFormat.COCO:
             dataset = fo.Dataset.from_dir(
                 dataset_type=fo.types.COCODetectionDataset,
@@ -495,9 +470,19 @@ def get_dataset_metrics(
                 name=dataset_name,
                 overwrite=True,
             )
+
+            total_count = dataset.count()
+
+            # Para COCO, el campo es "detections" en lugar de "ground_truth"
+            images_with_detections = dataset.match(F("detections.detections").length() > 0).count()
+            images_without_detections = total_count - images_with_detections
+
             class_count = dataset.count_values("detections.detections.label")
+
             metrics = {
-                "total_count": dataset.count(),
+                "total_images_count": total_count,
+                "total_images_with_detections": images_with_detections,
+                "total_images_without_detections": images_without_detections,
                 "class_count": class_count,
             }
         case _:
@@ -505,14 +490,36 @@ def get_dataset_metrics(
 
     return metrics
 
-def get_dataset_stats(dataset_path: Path,
+
+def _calculate_metrics(view, prefix):
+    total_count = view.count()
+
+    # Contar imágenes con al menos una detección
+    images_with_detections = view.match(F("ground_truth.detections").length() > 0).count()
+
+    # Contar imágenes sin detecciones
+    images_without_detections = view.match(F("ground_truth.detections").length() == 0).count()
+
+    # Contar clases
+    class_count = view.count_values("ground_truth.detections.label")
+
+    return {
+        f"{prefix}_count": total_count,
+        f"{prefix}_images_with_detections": images_with_detections,
+        f"{prefix}_images_without_detections": images_without_detections,
+        f"{prefix}_class_count": class_count,
+    }
+
+
+def get_dataset_stats(
+    dataset_path: Path,
     dataset_name: str,
     dataset_format: DatasetFormat,
 ) -> Optional[dict]:
     if not dataset_path.exists():
         LOGGER.error(f"El directorio del dataset no existe: {dataset_path}")
         raise typer.Exit(1)
-    
+
     dataset = None
     match dataset_format:
         case DatasetFormat.YOLO:
@@ -531,11 +538,12 @@ def get_dataset_stats(dataset_path: Path,
                 dataset_dir=dataset_path,
                 name=dataset_name,
                 overwrite=True,
-            )            
+            )
         case _:
             LOGGER.error(f"Formato {dataset_format} no implementado aún")
 
     return dataset.stats(include_media=True)
+
 
 @app.command()
 def copy_dataset_to_quality(dataset_path: Path, dataset_name: str, quality_folder: Path = DATA_QUALITY_FOLDER):
@@ -558,7 +566,7 @@ def copy_dataset_to_quality(dataset_path: Path, dataset_name: str, quality_folde
         LOGGER.error(f"El directorio del dataset no existe: {dataset_path}")
         raise typer.Exit(1)
 
-    quality_folder += dataset_name
+    quality_folder /= dataset_name
     quality_folder.mkdir(parents=True, exist_ok=True)
     try:
         LOGGER.info("Copiando dataset a la carpeta de calidad de datos...")
@@ -573,17 +581,8 @@ def copy_dataset_to_quality(dataset_path: Path, dataset_name: str, quality_folde
     try:
         with open(file_path, "r") as f:
             data = yaml.safe_load(f)
-        new_path_value = f"/{quality_folder.parent.name}/{dataset_name}"
+        new_path_value = f"/data/{dataset_name}"
         data["path"] = new_path_value
-
-        # Remplaza las barras invertidas por barras normales en todos los valores de ruta relevantes
-        for key, value in data.items():
-            if isinstance(value, str) and "\\" in value:
-                data[key] = value.replace("\\", "/")
-            elif isinstance(value, dict):
-                for sub_key, sub_value in value.items():
-                    if isinstance(sub_value, str) and "\\" in sub_value:
-                        value[sub_key] = sub_value.replace("\\", "/")
 
         with open(file_path, "w") as f:
             yaml.dump(data, f, default_flow_style=False)
@@ -594,7 +593,3 @@ def copy_dataset_to_quality(dataset_path: Path, dataset_name: str, quality_folde
         LOGGER.info(f"Error processing YAML file: {e}")
     except Exception as e:
         LOGGER.info(f"An unexpected error occurred: {e}")
-
-
-if __name__ == "__main__":
-    app()

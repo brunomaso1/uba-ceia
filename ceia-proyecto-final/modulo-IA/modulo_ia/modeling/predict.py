@@ -1,18 +1,15 @@
 from dataclasses import dataclass
-import os
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Literal
+from deprecated import deprecated
 from modulo_ia.config import config as CONFIG
 from loguru import logger as LOGGER
-
 import cv2
 import numpy as np
 import pandas as pd
 from ultralytics import YOLO
 from ultralytics.engine.results import Results
-
-from supervision import Detections, InferenceSlicer, OverlapFilter, BoxAnnotator
-
+from supervision import Detections, InferenceSlicer, OverlapFilter, BoxAnnotator, LabelAnnotator
 import modulo_apps.labeling.procesador_anotaciones_coco_dataset as CocoDatasetProcessor
 
 LOGGER.debug(
@@ -22,6 +19,8 @@ LOGGER.debug(
 
 @dataclass
 class PredictionResult:
+    """Clase para manejar los resultados de las predicciones del modelo."""
+
     detections: Results | Detections
     img_size_hw: tuple[int, int]
 
@@ -39,7 +38,22 @@ class PredictionResult:
         filtered_detections = self.detections[self.detections.confidence >= min_confidence]
         return PredictionResult(filtered_detections, self.img_size_hw)
 
+    def filter_by_nms(self, iou_threshold: float = 0.5) -> "PredictionResult":
+        if self.is_empty():
+            return self
+
+        filtered_detections = self.detections.with_nms(threshold=iou_threshold, class_agnostic=False)
+        return PredictionResult(filtered_detections, self.img_size_hw)
+
+    def filter_by_nmm(self, iou_threshold: float = 0.5) -> "PredictionResult":
+        if self.is_empty():
+            return self
+
+        filtered_detections = self.detections.with_nmm(threshold=iou_threshold, class_agnostic=False)
+        return PredictionResult(filtered_detections, self.img_size_hw)
+
     def as_pandas(self) -> pd.DataFrame:
+        """Convierte las detecciones a un DataFrame de pandas."""
         if self.detections.is_empty():
             return pd.DataFrame()
 
@@ -54,13 +68,32 @@ class PredictionResult:
         }
         return pd.DataFrame(data)
 
-    def get_annotated_image(self, image: np.ndarray) -> np.ndarray:
+    def get_annotated_image(self, image: np.ndarray, include_labels: bool = True) -> np.ndarray:
+        """Devuelve la imagen anotada con las detecciones."""
         if self.detections.is_empty():
             return image.copy()
-        return BoxAnnotator().annotate(scene=image.copy(), detections=self.detections)
+        annotated_frame = None
+        if include_labels:
+            labels = [
+                f"{class_name} {confidence:.2f}"
+                for class_name, confidence in zip(self.detections["class_name"], self.detections.confidence)
+            ]
 
+            label_annotator = LabelAnnotator()
+            annotated_frame = label_annotator.annotate(scene=image.copy(), detections=self.detections, labels=labels)
+
+        box_annotator = BoxAnnotator()
+        annotated_frame = box_annotator.annotate(
+            scene=image.copy() if annotated_frame is None else annotated_frame, detections=self.detections
+        )
+        return annotated_frame
+
+    @deprecated(reason="Usar as_coco_annotations_v1 en su lugar.", version="1.0")
     def as_coco_annotations(
-        self, pic_name: str, should_download: Optional[bool] = None, output_filename: Optional[Path] = None
+        self,
+        pic_name: str,
+        should_download: Optional[bool] = None,
+        output_filename: Optional[Path] = None,
     ) -> list[dict]:
         if self.detections.is_empty():
             return []
@@ -75,13 +108,38 @@ class PredictionResult:
             detections=self.detections, image_size_hw=self.img_size_hw, pic_name=pic_name, **kwargs
         )
 
+    def as_coco_annotations_v1(
+        self,
+        pic_name: str,
+        categories: Optional[list[dict]] = None,
+        should_download: Optional[bool] = None,
+        output_filename: Optional[Path] = None,
+    ):
+        if self.detections.is_empty():
+            return []
+
+        kwargs = {}
+        if output_filename is not None:
+            kwargs["output_filename"] = output_filename
+        if should_download is not None:
+            kwargs["should_download"] = should_download
+        if categories is not None:
+            kwargs["categories"] = categories
+
+        return CocoDatasetProcessor.create_coco_annotations_from_detections_v1(
+            detections=self.detections,
+            image_size_hw=self.img_size_hw,
+            pic_name=pic_name,
+            **kwargs,
+        )
+
 
 @dataclass
 class DetectionModelPredictor:
     model: Path | Any
     target_img_size_wh: tuple[int, int] = (640, 640)
     overlap_ratio_wh: tuple[float, float] = (0.4, 0.4)
-    overlap_filter: OverlapFilter = OverlapFilter.NON_MAX_MERGE
+    overlap_filter_name: Literal["NMS", "NMM"] = "NMS"
     iou_threshold: float = 0.5
 
     def __post_init__(self):
@@ -89,6 +147,13 @@ class DetectionModelPredictor:
             self.model = self._load_model(self.model)
         if not hasattr(self.model, "predict"):
             raise ValueError("El modelo debe tener un método 'predict'.")
+        match self.overlap_filter_name:
+            case "NMS":
+                self.overlap_filter = OverlapFilter.NON_MAX_SUPPRESSION
+            case "NMM":
+                self.overlap_filter = OverlapFilter.NON_MAX_MERGE
+            case _:
+                raise ValueError(f"Unsupported overlap filter: {self.overlap_filter_name}")
         self.overlap_wh: tuple[int, int] = (
             int(self.overlap_ratio_wh[0] * self.target_img_size_wh[0]),
             int(self.overlap_ratio_wh[1] * self.target_img_size_wh[1]),

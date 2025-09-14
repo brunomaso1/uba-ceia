@@ -14,7 +14,7 @@ hsv_v: 0.4 # Variaciones en brillo (luminosidad)
 # Técnicas de composición
 mosaic: 1.0 # Mosaic activo (muy útil en YOLO, mejora la generalización)
 mixup: 0.1 # Combinación de imágenes para generalizar mejor
-copy_paste: 0.0 # No lo recomiendo para palmeras, salvo que lo ajustes manualmente
+copy_paste: 0.0
 
 # AutoAugment y otros
 auto_augment: randaugment # Usa estrategias modernas de augmentación (si hay soporte)

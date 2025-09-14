@@ -1,6 +1,7 @@
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 import shutil
+from typing import Optional
 from matplotlib import pyplot as plt
 import numpy as np
 import random, yaml
@@ -427,39 +428,11 @@ def balance_dataset(
 def balance_dataset_v1(
     dataset_path: Path,
     output_path: Path,
+    export_categories: list[dict],
     dataset_format: DatasetFormat = DatasetFormat.YOLO,
     background_precentage: float = 0.1,
     all_classes: bool = False,
 ):
-    """
-    Balancea un dataset de detección de objetos en formato YOLO, permitiendo igualar la cantidad de imágenes por clase
-    y controlar la proporción de imágenes sin detecciones (background).
-
-    Args:
-        dataset_path : Path
-            Ruta al directorio raíz del dataset original. Debe contener las carpetas 'images/full' y 'labels/full'.
-        output_path : Path
-            Ruta donde se guardará el dataset balanceado. Si es igual a dataset_path, los archivos originales serán reemplazados.
-        dataset_format : DatasetFormat, opcional
-            Formato del dataset. Actualmente solo se soporta DatasetFormat.YOLO.
-        background_precentage : float, opcional
-            Proporción de imágenes sin detecciones (background) que se incluirán en el dataset balanceado, respecto a la cantidad de imágenes con detecciones.
-        all_classes : bool, opcional
-            Si es True, balancea el dataset igualando la cantidad de imágenes por cada clase. Requiere que exista un archivo dataset.yaml con los nombres de las clases.
-
-    Raises:
-        FileNotFoundError
-            Si no se encuentran las carpetas necesarias o el archivo dataset.yaml (cuando all_classes=True).
-        NotImplementedError
-            Si se especifica un formato de dataset distinto a YOLO.
-        ValueError
-            Si hay errores al parsear el archivo dataset.yaml o no se pueden obtener los nombres de las clases.
-
-    Notes:
-    - Utiliza FiftyOne para manipular y exportar el dataset.
-    - Si output_path es igual a dataset_path, los archivos originales serán sobrescritos.
-    - Permite controlar el balance entre imágenes con y sin detecciones, así como entre clases.
-    """
     if not dataset_path.exists():
         raise FileNotFoundError(f"El dataset {dataset_path} no existe.")
     if not output_path.exists():
@@ -479,25 +452,7 @@ def balance_dataset_v1(
     if not labels_dir.exists():
         raise FileNotFoundError(f"La carpeta 'labels' no se encontró en {dataset_path}.")
 
-    class_names = []
-    try:
-        with open(dataset_yaml_path, "r") as f:
-            data = yaml.safe_load(f)
-            class_names = data.get("names", [])
-            if all_classes and not class_names:
-                raise ValueError(
-                    f"No se encontraron nombres de clases en {dataset_yaml_path}. Necesario para balancear por clase."
-                )
-    except FileNotFoundError:
-        if all_classes:  # Si se pide balanceo por clase y no hay YAML, salimos
-            raise FileNotFoundError(
-                f"No se encontró dataset.yaml en {dataset_path}. Necesario para balancear por clase."
-            )
-        LOGGER.warning(f"No se encontró dataset.yaml en {dataset_path}. Balanceo entre imágenes con y sin detecciones.")
-    except yaml.YAMLError as e:
-        if all_classes:  # Si se pide balanceo por clase y hay error de YAML, salimos
-            raise ValueError(f"Error al parsear dataset.yaml en {dataset_path}: {e}")
-        LOGGER.warning(f"Error al parsear dataset.yaml en {dataset_path}: {e}")
+    _validate_class_names(dataset_path, all_classes, dataset_yaml_path)
 
     same_folder = False
     if output_path == dataset_path:
@@ -532,27 +487,39 @@ def balance_dataset_v1(
         # Eliminamos las imágenes sin detecciones.
         export_view = dataset.exclude(no_detections_samples_id)
     else:
-        # Obtener la clase con menos imágenes
-        class_counts = dataset.count_values("ground_truth.detections.label")
-        min_class = min(class_counts, key=class_counts.get)
-        min_class_count = class_counts[min_class]
-        LOGGER.debug(f"Clase con menos detecciones: {min_class} ({min_class_count} detecciones)")
+        LOGGER.debug("Balanceando el dataset por todas las clases individuales de objetos...")
+        class_count = dataset.count_values("ground_truth.detections.label")
+        class_count_ordered = {k: v for k, v in sorted(class_count.items(), key=lambda item: item[1])}
+        min_class_count = min(class_count_ordered.values())
+        LOGGER.debug(f"Conteo de detecciones por clase (antes del balanceo): {class_count_ordered}")
 
-        limits = {class_name: min_class_count for class_name in dataset.default_classes}
-        for label, limit in limits.items():
-            # Creamos una vista con las imágenes de la clase actual
-            view = dataset.filter_labels("ground_truth", F("label") == label)
-            label_ids = view.values("ground_truth.detections.id", unwind=True)
+        detections_counts = {class_name: 0 for class_name in class_count}
+        samples_to_include = []
 
-            # Mezclamos los ID...
-            random.shuffle(label_ids)
+        for class_name in class_count_ordered.keys():
+            LOGGER.debug(f"Procesando clase '{class_name}' con {class_count_ordered[class_name]} detecciones.")
+            LOGGER.debug(f"Conteo de detecciones totales actuales para todas las clases: {detections_counts}")
+            filtered_view = dataset.match(F("ground_truth.detections.label").contains(class_name))
+            filtered_view = filtered_view.shuffle()
+            if detections_counts[class_name] >= min_class_count:
+                LOGGER.info(f"Ya se alcanzó el mínimo requerido de detecciones para la clase '{class_name}'.")
+                continue
+            for sample in filtered_view:
+                samples_to_include.append(sample.id)
+                sample_detections = sample.ground_truth.detections
+                labels = [detection.label for detection in sample_detections]
+                sample_detections_count = Counter(labels)
+                for label, count in sample_detections_count.items():
+                    detections_counts[label] += count
+                if detections_counts[class_name] >= min_class_count:
+                    LOGGER.debug(
+                        f"Se alcanzó el mínimo requerido de {min_class_count} detecciones para la clase '{class_name}'."
+                    )
+                    # Salir del bucle interior si se alcanza el mínimo requerido
+                    break
 
-            # Seleccionamos el "exceso" de los IDs según el límite y le ponemos
-            # el tag "extra" para luego excuirlos.
-            view.select_labels(ids=label_ids[limit:]).tag_labels("extra")
-
-        # Omitir labels con el tag "extra" en la vista de exportación
-        export_view = dataset.exclude_labels(tags="extra")
+        # Incluir las imágenes con detecciones balanceadas
+        export_view = dataset.select(samples_to_include)
         with_detections_count = export_view.count()
 
     if not export_view:
@@ -577,6 +544,7 @@ def balance_dataset_v1(
         export_view += no_detections_view
 
     # Finalmente, exportamos el dataset balanceado
+    export_categories_list = [cat['name'] for cat in export_categories]
     if same_folder:
         temp_path = TEMP_DATA_FOLDER / "temp_dataset"
         export_view.export(
@@ -585,6 +553,7 @@ def balance_dataset_v1(
             label_field="ground_truth",
             overwrite=True,
             split="full",
+            classes=export_categories_list,
         )
         LOGGER.debug(f"Eliminando archivos originales en {dataset_path}.")
         shutil.rmtree(dataset_path)
@@ -609,12 +578,49 @@ def balance_dataset_v1(
             label_field="ground_truth",
             overwrite=True,
             split="full",
+            classes=export_categories_list,
         )
 
 
-if __name__ == "__main__":
-    # app()
-    dataset_path = INTERIM_DATA_FOLDER / "coco_palm_dataset_v1.0_step"
-    output_path = dataset_path
+def _validate_class_names(dataset_path: Path, all_classes: bool, dataset_yaml_path: Path) -> None:
+    """
+    Valida los nombres de clases en un dataset de YOLO.
+    Esta función verifica que exista un archivo dataset.yaml válido y que contenga
+    nombres de clases cuando se requiere balanceo por todas las clases.
+    Args:
+        dataset_path (Path): Ruta al directorio del dataset.
+        all_classes (bool): Si True, requiere que existan nombres de clases válidos.
+                           Si False, permite continuar sin archivo yaml o con errores.
+        dataset_yaml_path (Path): Ruta completa al archivo dataset.yaml.
+    Raises:
+        ValueError: Si all_classes es True y no se encuentran nombres de clases
+                   en el archivo yaml, o si hay errores al parsear el yaml.
+        FileNotFoundError: Si all_classes es True y no se encuentra el archivo
+                          dataset.yaml.
+    Note:
+        Si all_classes es False, los errores se registran como warnings y la
+        función continúa sin lanzar excepciones, permitiendo balanceo básico
+        entre imágenes con y sin detecciones.
+    """
+    try:
+        with open(dataset_yaml_path, "r") as f:
+            data = yaml.safe_load(f)
+            class_names = data.get("names", [])
+            if all_classes and not class_names:
+                raise ValueError(
+                    f"No se encontraron nombres de clases en {dataset_yaml_path}. Necesario para balancear por clase."
+                )
+    except FileNotFoundError:
+        if all_classes:  # Si se pide balanceo por clase y no hay YAML, salimos
+            raise FileNotFoundError(
+                f"No se encontró dataset.yaml en {dataset_path}. Necesario para balancear por clase."
+            )
+        LOGGER.warning(f"No se encontró dataset.yaml en {dataset_path}. Balanceo entre imágenes con y sin detecciones.")
+    except yaml.YAMLError as e:
+        if all_classes:  # Si se pide balanceo por clase y hay error de YAML, salimos
+            raise ValueError(f"Error al parsear dataset.yaml en {dataset_path}: {e}")
+        LOGGER.warning(f"Error al parsear dataset.yaml en {dataset_path}: {e}")
 
-    balance_dataset_v1(dataset_path=dataset_path, output_path=output_path, all_classes=False)
+
+if __name__ == "__main__":
+    app()

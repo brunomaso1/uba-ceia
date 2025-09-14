@@ -13,6 +13,7 @@ from ultralytics.data import build_dataloader, build_yolo_dataset
 from ultralytics.cfg import get_cfg
 
 from deprecated import deprecated
+from torch.utils.data import DataLoader
 
 
 def filter_results_by_confidence(
@@ -160,12 +161,21 @@ def get_yolo_training_dataloader(
     cfg_imgsz: int,
     cfg_batch: int,
     dataset_path: Path,
+    shuffle: bool = True,
 ) -> InfiniteDataLoader:
-    cfg_dict = get_cfg(overrides={"cfg": str(cfg_path)})
-    cfg_dict.data = str(cfg_data)
-    cfg_dict.imgsz = cfg_imgsz
-    cfg_dict.batch = cfg_batch
-    cfg_dict.mode = "train"
+    with open(cfg_path, "r") as f:
+        cfg_overrides = yaml.safe_load(f)
+
+    cfg_overrides.update(
+        {
+            "data": str(cfg_data),
+            "imgsz": cfg_imgsz,
+            "batch": cfg_batch,
+            "mode": "train",
+        }
+    )
+
+    cfg_dict = get_cfg(overrides=cfg_overrides)
 
     # Cargar el YAML como diccionario
     with open(cfg_dict.data, "r") as f:
@@ -173,39 +183,95 @@ def get_yolo_training_dataloader(
         if "channels" not in data_dict:
             data_dict["channels"] = 3  # RGB
 
-    yolo_training_dataset = build_yolo_dataset(cfg_dict, img_path=dataset_path, batch=cfg_dict.batch, data=data_dict)
-    yolo_training_dataloader = build_dataloader(yolo_training_dataset, batch=cfg_dict.batch, workers=cfg_dict.workers)
+    yolo_training_dataset = build_yolo_dataset(
+        cfg_dict, rect=False, img_path=dataset_path, batch=cfg_dict.batch, data=data_dict
+    )
+    yolo_training_dataloader = build_dataloader(
+        yolo_training_dataset, shuffle=shuffle, batch=cfg_dict.batch, workers=cfg_dict.workers
+    )
     return yolo_training_dataloader
 
 
-def plot_yolo_augmentations(dataloader, class_names, max_batches=1, ncols=3):
+def plot_yolo_augmentations(dataloader, class_names, color_map=None, max_batches=1, ncols=3):
     """
-    Visualiza las imágenes y sus correspondientes cajas delimitadoras (bounding boxes)
-    y clases a partir de un dataloader.
-    Args:
-        dataloader (torch.utils.data.DataLoader): Dataloader que proporciona lotes de datos
-            con las claves "bboxes", "cls", "img" y "batch_idx".
-            - "bboxes": Tensor de forma (n_boxes, 4) que contiene las coordenadas de las
-              cajas delimitadoras en formato (x_center, y_center, width, height).
-            - "cls": Tensor de forma (n_boxes, 1) que contiene los índices de las clases
-              correspondientes a cada caja delimitadora.
-            - "img": Tensor de forma (batch_size, 3, H, W) que contiene las imágenes del lote.
-            - "batch_idx": Tensor de forma (n_boxes, 1) que indica a qué imagen pertenece
-              cada caja delimitadora.
-        class_names (list): Lista de nombres de las clases, donde el índice corresponde
-            al identificador de la clase.
-        max_batches (int, opcional): Número máximo de lotes a visualizar. Por defecto es 1.
-        ncols (int, opcional): Número de columnas en la cuadrícula de subplots. Por defecto es 3.
-    Returns:
-        None: La función no retorna ningún valor, pero muestra las imágenes con sus
-        correspondientes cajas delimitadoras y nombres de clases utilizando matplotlib.
-    Notas:
-        - Las imágenes se normalizan automáticamente al rango [0, 1] si no están ya en ese rango.
-        - Las cajas delimitadoras se dibujan en rojo, y los nombres de las clases se muestran
-          como texto sobre las cajas.
-        - Si el número de imágenes en un lote es menor que el número de subplots, los subplots
-          restantes se desactivan.
+    Visualiza imágenes de un DataLoader junto con sus cajas delimitadoras (bounding boxes) y etiquetas de clase.
+        dataloader (torch.utils.data.DataLoader): Dataloader que produce lotes con las claves:
+            - "bboxes": Tensor de forma (n_boxes, 4) con las coordenadas de las cajas en formato
+              (x_center, y_center, width, height) normalizadas en [0, 1].
+            - "cls": Tensor de forma (n_boxes, 1) con los índices de clase de cada caja.
+            - "img": Tensor de forma (batch_size, 3, H, W) con las imágenes del lote.
+            - "batch_idx": Tensor de forma (n_boxes, 1) que indica a qué imagen pertenece cada caja.
+        class_names (list[str]): Lista con los nombres de clases; el índice corresponde al identificador de clase.
+        color_map (dict[int | str, Any] | list[Any] | None, opcional): Mapa de colores para las clases. Puede ser:
+            - dict que mapea id de clase (int) o nombre de clase (str) a un color aceptado por matplotlib,
+            - list/tuple donde la posición i corresponde al color de la clase i,
+            - Los colores pueden ser strings ('red', '#FF0000') o tuplas RGB(A). Si son enteros 0-255 se normalizan a 0-1.
+            - None para usar el color por defecto (rojo).
+        max_batches (int, opcional): Número máximo de lotes a visualizar. Por defecto 1.
+        ncols (int, opcional): Número de columnas en la cuadrícula de subplots. Por defecto 3.
+        should_shuffle (bool, opcional): Si es True, se intenta recrear el DataLoader con shuffle=True
+            manteniendo el resto de parámetros (batch_size, num_workers, etc.). Si falla, se continúa sin barajar.
+        None: Muestra las imágenes con sus cajas y etiquetas utilizando matplotlib.
+        - Las imágenes se normalizan automáticamente al rango [0, 1] para su visualización.
+        - Las cajas delimitadoras usan el color provisto en color_map cuando corresponde.
+        - Si el número de imágenes del lote es menor que el número de subplots, los subplots restantes se desactivan.
     """
+
+    def _to_mpl_color(c):
+        """
+            Normaliza una especificación de color al formato compatible con Matplotlib (RGB(A) con componentes en el rango [0, 1]).
+            - Si c es una tupla o lista de longitud 3 o 4, se interpreta como RGB(A).
+                - Si alguno de los tres primeros valores es > 1, se asume que están en el rango 0–255 y se escalan a 0–1.
+                - En caso contrario, se dejan tal como están (se asume que ya están en 0–1).
+                - Si hay un cuarto valor (alfa) y es numérico > 1, también se escala de 0–255 a 0–1; en otros casos se deja sin cambios.
+            - Para cualquier otro tipo de entrada (por ejemplo, nombre de color, cadena hex, otros tipos), el valor se devuelve sin modificar.
+            - Solo se normalizan secuencias tipo tupla/lista; otros iterables (p. ej., arrays de NumPy) no se transforman.
+        Args:
+                c (tuple | list | Any): Especificación de color: secuencia RGB o RGBA (longitud 3 o 4)
+                        de enteros/flotantes, o cualquier color aceptado por Matplotlib (p. ej., 'red', '#FF007F').
+                        Solo se normalizan las secuencias tipo tupla/lista.
+        Returns:
+                tuple | Any: Una tupla RGB o RGBA con componentes float en el rango [0, 1],
+                        o la entrada original sin cambios si no es una tupla/lista de longitud 3 o 4.
+        Examples:
+            >>> _to_mpl_color((255, 0, 127))
+            (1.0, 0.0, 0.4980392156862745)
+            >>> _to_mpl_color((10, 20, 30, 128))
+            (0.0392156862745098, 0.0784313725490196, 0.11764705882352941, 0.5019607843137255)
+            >>> _to_mpl_color((0.1, 0.2, 0.3, 0.4))
+            (0.1, 0.2, 0.3, 0.4)
+            >>> _to_mpl_color("#ff007f")
+            '#ff007f'
+        """
+        if isinstance(c, (tuple, list)):
+            if len(c) in (3, 4):
+                vals = list(c[:3])
+                if any(v > 1 for v in vals):
+                    vals = [v / 255.0 for v in vals]
+                if len(c) == 4:
+                    a = c[3]
+                    a = a / 255.0 if isinstance(a, (int, float)) and a > 1 else a
+                    return (*vals, a)
+                return tuple(vals)
+        return c
+
+    def _get_color_for_class(cls_idx: int, cls_name: str):
+        default_color = "red"
+        if color_map is None:
+            return default_color
+        try:
+            if isinstance(color_map, dict):
+                if cls_idx in color_map:
+                    return _to_mpl_color(color_map[cls_idx])
+                if cls_name in color_map:
+                    return _to_mpl_color(color_map[cls_name])
+            elif isinstance(color_map, (list, tuple)):
+                if 0 <= cls_idx < len(color_map):
+                    return _to_mpl_color(color_map[cls_idx])
+        except Exception:
+            pass
+        return default_color
+
     for i, batch in enumerate(dataloader):
         if i >= max_batches:
             break
@@ -229,14 +295,13 @@ def plot_yolo_augmentations(dataloader, class_names, max_batches=1, ncols=3):
             ax = axs[j]
 
             # 1. Preparar la imagen para mostrarla con matplotlib
-            # Cambiar el formato de (C, H, W) a (H, W, C)
-            # Convertir el tensor a NumPy y normalizar a [0, 1] si no lo está
             img = img_tensor.permute(1, 2, 0).cpu().numpy()
-            img = (img - img.min()) / (img.max() - img.min())  # Normalizar si es necesario
+            denom = img.max() - img.min()
+            if denom > 0:
+                img = (img - img.min()) / denom
 
             ax.imshow(img)
             ax.axis("off")
-            ax.set_title(f"Image {j + 1}")
 
             h, w, _ = img.shape
 
@@ -246,27 +311,29 @@ def plot_yolo_augmentations(dataloader, class_names, max_batches=1, ncols=3):
 
             # 3. Dibujar las cajas delimitadoras
             for bbox, cls_id in zip(current_img_bboxes, current_img_cls):
-                # Convertir de formato (x_center, y_center, width, height) a (x1, y1, x2, y2)
-                # y escalar a las dimensiones de la imagen
+                # Convertir de formato (x_center, y_center, width, height) a (x1, y1, width, height)
                 x_center, y_center, bbox_w, bbox_h = bbox.cpu().numpy()
                 x1 = int((x_center - bbox_w / 2) * w)
                 y1 = int((y_center - bbox_h / 2) * h)
                 width = int(bbox_w * w)
                 height = int(bbox_h * h)
 
+                cls_idx = int(cls_id.item())
+                class_name = class_names[cls_idx]
+                color = _get_color_for_class(cls_idx, class_name)
+
                 # Crear y añadir el rectángulo
-                rect = plt.Rectangle((x1, y1), width, height, linewidth=2, edgecolor="red", facecolor="none")
+                rect = plt.Rectangle((x1, y1), width, height, linewidth=2, edgecolor=color, facecolor="none")
                 ax.add_patch(rect)
 
-                # Obtener el nombre de la clase y añadir el texto
-                class_name = class_names[int(cls_id.item())]
+                # Añadir el texto con fondo del mismo color
                 ax.text(
                     x1,
-                    y1 - 5,
+                    max(0, y1 - 10),
                     class_name,
                     color="white",
                     fontsize=12,
-                    bbox=dict(facecolor="red", alpha=0.5, edgecolor="none"),
+                    bbox=dict(facecolor=color, alpha=0.5, edgecolor="none"),
                 )
 
         # Eliminar los ejes no utilizados si el número de imágenes es menor que el número de subplots

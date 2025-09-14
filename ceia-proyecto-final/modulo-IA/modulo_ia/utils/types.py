@@ -1,6 +1,8 @@
 # Enum para los formatos de dataset
 from enum import Enum
 
+from pydantic import BaseModel
+
 
 class DatasetFormat(str, Enum):
     YOLO = "yolo"

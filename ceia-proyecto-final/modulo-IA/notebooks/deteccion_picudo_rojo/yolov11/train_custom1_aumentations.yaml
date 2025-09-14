@@ -1,0 +1,20 @@
+# YOLOv11 Augmentations Configuration File
+# Este archivo define las técnicas de aumento de datos que se aplicarán durante el entrenamiento.
+hsv_s: 0.015 # Default: 0.7 | Range (0.0 - 1.0) | Description: Modifica la saturación de la imagen por una fracción, afectando la intensidad de los colores. Útil para simular distintas condiciones ambientales.
+hsv_h: 0.7 # Default: 0.015 | Range (0.0 - 1.0) | Description: Ajusta el tono (hue) de la imagen por una fracción del círculo cromático, introduciendo variabilidad de color. Ayuda al modelo a generalizar bajo diferentes condiciones de iluminación.
+hsv_v: 0.4 # Default: 0.4 | Range (0.0 - 1.0) | Description: Modifica el valor (brillo) de la imagen por una fracción, ayudando al modelo a rendir bien bajo diversas condiciones de iluminación.
+degrees: 5.0 # Default: 0.0 | Range (0.0 - 180) | Description: Rota la imagen aleatoriamente dentro del rango de grados especificado, mejorando la capacidad del modelo para reconocer objetos en diversas orientaciones.
+translate: 0.05 # Default: 0.1 | Range (0.0 - 1.0) | Description: Desplaza la imagen horizontal y verticalmente por una fracción del tamaño de la imagen, ayudando a aprender a detectar objetos parcialmente visibles.
+scale: 0.1 # Default: 0.5 | Range (>=0.0) | Description: Escala la imagen por un factor de ganancia, simulando objetos a distintas distancias de la cámara.
+shear: 2.0 # Default: 0.0 | Range (-180 - +180) | Description: Cizalla (shear) la imagen en los grados indicados, imitando el efecto de ver objetos desde distintos ángulos.
+perspective: 0.0 # Default: 0.0 | Range (0.0 - 0.001) | Description: Aplica una transformación de perspectiva aleatoria a la imagen, mejorando la capacidad del modelo para comprender objetos en el espacio 3D.
+flipud: 0.0 # Default: 0.0 | Range (0.0 - 1.0) | Description: Invierte la imagen verticalmente con la probabilidad indicada, aumentando la variabilidad de datos sin afectar las características del objeto.
+fliplr: 0.5 # Default: 0.5 | Range (0.0 - 1.0) | Description: Invierte la imagen de izquierda a derecha con la probabilidad indicada, útil para aprender objetos simétricos y aumentar la diversidad del conjunto de datos.
+bgr: 0.0 # Default: 0.0 | Range (0.0 - 1.0) | Description: Permuta los canales de la imagen de RGB a BGR con la probabilidad indicada, útil para aumentar la robustez ante un orden de canales incorrecto.
+mosaic: 1.0 # Default: 1.0 | Range (0.0 - 1.0) | Description: Combina cuatro imágenes de entrenamiento en una, simulando distintas composiciones de escena e interacciones entre objetos. Muy eficaz para la comprensión de escenas complejas.
+mixup: 0.1 # Default: 0.0 | Range (0.0 - 1.0) | Description: Mezcla dos imágenes y sus etiquetas, creando una imagen compuesta. Mejora la capacidad de generalización del modelo al introducir ruido en las etiquetas y variabilidad visual.
+cutmix: 0.0 # Default: 0.0 | Range (0.0 - 1.0) | Description: Combina porciones de dos imágenes, creando una mezcla parcial mientras mantiene regiones distintas. Mejora la robustez del modelo al crear escenarios de oclusión.
+copy_paste: 0.0 # Default: 0.0 | Range (0.0 - 1.0) | Description: Solo segmentación. Copia y pega objetos entre imágenes para aumentar las instancias de objetos.
+copy_paste_mode: "flip" # Default: flip | Description: Solo segmentación. Especifica la estrategia de copiado y pegado a usar. Las opciones incluyen 'flip' y 'mixup'.
+auto_augment: randaugment # Default: randaugment | Description: Solo clasificación. Aplica una política de aumento predefinida ('randaugment', 'autoaugment' o 'augmix') para mejorar el rendimiento del modelo mediante diversidad visual.
+erasing: 0.1 # Default: 0.4 | Range (0.0 - 0.9) | Description: Solo clasificación. Borra aleatoriamente regiones de la imagen durante el entrenamiento para incentivar que el modelo se enfoque en características menos obvias.
