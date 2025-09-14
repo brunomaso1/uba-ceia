@@ -45,6 +45,64 @@ Link al documento: TODO
 
 Para gestionar las dependencias del proyecto, se utiliza Poetry.
 
+### Colores del proyecto
+
+```css
+html {
+	--mat-sys-background: light-dark(#f9faf3, #121410);
+	--mat-sys-error: light-dark(#ba1a1a, #ffb4ab);
+	--mat-sys-error-container: light-dark(#ffdad6, #93000a);
+	--mat-sys-inverse-on-surface: light-dark(#f1f1eb, #2f312d);
+	--mat-sys-inverse-primary: light-dark(#02e600, #026e00);
+	--mat-sys-inverse-surface: light-dark(#2f312d, #e2e3dc);
+	--mat-sys-on-background: light-dark(#1a1c18, #e2e3dc);
+	--mat-sys-on-error: light-dark(#ffffff, #690005);
+	--mat-sys-on-error-container: light-dark(#93000a, #ffdad6);
+	--mat-sys-on-primary: light-dark(#ffffff, #013a00);
+	--mat-sys-on-primary-container: light-dark(#015300, #77ff61);
+	--mat-sys-on-primary-fixed: light-dark(#002200, #002200);
+	--mat-sys-on-primary-fixed-variant: light-dark(#015300, #015300);
+	--mat-sys-on-secondary: light-dark(#ffffff, #263422);
+	--mat-sys-on-secondary-container: light-dark(#3c4b37, #d7e8cd);
+	--mat-sys-on-secondary-fixed: light-dark(#121f0e, #121f0e);
+	--mat-sys-on-secondary-fixed-variant: light-dark(#3c4b37, #3c4b37);
+	--mat-sys-on-surface: light-dark(#1a1c18, #e2e3dc);
+	--mat-sys-on-surface-variant: light-dark(#43483f, #dfe4d7);
+	--mat-sys-on-tertiary: light-dark(#ffffff, #013a00);
+	--mat-sys-on-tertiary-container: light-dark(#015300, #77ff61);
+	--mat-sys-on-tertiary-fixed: light-dark(#002200, #002200);
+	--mat-sys-on-tertiary-fixed-variant: light-dark(#015300, #015300);
+	--mat-sys-outline: light-dark(#73796e, #8d9387);
+	--mat-sys-outline-variant: light-dark(#c3c8bc, #43483f);
+	--mat-sys-primary: light-dark(#026e00, #02e600);
+	--mat-sys-primary-container: light-dark(#77ff61, #015300);
+	--mat-sys-primary-fixed: light-dark(#77ff61, #77ff61);
+	--mat-sys-primary-fixed-dim: light-dark(#02e600, #02e600);
+	--mat-sys-scrim: light-dark(#000000, #000000);
+	--mat-sys-secondary: light-dark(#54634d, #bbcbb2);
+	--mat-sys-secondary-container: light-dark(#d7e8cd, #3c4b37);
+	--mat-sys-secondary-fixed: light-dark(#d7e8cd, #d7e8cd);
+	--mat-sys-secondary-fixed-dim: light-dark(#bbcbb2, #bbcbb2);
+	--mat-sys-shadow: light-dark(#000000, #000000);
+	--mat-sys-surface: light-dark(#f9faf3, #121410);
+	--mat-sys-surface-bright: light-dark(#f9faf3, #383a35);
+	--mat-sys-surface-container: light-dark(#eeeee7, #1e201c);
+	--mat-sys-surface-container-high: light-dark(#e8e9e1, #282b26);
+	--mat-sys-surface-container-highest: light-dark(#e2e3dc, #333531);
+	--mat-sys-surface-container-low: light-dark(#f3f4ed, #1a1c18);
+	--mat-sys-surface-container-lowest: light-dark(#ffffff, #0c0f0b);
+	--mat-sys-surface-dim: light-dark(#dadbd3, #121410);
+	--mat-sys-surface-tint: light-dark(#026e00, #02e600);
+	--mat-sys-surface-variant: light-dark(#dfe4d7, #43483f);
+	--mat-sys-tertiary: light-dark(#026e00, #02e600);
+	--mat-sys-tertiary-container: light-dark(#77ff61, #015300);
+	--mat-sys-tertiary-fixed: light-dark(#77ff61, #77ff61);
+	--mat-sys-tertiary-fixed-dim: light-dark(#02e600, #02e600);
+	--mat-sys-neutral-variant20: #2c3229;
+	--mat-sys-neutral10: #1a1c18;
+}
+```
+
 ### Comandos útiles
 
 #### Docker
@@ -71,6 +129,72 @@ docker volume rm $(docker volume ls -q)
 ```bash
 docker logs traefik-entrypoint | sed 's/\x1b\[[0-9;]*m//g' > traefik-entrypoint-20250610.log
 ```
+
+- Ingresar dentro de un contenedor:
+```bash
+docker exec -it <container_id> sh
+```
+
+- Ver las redes:
+```bash
+docker network ls
+docker network inspect <network_id> # Te dice cuales los contenedores conectados
+```
+
+##### Comandos debugging
+
+-  Ver todos los contenedores y sus redes
+```bash
+docker ps --format "table {{.Names}}\t{{.Ports}}\t{{.Networks}}"
+```
+
+- Probar conectividad desde el contenedor traefik-entrypoint
+```bash
+docker exec traefik-entrypoint nslookup traefik
+docker exec traefik-entrypoint wget -qO- http://traefik:8080 || echo "Connection failed"
+```
+
+- Más pruebas de conectividad:
+```bash
+docker exec traefik-entrypoint ping traefik
+docker exec traefik-entrypoint telnet traefik 8080
+```
+
+- Ver logs del Traefik de CVAT con más detalle (modo seguimiento):
+```bash
+docker logs traefik -f
+```
+
+- Verificar nombres contenedor:
+```bash
+docker ps --filter "name=traefik"
+```
+
+- Ver el estado del contenedor Traefik de CVAT:
+```bash
+docker ps | grep traefik
+```
+
+- Ver los puertos que está exponiendo realmente:
+```bash
+docker port traefik
+```
+
+- Ver logs más detallados del Traefik de CVAT:
+```bash
+docker logs traefik --tail 50
+```
+
+- Verificar la configuración interna del contenedor:
+```bash
+docker exec traefik ps aux
+```
+
+- Ver qué puertos está escuchando dentro del contenedor (importante para ver si está escuchando en el puerto correcto):
+```bash
+docker exec traefik netstat -tlnp 2>/dev/null || docker exec traefik ss -tlnp
+```
+
 
 #### Poetry
 
@@ -181,7 +305,36 @@ Function Prompt { "$( ( get-item $pwd ).Name )>" }
 df -h
 ```
 
-- Verificar uso de memoria:
+- Verificar los discos detectados:
+```bash
+lsblk
+fdisk -l
+```
+
+- Revisar el grupo de volúmenes lógicos (LVM):
+```bash
+sudo vgs
+```
+
+- Agregar disco al grupo de volúmenes lógicos (LVM):
+```bash
+# Solo si el vgs mostró 0 en VFree
+sudo pvcreate /dev/sdb # Inicializar el disco como un Physical Volume
+sudo vgextend ubuntu-vg /dev/sdb # Agregar al grupo de volúmenes lógicos
+```
+
+- Extender el volúmen lógico raiz:
+```bash
+sudo lvextend -l +100%FREE /dev/ubuntu-vg/ubuntu-lv
+```
+
+- Redimensionar el sistema de archivos:
+```bash
+sudo resize2fs /dev/ubuntu-vg/ubuntu-lv # Para -> ext4
+sudo xfs_growfs /dev/ubuntu-vg/ubuntu-lv # Para -> xfs
+```
+
+- Verificar uso de memoria (RAM):
 ```bash
 free -h
 watch -n 5 free -m
@@ -189,6 +342,8 @@ watch -n 5 free -m
 
 - Verificar uso de CPU:
 ```bash
+top -b -n 1 |grep ^Cpu
+ps -eo pcpu,pid,user,args | sort -r -k1 | less # Porcentaje de uso de CPU
 top
 htop
 ps aux
@@ -204,10 +359,39 @@ egrep "svm|vmx" /proc/cpuinfo
 
 #### MLFlow
 
+- Listar experimentos:
+```python
+experiments = mlflow.search_experiments(view_type="ALL")
+for exp in experiments:
+    print(f"Experiment Name: {exp.name}, Experiment ID: {exp.experiment_id}")
+```
+
 - Limpiar experimentos:
 ```bash
-mlflow gc --tracking-uri "http://localhost:5000" --backend-store-uri "sqlite:////mlruns/mlruns.db" --experiment-id 4
+docker exec -it <nombre_contenedor_mlflow> mlflow gc \
+	--tracking-uri "http://localhost:5000" \
+    --backend-store-uri sqlite:////mlruns/mlruns.db \
+    --experiment-ids 4
+
+# Ejemplo:
+docker exec -it 1e2a2d3b145f mlflow gc --tracking-uri "http://localhost:5000" --backend-store-uri sqlite:////mlruns/mlruns.db --experiment-ids 6
 ```
+
+- Limpiar runs:
+```bash
+docker exec -it 1e2a2d3b145f mlflow gc --tracking-uri "http://localhost:5000" --backend-store-uri sqlite:////mlruns/mlruns.db
+```
+
+- Restaurar experimento borrado:
+```python
+from mlflow.tracking import MlflowClient
+
+client = MlflowClient(tracking_uri="http://localhost:5000")
+
+# Restaurar experimento con ID 4
+client.restore_experiment("2")
+```
+
 
 #### Fiftyone
 
