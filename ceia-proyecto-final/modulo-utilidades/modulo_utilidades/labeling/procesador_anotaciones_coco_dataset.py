@@ -5,12 +5,12 @@ from typing import Any, Optional
 
 from deprecated import deprecated
 from loguru import logger as LOGGER
-from modulo_apps.config import config as CONFIG
-from modulo_apps.utils.types import Metadata
+from modulo_utilidades.config import config as CONFIG
+from modulo_utilidades.utils.types import Metadata
 
 from supervision import Detections
 
-import modulo_apps.labeling.convertor_cordenadas as ConvertorCordenadas
+import modulo_utilidades.labeling.convertor_cordenadas as ConvertorCordenadas
 
 DOWNLOAD_COCO_ANNOTATIONS_FOLDER = CONFIG.folders.download_coco_annotations_folder
 

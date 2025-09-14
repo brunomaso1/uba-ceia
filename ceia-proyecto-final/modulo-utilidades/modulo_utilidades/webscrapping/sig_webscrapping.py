@@ -4,19 +4,19 @@ from typing import Optional
 import os, re, zipfile, requests, shutil
 from bs4 import BeautifulSoup
 from tqdm import tqdm
-from modulo_apps.config import config as CONFIG
+from modulo_utilidades.config import config as CONFIG
 from loguru import logger as LOGGER
 
-from modulo_apps.database_comunication.mongodb_client import mongodb as DB
+from modulo_utilidades.database_comunication.mongodb_client import mongodb as DB
 
-import modulo_apps.s3_comunication.procesador_s3 as ProcesadorS3
-import modulo_apps.utils.helpers as Helpers
+import modulo_utilidades.s3_comunication.procesador_s3 as ProcesadorS3
+import modulo_utilidades.utils.helpers as Helpers
 
 import cv2
 
 import typer
 
-from modulo_apps.utils.types import DownloadFileMetadata, JGWData, Patch
+from modulo_utilidades.utils.types import DownloadFileMetadata, JGWData, Patch
 
 # Configuracion
 DOWNLOAD_FOLDER = CONFIG.folders.download_folder

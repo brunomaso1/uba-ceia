@@ -4,8 +4,8 @@ from typing import Optional
 from pymongo import MongoClient
 from pymongo.database import Database
 
-from modulo_apps.config import config as CONFIG
-from modulo_apps.config import MongoDBConfig
+from modulo_utilidades.config import config as CONFIG
+from modulo_utilidades.config import MongoDBConfig
 
 from loguru import logger
 

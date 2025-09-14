@@ -7,7 +7,7 @@ from dataclasses import dataclass
 OPENCV_IO_MAX_IMAGE_PIXELS = 50000 * 50000  # Para imágenes grandes, ej: barrio3Ombues_20180801_dji_pc_3cm.jpg
 os.environ["OPENCV_IO_MAX_IMAGE_PIXELS"] = str(OPENCV_IO_MAX_IMAGE_PIXELS)
 
-from modulo_apps.config import config as MODULO_APPS_CONFIG
+from modulo_utilidades.config import config as MODULO_APPS_CONFIG
 
 PROJECT_DIR = Path(__file__).resolve().parent
 ROOT_DIR = PROJECT_DIR.parent

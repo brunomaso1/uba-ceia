@@ -13,11 +13,11 @@ from fiftyone import ViewField as F
 from loguru import logger as LOGGER
 import yaml
 from modulo_ia.config import config as CONFIG
-from modulo_apps.database_comunication.mongodb_client import mongodb as DB
+from modulo_utilidades.database_comunication.mongodb_client import mongodb as DB
 
-import modulo_apps.s3_comunication.procesador_s3 as ProcesadorS3
-import modulo_apps.labeling.procesador_anotaciones_mongodb as ProcesadorAnotacionesMongoDB
-import modulo_apps.labeling.procesador_recortes as ProcesadorRecortes
+import modulo_utilidades.s3_comunication.procesador_s3 as ProcesadorS3
+import modulo_utilidades.labeling.procesador_anotaciones_mongodb as ProcesadorAnotacionesMongoDB
+import modulo_utilidades.labeling.procesador_recortes as ProcesadorRecortes
 from modulo_ia.utils.types import DatasetFormat
 
 RAW_DATA_FOLDER = CONFIG.folders.raw_data_folder

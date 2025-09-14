@@ -1,5 +1,5 @@
 from typing import Any
-from modulo_apps.labeling.procesador_anotaciones_coco_dataset import convert_label, merge_labels, delete_label
+from modulo_utilidades.labeling.procesador_anotaciones_coco_dataset import convert_label, merge_labels, delete_label
 import pytest
 import copy
 

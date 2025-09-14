@@ -19,12 +19,12 @@ from shapely.geometry import Point, Polygon
 import typer
 
 from loguru import logger as LOGGER
-from modulo_apps.config import config as CONFIG
-from modulo_apps.database_comunication.mongodb_client import mongodb as DB
+from modulo_utilidades.config import config as CONFIG
+from modulo_utilidades.database_comunication.mongodb_client import mongodb as DB
 
-import modulo_apps.labeling.procesador_anotaciones_coco_dataset as CocoDatasetUtils
-import modulo_apps.labeling.convertor_cordenadas as ConvertorCoordenadas
-import modulo_apps.labeling.procesador_anotaciones_mongodb as ProcesadorAnotacionesMongoDB
+import modulo_utilidades.labeling.procesador_anotaciones_coco_dataset as CocoDatasetUtils
+import modulo_utilidades.labeling.convertor_cordenadas as ConvertorCoordenadas
+import modulo_utilidades.labeling.procesador_anotaciones_mongodb as ProcesadorAnotacionesMongoDB
 
 DOWNLOAD_TEMP_FOLDER = CONFIG.folders.download_temp_folder
 DOWNLOAD_GOOGLE_MAPS_FOLDER = CONFIG.folders.download_google_maps_folder

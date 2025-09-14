@@ -6,7 +6,7 @@ import boto3
 from botocore.exceptions import ClientError
 from botocore.client import BaseClient
 
-from modulo_apps.config import MinioConfig, config as CONFIG
+from modulo_utilidades.config import MinioConfig, config as CONFIG
 
 
 @dataclass

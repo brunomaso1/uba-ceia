@@ -10,7 +10,7 @@ import pandas as pd
 from ultralytics import YOLO
 from ultralytics.engine.results import Results
 from supervision import Detections, InferenceSlicer, OverlapFilter, BoxAnnotator, LabelAnnotator
-import modulo_apps.labeling.procesador_anotaciones_coco_dataset as CocoDatasetProcessor
+import modulo_utilidades.labeling.procesador_anotaciones_coco_dataset as CocoDatasetProcessor
 
 LOGGER.debug(
     f"Ambiente actual: {CONFIG.environment}"

@@ -1,5 +1,5 @@
 [project]
-name = "modulo-apps"
+name = "modulo-utilidades"
 version = "0.1.0"
 description = ""
 authors = [{ name = "brunomaso1", email = "brunomaso1@hotmail.com" }]
@@ -33,7 +33,7 @@ dependencies = [
 ]
 
 [tool.poetry]
-packages = [{ include = "modulo_apps" }]
+packages = [{ include = "modulo_utilidades" }]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

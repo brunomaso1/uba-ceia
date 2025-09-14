@@ -7,11 +7,11 @@ import typer
 
 import botocore
 from loguru import logger as LOGGER
-from modulo_apps.config import config as CONFIG
-from modulo_apps.database_comunication.mongodb_client import mongodb as DB
-from modulo_apps.s3_comunication.s3_client import s3client as S3_CLIENT
+from modulo_utilidades.config import config as CONFIG
+from modulo_utilidades.database_comunication.mongodb_client import mongodb as DB
+from modulo_utilidades.s3_comunication.s3_client import s3client as S3_CLIENT
 
-from modulo_apps.utils.types import ImageMetadata
+from modulo_utilidades.utils.types import ImageMetadata
 
 
 DOWNLOAD_FOLDER = CONFIG.folders.download_folder

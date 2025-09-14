@@ -1,5 +1,5 @@
 from loguru import logger
-from modulo_apps.config import config as MODULO_APPS_CONFIG
+from modulo_utilidades.config import config as MODULO_APPS_CONFIG
 from modulo_ia.config import config as MODULO_IA_CONFIG
 
 def main():

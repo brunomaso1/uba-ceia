@@ -10,7 +10,7 @@ import layoutparser as lp
 import cv2 as cv
 from pycocotools.coco import COCO
 
-from modulo_apps.config import config as CONFIG
+from modulo_utilidades.config import config as CONFIG
 
 DOWNLOAD_FOLDER = CONFIG.folders.download_folder
 DOWNLOAD_IMAGES_FOLDER = CONFIG.folders.download_images_folder
@@ -18,7 +18,7 @@ DOWNLOAD_PATCHES_FOLDER = CONFIG.folders.download_patches_folder
 DOWNLOAD_CUTOUTS_FOLDER = CONFIG.folders.download_cutouts_folder
 DOWNLOAD_CUTOUTS_METADATA_FOLDER = CONFIG.folders.download_cutouts_metadata_folder
 
-import modulo_apps.labeling.procesador_anotaciones_coco_dataset as CocoDatasetUtils
+import modulo_utilidades.labeling.procesador_anotaciones_coco_dataset as CocoDatasetUtils
 
 
 def _load_coco_annotations(annotations: list[dict[str, Any]], coco: Any = None):

@@ -17,7 +17,7 @@ from tqdm import tqdm
 import typer
 
 from modulo_ia.utils.types import DatasetFormat
-import modulo_apps.utils.helpers as Helpers
+import modulo_utilidades.utils.helpers as Helpers
 
 import fiftyone as fo
 from fiftyone import ViewField as F

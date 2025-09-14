@@ -5,7 +5,7 @@ from fastapi_backend.dependencies.in_memory_store_api import InMemoryStore, get_
 from loguru import logger
 import cv2
 from modulo_ia.modeling.predict import DetectionModelPredictor
-import modulo_apps.labeling.procesador_geojson_kml as ProcesadorGeoJSONKML
+import modulo_utilidades.labeling.procesador_geojson_kml as ProcesadorGeoJSONKML
 from fastapi_backend.schemas.data_types.models_types import ModelType
 from fastapi_backend.utils import fetch_store_entry_with_checks
 from fastapi import Depends

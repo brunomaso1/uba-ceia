@@ -8,15 +8,15 @@ from pymongo import UpdateOne
 import typer
 
 from loguru import logger as LOGGER
-from modulo_apps.config import config as CONFIG
-from modulo_apps.database_comunication.mongodb_client import mongodb as DB
+from modulo_utilidades.config import config as CONFIG
+from modulo_utilidades.database_comunication.mongodb_client import mongodb as DB
 
-from modulo_apps.utils.types import AnnotationType
+from modulo_utilidades.utils.types import AnnotationType
 
-import modulo_apps.labeling.procesador_anotaciones_coco_dataset as CocoDatasetUtils
-import modulo_apps.labeling.convertor_cordenadas as ConvertorCoordenadas
-import modulo_apps.labeling.procesador_anotaciones_cvat as ProcesadorAnotacionesCVAT
-from modulo_apps.utils.types import ImageMetadata
+import modulo_utilidades.labeling.procesador_anotaciones_coco_dataset as CocoDatasetUtils
+import modulo_utilidades.labeling.convertor_cordenadas as ConvertorCoordenadas
+import modulo_utilidades.labeling.procesador_anotaciones_cvat as ProcesadorAnotacionesCVAT
+from modulo_utilidades.utils.types import ImageMetadata
 
 MINIO_PATCHES_PATH = CONFIG.minio.paths.patches
 DOWNLOAD_COCO_ANNOTATIONS_FOLDER = CONFIG.folders.download_coco_annotations_folder

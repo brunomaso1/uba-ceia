@@ -6,12 +6,12 @@ import numpy as np
 
 from loguru import logger as LOGGER
 from tqdm import tqdm
-from modulo_apps.config import config as CONFIG
-from modulo_apps.s3_comunication.s3_client import s3client as S3_CLIENT
+from modulo_utilidades.config import config as CONFIG
+from modulo_utilidades.s3_comunication.s3_client import s3client as S3_CLIENT
 
-import modulo_apps.labeling.procesador_anotaciones_coco_dataset as CocoDatasetUtils
-import modulo_apps.labeling.procesador_anotaciones_mongodb as ProcesadorCocoDataset
-import modulo_apps.s3_comunication.procesador_s3 as ProcesadorS3
+import modulo_utilidades.labeling.procesador_anotaciones_coco_dataset as CocoDatasetUtils
+import modulo_utilidades.labeling.procesador_anotaciones_mongodb as ProcesadorCocoDataset
+import modulo_utilidades.s3_comunication.procesador_s3 as ProcesadorS3
 
 import typer
 
