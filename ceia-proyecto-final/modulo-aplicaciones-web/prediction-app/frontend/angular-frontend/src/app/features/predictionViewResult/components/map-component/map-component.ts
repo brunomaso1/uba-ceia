@@ -3,6 +3,40 @@ import { MatCardModule } from '@angular/material/card';
 import { FeatureCollection } from 'geojson';
 import * as L from 'leaflet'
 
+// TODO: Refactor this icons to a folder with all the icons used in the app
+const greenIcon = L.icon({
+  iconUrl: '/assets/iconos-palmeras/palmera-verde.png',
+  shadowUrl: '/assets/leaflet/marker-shadow.png',
+
+  iconSize: [40, 40], // size of the icon
+  shadowSize: [80, 40], // size of the shadow
+  iconAnchor: [23, 40], // point of the icon which will correspond to marker's location
+  shadowAnchor: [20, 40],  // the same for the shadow
+  popupAnchor: [-5, -35] // point from which the popup should open relative to the iconAnchor
+});
+
+const redIcon = L.icon({
+  iconUrl: '/assets/iconos-palmeras/palmera-roja.png',
+  shadowUrl: '/assets/leaflet/marker-shadow.png',
+
+  iconSize: [40, 40], // size of the icon
+  shadowSize: [80, 40], // size of the shadow
+  iconAnchor: [23, 40], // point of the icon which will correspond to marker's location
+  shadowAnchor: [20, 40],  // the same for the shadow
+  popupAnchor: [-5, -35] // point from which the popup should open relative to the iconAnchor
+});
+
+const yellowIcon = L.icon({
+  iconUrl: '/assets/iconos-palmeras/palmera-amarilla.png',
+  shadowUrl: '/assets/leaflet/marker-shadow.png',
+
+  iconSize: [40, 40], // size of the icon
+  shadowSize: [80, 40], // size of the shadow
+  iconAnchor: [23, 40], // point of the icon which will correspond to marker's location
+  shadowAnchor: [20, 40],  // the same for the shadow
+  popupAnchor: [-5, -35] // point from which the popup should open relative to the iconAnchor
+});
+
 @Component({
   selector: 'app-map-component',
   imports: [MatCardModule],
@@ -25,6 +59,7 @@ export class MapComponent implements AfterViewInit {
   constructor() {
     effect(() => {
       const geoJSON = this.geoJSONData();
+      console.log('GeoJSON data received:', geoJSON);
 
       if (this.map && geoJSON) {
         this.addGeoJSONLayer(geoJSON);
@@ -67,32 +102,44 @@ export class MapComponent implements AfterViewInit {
       this.map.removeLayer(this.currentGeoJsonLayer);
     }
 
-    const greenIcon = L.icon({
-      iconUrl: '/assets/iconos-palmeras/palmera-verde.png',
-      shadowUrl: '/assets/leaflet/marker-shadow.png',
-
-      iconSize: [40, 40], // size of the icon
-      shadowSize: [80, 40], // size of the shadow
-      iconAnchor: [23, 40], // point of the icon which will correspond to marker's location
-      shadowAnchor: [20, 40],  // the same for the shadow
-      popupAnchor: [-5, -35] // point from which the popup should open relative to the iconAnchor
-    });
-
     const geoJsonLayer = L.geoJSON(geoJSON, {
       pointToLayer: (feature, latlng) => {
         switch (feature.properties?.name) {
-          case 'palmera-sana':
+          case 'palmera-sana' :
+          case 'palmera':
             return L.marker(latlng, {
               icon: greenIcon
+            });
+          case 'palmera-infectada':
+            return L.marker(latlng, {
+              icon: yellowIcon
+            });
+          case 'palmera-muerta':
+            return L.marker(latlng, {
+              icon: redIcon
             });
           default:
             return L.marker(latlng);
         }
       },
       onEachFeature: (feature, layer) => {
-        if (feature.properties?.name) {
-          layer.bindPopup(feature.properties.name);
-        }
+        const estado = feature.properties?.name || 'Desconocido';
+        const id = feature.id || 'N/A';
+        const coordinates = feature.geometry.type === 'Point'
+          ? `${feature.geometry.coordinates[1].toFixed(6)}, ${feature.geometry.coordinates[0].toFixed(6)}`
+          : 'N/A';
+        const confidence = feature.properties?.confidence ? `${(feature.properties.confidence * 100).toFixed(2)}%` : 'N/A';
+
+        const popupContent = `
+          <div style="font-family: Arial, sans-serif; line-height: 1.4;">
+            <h4 style="margin: 0 0 8px 0; color: #333;">Información de la Palmera ${id}</h4>
+            <p style="margin: 4px 0;"><strong>Estado:</strong> ${estado}</p>
+            <p style="margin: 4px 0;"><strong>Confianza:</strong> ${confidence}</p>
+            <p style="margin: 4px 0;"><strong>Coordenadas:</strong> ${coordinates}</p>
+          </div>
+        `;
+
+        layer.bindPopup(popupContent);
       }
     });
 

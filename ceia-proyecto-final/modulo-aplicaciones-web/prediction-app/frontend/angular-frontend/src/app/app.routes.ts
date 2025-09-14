@@ -28,5 +28,10 @@ export const routes: Routes = [
         path: 'unauthorized',
         component: UnauthorizedPage,
         title: 'Unauthorized page',
+    },
+    {
+        path: '**',
+        redirectTo: '',
+        pathMatch: 'full'
     }
 ];

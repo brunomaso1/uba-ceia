@@ -1,12 +1,13 @@
+from typing import Annotated
 from fastapi import APIRouter, status, HTTPException
 from fastapi.params import Depends
 from fastapi.responses import JSONResponse
-
 from fastapi_backend.dependencies.in_memory_store_api import InMemoryStore, get_store_api
-from fastapi_backend.enums.predictions_status_enum import PredictionsStatusEnum
+from fastapi_backend.dependencies.prediction_service_api import get_prediction_service
+from fastapi_backend.schemas.data_types.models_types import ModelType
+from fastapi_backend.schemas.data_types.predictions_status_type import PredictionsStatusType
 from fastapi_backend.schemas.responses_types.generate_sync_predictions_response import GenerateSyncPredictionsResponse
 from fastapi_backend.services.predict_service import PredictionService
-
 
 router = APIRouter(prefix="/predictions", tags=["predictions"])
 
@@ -22,7 +23,14 @@ router = APIRouter(prefix="/predictions", tags=["predictions"])
     response_model=GenerateSyncPredictionsResponse,
 )
 def generate_sync_predictions(
-    image_id: int, store_api: InMemoryStore = Depends(get_store_api)
+    image_id: Annotated[
+        int,
+        "Identificador de la imagen para la cual se desean generar las predicciones. "
+        "Este ID debe corresponder a una imagen previamente almacenada en el sistema, usualmente devuelta por el endpoint de subida de imágenes.",
+    ],
+    model_type: Annotated[ModelType, "Tipo de modelo a utilizar para las predicciones."] = ModelType.RPW_DETECTION,
+    store_api: InMemoryStore = Depends(get_store_api),
+    prediction_service: PredictionService = Depends(get_prediction_service),
 ) -> GenerateSyncPredictionsResponse:
     """Get predictions for a specific image by ID."""
     if image_id < 1 or image_id > store_api.get_length():
@@ -39,13 +47,12 @@ def generate_sync_predictions(
             status_code=404, detail="No se encontró el JGW para la imagen con el ID proporcionado. Ya lo subió?"
         )
 
-    predictions = PredictionService(store_api)
-    result = predictions.generate_sync_predictions(image_id)
+    result = prediction_service.generate_sync_predictions(image_id, model_type)
     if result is None:
         raise HTTPException(status_code=500, detail="Error al generar las predicciones.")
 
     return GenerateSyncPredictionsResponse(
-        id=image_id, status=PredictionsStatusEnum.COMPLETED, message="Predicciones generadas correctamente."
+        id=image_id, status=PredictionsStatusType.COMPLETED, message="Predicciones generadas correctamente."
     )
 
 
@@ -55,10 +62,22 @@ def generate_sync_predictions(
     responses={
         202: {"description": "Predicción en proceso."},
         404: {"description": "Imagen no encontrada."},
+        500: {"description": "Error interno del servidor."},
     },
 )
-async def generate_async_predictions(image_id: int, store_api: InMemoryStore = Depends(get_store_api)) -> JSONResponse:
+async def generate_async_predictions(
+    image_id: Annotated[
+        int,
+        "Identificador de la imagen para la cual se desean generar las predicciones. "
+        "Este ID debe corresponder a una imagen previamente almacenada en el sistema, usualmente devuelta por el endpoint de subida de imágenes.",
+    ],
+    model_type: Annotated[ModelType, "Tipo de modelo a utilizar para las predicciones."] = ModelType.PALM_DETECTION,
+    store_api: InMemoryStore = Depends(get_store_api),
+    prediction_service: PredictionService = Depends(get_prediction_service),
+) -> JSONResponse:
     """Get predictions for a specific image by ID."""
+    raise HTTPException(status_code=501, detail="Predicciones asíncronas no implementadas aún.")
+
     if image_id < 1 or image_id > store_api.get_length():
         raise HTTPException(status_code=404, detail="ID de imagen fuera del rango.")
 
@@ -73,9 +92,7 @@ async def generate_async_predictions(image_id: int, store_api: InMemoryStore = D
             status_code=404, detail="No se encontró el JGW para la imagen con el ID proporcionado. Ya lo subió?"
         )
 
-    # TODO: Make this inyectable.
-    predictions = PredictionService(store_api, image_id)
-    job_id = await predictions.generate_async_predictions()
+    job_id = await prediction_service.generate_async_predictions(image_id, model_type)
     return JSONResponse(
         content={"message": f"Job {job_id} started for image ID {image_id}.", "status": "started", "job_id": job_id}
     )

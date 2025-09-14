@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class PredictionsStatusEnum(Enum):
+class PredictionsStatusType(str, Enum):
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"

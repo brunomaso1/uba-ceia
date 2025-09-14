@@ -1968,6 +1968,24 @@ testing = ["covdefaults (>=2.3)", "coverage (>=7.6.10)", "diff-cover (>=9.2.1)",
 typing = ["typing-extensions (>=4.12.2) ; python_version < \"3.11\""]
 
 [[package]]
+name = "fire"
+version = "0.7.1"
+description = "A library for automatically generating command line interfaces."
+optional = false
+python-versions = ">=3.7"
+groups = ["main"]
+files = [
+    {file = "fire-0.7.1-py3-none-any.whl", hash = "sha256:e43fd8a5033a9001e7e2973bab96070694b9f12f2e0ecf96d4683971b5ab1882"},
+    {file = "fire-0.7.1.tar.gz", hash = "sha256:3b208f05c736de98fb343310d090dcc4d8c78b2a89ea4f32b837c586270a9cbf"},
+]
+
+[package.dependencies]
+termcolor = "*"
+
+[package.extras]
+test = ["hypothesis (<6.136.0)", "levenshtein (<=0.27.1)", "pip", "pylint (<3.3.8)", "pytest (<=8.4.1)", "pytest-pylint (<=1.1.2)", "pytest-runner (<7.0.0)", "setuptools (<=80.9.0)", "termcolor (<3.2.0)"]
+
+[[package]]
 name = "flask"
 version = "3.1.1"
 description = "A simple framework for building complex web applications."
@@ -3683,6 +3701,7 @@ loguru = ">=0.7.3,<0.8.0"
 mlflow = ">=3.1.1,<4.0.0"
 modulo-apps = {path = "E:/Documentos/Git Repositories/uba-ceia-proy-final/ceia-proyecto-final/modulo-apps"}
 opencv-python = "4.11.0.86"
+sahi = ">=0.11.32,<0.12.0"
 scikit-learn = ">=1.7.0,<2.0.0"
 supervision = ">=0.25.1,<0.26.0"
 torch = ">=2.7.1,<3.0.0"
@@ -5156,6 +5175,24 @@ files = [
 pyasn1 = ">=0.6.1,<0.7.0"
 
 [[package]]
+name = "pybboxes"
+version = "0.1.6"
+description = "Light Weight Toolkit for Bounding Boxes"
+optional = false
+python-versions = ">=3.7"
+groups = ["main"]
+files = [
+    {file = "pybboxes-0.1.6-py3-none-any.whl", hash = "sha256:e6f7ca43a38bfe2c6ec5b67c6f6e95790e5d9c8c41d84ef11ba896fe181816d5"},
+    {file = "pybboxes-0.1.6.tar.gz", hash = "sha256:558bfd2a7ca37def07ac95108f3b6504d728332b0c5b871df1017de5c7c1f68d"},
+]
+
+[package.dependencies]
+numpy = "*"
+
+[package.extras]
+dev = ["black (==22.3.0)", "click (==8.0.4)", "deepdiff (==5.5.0)", "flake8 (==3.9.2)", "importlib-metadata (>=1.1.0,<4.3) ; python_version < \"3.8\"", "isort (==5.9.2)", "pytest (>=7.0.1)", "pytest-cov (>=3.0.0)", "pytest-timeout (>=2.1.0)"]
+
+[[package]]
 name = "pybcj"
 version = "1.0.6"
 description = "bcj filter library"
@@ -6534,6 +6571,34 @@ testing = ["h5py (>=3.7.0)", "huggingface-hub (>=0.12.1)", "hypothesis (>=6.70.2
 torch = ["safetensors[numpy]", "torch (>=1.10)"]
 
 [[package]]
+name = "sahi"
+version = "0.11.33"
+description = "A vision library for performing sliced inference on large images/small objects"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "sahi-0.11.33-py3-none-any.whl", hash = "sha256:1c858401ae8d559bbc3cac4f5f91e5466b52f4399087f0f23570b2f4c71dc621"},
+    {file = "sahi-0.11.33.tar.gz", hash = "sha256:25d85fdb3b6f86597b31b0d0c4593b7189557f58d4eec1c0155fe6d8bcc34980"},
+]
+
+[package.dependencies]
+click = "*"
+fire = "*"
+opencv-python = "<=4.11.0.86"
+pillow = ">=8.2.0"
+pybboxes = "0.1.6"
+pyyaml = "*"
+requests = "*"
+shapely = ">=2.0.0"
+terminaltables = "*"
+tqdm = ">=4.48.2"
+
+[package.extras]
+ci = ["fiftyone", "inference (>=0.51.5) ; python_version >= \"3.12\"", "onnx ; python_version >= \"3.10\"", "onnxruntime ; python_version >= \"3.10\"", "pycocotools (>=2.0.7)", "rfdetr (>=1.1.0) ; python_version >= \"3.12\"", "scikit-image", "torch (==2.4.1) ; python_version == \"3.8\" and platform_system == \"Darwin\"", "torch (==2.4.1+cpu) ; python_version == \"3.8\" and platform_system != \"Darwin\"", "torch (==2.7.0) ; python_version >= \"3.9\" and platform_system == \"Darwin\"", "torch (==2.7.0+cpu) ; python_version >= \"3.9\" and platform_system != \"Darwin\"", "torchvision (==0.19.1) ; python_version == \"3.8\" and platform_system == \"Darwin\"", "torchvision (==0.19.1+cpu) ; python_version == \"3.8\" and platform_system != \"Darwin\"", "torchvision (==0.22.0) ; python_version >= \"3.9\" and platform_system == \"Darwin\"", "torchvision (==0.22.0+cpu) ; python_version >= \"3.9\" and platform_system != \"Darwin\"", "transformers (>=4.49.0) ; python_version >= \"3.9\"", "ultralytics (>=8.3.161)"]
+mmdet = ["mmcv (==2.1.0) ; python_version == \"3.11\" and (platform_system != \"Darwin\" or platform_machine != \"arm64\")", "mmdet (==3.3.0) ; python_version == \"3.11\" and (platform_system != \"Darwin\" or platform_machine != \"arm64\")", "mmengine ; python_version == \"3.11\" and (platform_system != \"Darwin\" or platform_machine != \"arm64\")", "numpy (<2.0) ; python_version == \"3.11\""]
+
+[[package]]
 name = "scikit-image"
 version = "0.25.2"
 description = "Image processing in Python"
@@ -7287,6 +7352,33 @@ colorama = ">=0.4.4,<0.5.0"
 mslex = {version = ">=1.1.0,<2.0.0", markers = "sys_platform == \"win32\""}
 psutil = ">=5.7.2,<7"
 tomli = {version = ">=2.0.1,<3.0.0", markers = "python_version >= \"3.7\" and python_version < \"4.0\""}
+
+[[package]]
+name = "termcolor"
+version = "3.1.0"
+description = "ANSI color formatting for output in terminal"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "termcolor-3.1.0-py3-none-any.whl", hash = "sha256:591dd26b5c2ce03b9e43f391264626557873ce1d379019786f99b0c2bee140aa"},
+    {file = "termcolor-3.1.0.tar.gz", hash = "sha256:6a6dd7fbee581909eeec6a756cff1d7f7c376063b14e4a298dc4980309e55970"},
+]
+
+[package.extras]
+tests = ["pytest", "pytest-cov"]
+
+[[package]]
+name = "terminaltables"
+version = "3.1.10"
+description = "Generate simple tables in terminals from a nested list of strings."
+optional = false
+python-versions = ">=2.6"
+groups = ["main"]
+files = [
+    {file = "terminaltables-3.1.10-py2.py3-none-any.whl", hash = "sha256:e4fdc4179c9e4aab5f674d80f09d76fa436b96fdc698a8505e0a36bf0804a874"},
+    {file = "terminaltables-3.1.10.tar.gz", hash = "sha256:ba6eca5cb5ba02bba4c9f4f985af80c54ec3dccf94cfcd190154386255e47543"},
+]
 
 [[package]]
 name = "texttable"
@@ -8631,4 +8723,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13,<4.0"
-content-hash = "b302e2390dd8b011ebe436b6fcc97cca781766d04b0bfcf284dddef9b0177e8b"
+content-hash = "b31d5f41e9b52b553d1c9e17d4b24bdc098d2002f1ded66f8b8177d75647b080"
