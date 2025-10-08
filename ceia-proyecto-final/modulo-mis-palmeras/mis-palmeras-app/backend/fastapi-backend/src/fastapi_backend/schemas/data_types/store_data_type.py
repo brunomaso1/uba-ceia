@@ -1,11 +1,10 @@
 import io
-from typing import Any
 from geopandas import GeoDataFrame
 import numpy as np
 from pydantic import BaseModel
 
-from fastapi_backend.schemas.data_types.jgw_data_type import JGWDataType
-
+# Local imports
+from ..data_types.jgw_data_type import JGWDataType
 
 class StoreDataType(BaseModel):
     """Base class for data types that can be stored in the database."""

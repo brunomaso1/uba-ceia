@@ -23,6 +23,7 @@ dependencies = [
     "deprecated (>=1.2.18,<2.0.0)",
     "modulo-utilidades @ file:///E:/Documentos/Git%20Repositories/uba-ceia-proy-final/ceia-proyecto-final/modulo-utilidades",
     "modulo-ia @ file:///E:/Documentos/Git%20Repositories/uba-ceia-proy-final/ceia-proyecto-final/modulo-ia",
+    "pydantic-settings (>=2.11.0,<3.0.0)",
 ]
 
 [tool.poetry]

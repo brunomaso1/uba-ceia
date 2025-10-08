@@ -2,14 +2,17 @@ from dataclasses import dataclass
 import io, json, zipfile
 from fastapi.responses import StreamingResponse
 from loguru import logger
-from fastapi_backend.dependencies.in_memory_store_api import InMemoryStore
-from fastapi_backend.schemas.data_types.store_data_type import StoreDataType
-from fastapi_backend.utils import fetch_store_entry_with_checks
+
+# Custom dependencies
+from ..dependencies.in_memory_store_api import InMemoryStore
+from ..schemas.data_types.store_data_type import StoreDataType
+from ..utils import fetch_store_entry_with_checks
 
 
 @dataclass
 class ZipService:
     """Servicio para crear y descargar un archivo ZIP con las predicciones y anotaciones de una imagen procesada."""
+
     store_api: InMemoryStore
 
     def download_zip(self, image_id: int) -> StreamingResponse:
@@ -88,9 +91,9 @@ class ZipService:
             >>> with open("output.zip", "wb") as f:
             ...     f.write(zip_buffer.getvalue())
         Notes:
-            - Si no existe un buffer de imagen anotada, se registra una advertencia y se 
+            - Si no existe un buffer de imagen anotada, se registra una advertencia y se
               incluye None en el ZIP para annotated_image.jpg
-            - La función asume que store_entry.predictions implementa la interfaz 
+            - La función asume que store_entry.predictions implementa la interfaz
               __geo_interface__ para la conversión a GeoJSON
             - El buffer ZIP resultante tiene el puntero posicionado al inicio (seek(0))
             - Los datos KML y GeoJSON se codifican en UTF-8 antes de ser añadidos al ZIP

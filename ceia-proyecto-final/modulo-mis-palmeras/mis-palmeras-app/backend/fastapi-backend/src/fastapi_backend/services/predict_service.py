@@ -1,33 +1,38 @@
 from dataclasses import dataclass
 import io
-import fastapi_backend.config as CONFIG
-from fastapi_backend.dependencies.in_memory_store_api import InMemoryStore, get_store_api
 from loguru import logger
 import cv2
-from modulo_ia.modeling.predict import DetectionModelPredictor
-import modulo_utilidades.labeling.procesador_geojson_kml as ProcesadorGeoJSONKML
-from fastapi_backend.schemas.data_types.models_types import ModelType
-from fastapi_backend.utils import fetch_store_entry_with_checks
 from fastapi import Depends
 
-RESOURCES_DIR = CONFIG.RESOURCES_DIR
-# Model parameters
-# Palm detection model
-PALM_MODEL_CLASS_NAMES = CONFIG.PALM_MODEL_CLASS_NAMES
-PALM_MODEL_PATH = CONFIG.PALM_MODEL_PATH
-PALM_MODEL_OVERLAP_FILTER = CONFIG.PALM_MODEL_OVERLAP_FILTER
-PALM_MODEL_NMS_THRESHOLD = CONFIG.PALM_MODEL_NMS_THRESHOLD
-PALM_MODEL_MIN_CONFIDENCE = CONFIG.PALM_MODEL_MIN_CONFIDENCE
-# RPW detection model
-RPW_MODEL_CLASS_NAMES = CONFIG.RPW_MODEL_CLASS_NAMES
-RPW_MODEL_PATH = CONFIG.RPW_MODEL_PATH
-RPW_MODEL_OVERLAP_FILTER = CONFIG.RPW_MODEL_OVERLAP_FILTER
-RPW_MODEL_NMM_THRESHOLD = CONFIG.RPW_MODEL_NMM_THRESHOLD
-RPW_MODEL_MIN_CONFIDENCE = CONFIG.RPW_MODEL_MIN_CONFIDENCE
+# Custom modules dependencies
+from modulo_ia.modeling.predict import DetectionModelPredictor
+import modulo_utilidades.labeling.procesador_geojson_kml as ProcesadorGeoJSONKML
+
+# Custom dependencies
+from ..config import settings
+from ..schemas.data_types.models_types import ModelType
+from ..utils import fetch_store_entry_with_checks
+from ..dependencies.in_memory_store_api import InMemoryStore, get_store_api
+
+RESOURCES_DIR = settings.resources_dir
 
 # Common model parameters
-TARGET_IMG_SIZE_WH = CONFIG.TARGET_IMG_SIZE_WH
-OVERLAP_RATIO_WH = CONFIG.OVERLAP_RATIO_WH
+TARGET_IMG_SIZE_WH = settings.target_img_size_wh
+OVERLAP_RATIO_WH = settings.overlap_ratio_wh
+
+PALM_MODEL_PATH = settings.palm_model_path
+PALM_MODEL_CLASS_NAMES = settings.palm_model_class_names
+PALM_MIN_RATIO = settings.palm_min_ratio
+PALM_NMS_IOU_THRESHOLD = settings.palm_nms_iou_threshold
+PALM_CONTAINERMENT_THRESHOLD = settings.palm_containerment_threshold
+PALM_CONFIDENCE = settings.palm_confidence
+
+RPW_MODEL_PATH = settings.rpw_model_path
+RPW_MODEL_CLASS_NAMES = settings.rpw_model_class_names
+RPW_MIN_RATIO = settings.rpw_min_ratio
+RPW_NMS_IOU_THRESHOLD = settings.rpw_nms_iou_threshold
+RPW_CONTAINERMENT_THRESHOLD = settings.rpw_containerment_threshold
+RPW_CONFIDENCE = settings.rpw_confidence
 
 
 @dataclass
@@ -160,28 +165,36 @@ class PredictionService:
         match model_type:
             case ModelType.PALM_DETECTION:
                 logger.debug("Usando modelo de detección de palmas.")
-                overlap_filter_name = PALM_MODEL_OVERLAP_FILTER
-                model_class_names = PALM_MODEL_CLASS_NAMES
                 model_path = PALM_MODEL_PATH
-                model_threshold = PALM_MODEL_NMS_THRESHOLD
+                model_class_names = PALM_MODEL_CLASS_NAMES
+                overlap_ratio_wh = OVERLAP_RATIO_WH
+                min_ratio = PALM_MIN_RATIO
+                nms_iou_threshold = PALM_NMS_IOU_THRESHOLD
+                containerment_threshold = PALM_CONTAINERMENT_THRESHOLD
+                confidence = PALM_CONFIDENCE
             case ModelType.RPW_DETECTION:
                 logger.debug("Usando modelo de detección de palmas con RPW.")
-                overlap_filter_name = RPW_MODEL_OVERLAP_FILTER
-                model_class_names = RPW_MODEL_CLASS_NAMES
                 model_path = RPW_MODEL_PATH
-                model_threshold = RPW_MODEL_NMM_THRESHOLD
+                model_class_names = RPW_MODEL_CLASS_NAMES
+                overlap_ratio_wh = OVERLAP_RATIO_WH
+                min_ratio = RPW_MIN_RATIO
+                nms_iou_threshold = RPW_NMS_IOU_THRESHOLD
+                containerment_threshold = RPW_CONTAINERMENT_THRESHOLD
+                confidence = RPW_CONFIDENCE
             case _:
                 raise ValueError(f"Unsupported model type: {model_type}")
 
         categories = [{"id": id, "name": name, "supercategory": ""} for id, name in model_class_names.items()]
         model_predictor = DetectionModelPredictor(
-            model_path,
-            TARGET_IMG_SIZE_WH,
-            OVERLAP_RATIO_WH,
-            overlap_filter_name,
-            model_threshold,
+            model=model_path, target_img_size_wh=TARGET_IMG_SIZE_WH, overlap_ratio_wh=overlap_ratio_wh
         )
-        predictions = model_predictor.predict(image).filter_by_confidence(min_confidence=PALM_MODEL_MIN_CONFIDENCE)
+        predictions = (
+            model_predictor.predict(image)
+            .filter_by_square_ratio(min_ratio=min_ratio)
+            .filter_by_nms(nms_iou_threshold, class_agnostic=True)
+            .filter_by_containment(containerment_threshold, class_agnostic=True, check_confidence=False)
+            .filter_by_confidence(confidence)
+        )
         coco_annotations = predictions.as_coco_annotations_v1(
             pic_name=name,
             categories=categories,

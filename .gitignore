@@ -250,37 +250,14 @@ $RECYCLE.BIN/
 # End of https://www.toptal.com/developers/gitignore/api/windows,visualstudiocode,jupyternotebooks,python,venv,virtualenv
 
 # Custom rules (everything added below won't be overriden by 'Generate .gitignore File' if you use 'Update' option)
-# Ignorar todos los archivos .env.*
+# Proyecto en general
+data
+*.pt
 .env.*
-
-# Archivos que terminan en .example son trackeados por git
 !*.example
 
-# MongoDB
-mongodb_data/
-mongodb_log/
-
-# Minio
-prometheus-data/
-minio-data/
-private.key
-
-# FiftyOne
-fiftyone-data/
-
-# LLDAP
-lldap_data/
-
-# Vagrant
-# General
-.vagrant/
-
-# LDAP-Self-Service-Password
-ssp.conf.php
-
-# Backups
-ceia-proyecto-final/modulo-respaldo/backup*
-
+# Según modulos:
+# Modulo-etiquetado-datos
 # CVAT
 # La carpeta cvat se ignora totalmente, menos los archivos de configuración actualizados o modificados.
 # Cuando se modifica o incluye un archivo, hay que agregar la excepción aca.
@@ -291,14 +268,50 @@ ceia-proyecto-final/modulo-etiquetado-datos/cvat/**
 !ceia-proyecto-final/modulo-etiquetado-datos/cvat/example*
 !ceia-proyecto-final/modulo-etiquetado-datos/cvat/readme.md
 
-# Modelos
-*.pt
-data
+# Modulo-gestor-datos
+# Mongodb
+mongodb_data/
+mongodb_log/
+
+# Modulo-repositorio-objetos
+# Minio
+prometheus-data/
+minio-data/
+private.key
+
+# Modulo-calidad-datos
+# FiftyOne
+ceia-proyecto-final/modulo-calidad-datos/fiftyone/data
+
+# Modulo-seguridad
+# LLDAP
+lldap_data/
+
+# LDAP-Self-Service-Password
+ssp.conf.php
 
 # PostgreSQL (Keyclack)
-postgres_data
+postgres_data/
 
+# Modulo-respaldo
+ceia-proyecto-final/modulo-respaldo/backup*
+
+# Modulo-mis-palmeras
+mock-data/
+mock_data/
+
+
+
+# Modulo-IA
+ceia-proyecto-final/modulo-IA/plots
+ceia-proyecto-final/modulo-IA/models
+ceia-proyecto-final/modulo-IA/data
+train/
+
+# Modulo-reportes
 mlruns
+runs/*
 
-# Forntend app
-mock-data
+# Vagrant
+# General
+.vagrant/

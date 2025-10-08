@@ -1,8 +1,11 @@
 from fastapi import APIRouter, status
 
-from fastapi_backend.config import API_VERSION
-from fastapi_backend.routers import geolocalization_api, image_api, jgw_api, predictions_api, zip_api
-from fastapi_backend.schemas.responses_types.health_check_response import HealthCheckResponse
+# Local imports
+from ..config import settings
+from ..routers import geolocalization_api, image_api, jgw_api, predictions_api, zip_api
+from ..schemas.responses_types.health_check_response import HealthCheckResponse
+
+API_VERSION = settings.api_version
 
 router = APIRouter(prefix=f"/api{API_VERSION}")
 

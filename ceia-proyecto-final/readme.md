@@ -13,7 +13,7 @@
 
 </div>
 
-## Consinga
+## Consigna
 
 En el marco de la Especialización en Inteligencia Artificial de la Facultad de Ingeniería de la Universidad de Buenos Aires (FIUBA), se propone la realización de un proyecto final que permita integrar los conocimientos adquiridos en las diferentes materias del programa.
 
@@ -44,6 +44,18 @@ Link al documento: TODO
 ### Gestor de dependencias
 
 Para gestionar las dependencias del proyecto, se utiliza Poetry.
+
+### Entornos
+
+El proyecto se desarrolla en dos entornos: desarrollo y producción. Cada entorno tiene su propia configuración y dependencias.
+
+#### Producción
+
+- Ubuntu 24.04
+- Docker + Docker Compose
+- SSH
+- Samba
+- VSCode Remote - SSH
 
 ### Colores del proyecto
 

@@ -2,12 +2,14 @@ from typing import Annotated
 from fastapi import APIRouter, status, HTTPException
 from fastapi.params import Depends
 from fastapi.responses import JSONResponse
-from fastapi_backend.dependencies.in_memory_store_api import InMemoryStore, get_store_api
-from fastapi_backend.dependencies.prediction_service_api import get_prediction_service
-from fastapi_backend.schemas.data_types.models_types import ModelType
-from fastapi_backend.schemas.data_types.predictions_status_type import PredictionsStatusType
-from fastapi_backend.schemas.responses_types.generate_sync_predictions_response import GenerateSyncPredictionsResponse
-from fastapi_backend.services.predict_service import PredictionService
+
+# Local imports
+from ..dependencies.in_memory_store_api import InMemoryStore, get_store_api
+from ..dependencies.prediction_service_api import get_prediction_service
+from ..schemas.data_types.models_types import ModelType
+from ..schemas.data_types.predictions_status_type import PredictionsStatusType
+from ..schemas.responses_types.generate_sync_predictions_response import GenerateSyncPredictionsResponse
+from ..services.predict_service import PredictionService
 
 router = APIRouter(prefix="/predictions", tags=["predictions"])
 

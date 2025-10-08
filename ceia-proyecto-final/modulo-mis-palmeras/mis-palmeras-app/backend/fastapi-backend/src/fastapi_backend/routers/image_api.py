@@ -1,15 +1,15 @@
-import io
 import uuid
-from fastapi import APIRouter, Depends, UploadFile, Response, HTTPException, status
+from fastapi import APIRouter, Depends, UploadFile, HTTPException, status
 import cv2
 from fastapi.responses import StreamingResponse
 import numpy as np
 from loguru import logger
 
-from fastapi_backend.dependencies.in_memory_store_api import InMemoryStore, get_store_api
-from fastapi_backend.errors.errors_codes import ERROR_CODES
-from fastapi_backend.schemas.data_types.store_data_type import StoreDataType
-from fastapi_backend.schemas.responses_types.upload_image_response import UploadImageResponse
+# Local imports
+from ..dependencies.in_memory_store_api import InMemoryStore, get_store_api
+from ..errors.errors_codes import ERROR_CODES
+from ..schemas.data_types.store_data_type import StoreDataType
+from ..schemas.responses_types.upload_image_response import UploadImageResponse
 
 
 router = APIRouter(prefix="/image", tags=["image"])

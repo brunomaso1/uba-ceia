@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 
-from fastapi_backend.schemas.data_types.store_data_type import StoreDataType
-
+# Local imports
+from ..schemas.data_types.store_data_type import StoreDataType
 
 @dataclass
 class InMemoryStore:

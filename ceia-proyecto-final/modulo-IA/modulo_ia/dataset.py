@@ -28,7 +28,6 @@ PROCESSED_DATA_FOLDER = CONFIG.folders.processed_data_folder
 DATA_QUALITY_FOLDER = CONFIG.fiftyone.data_quality_folder
 
 DATASET_NAME = CONFIG.names.palm_dataset_name
-DATASET_VERSION = CONFIG.versions.palm_dataset_name
 
 RANDOM_SEED = CONFIG.seed
 

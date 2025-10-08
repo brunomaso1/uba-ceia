@@ -1,54 +1,56 @@
-import os
+import json
 from pathlib import Path
-from dotenv import load_dotenv
 from loguru import logger
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# FOLDERS
 ROOT_DIR = Path(__file__).resolve().parent
-logger.debug(f"Directorio raiz: {ROOT_DIR}")
-RESOURCES_DIR = ROOT_DIR / "resources"
-MODELS_DIR = RESOURCES_DIR / "ia_models"
+env_file_path = ROOT_DIR / ".env"
+env_file = str(env_file_path)
 
-# ENVIRONMENT VARIABLES
-try:
-    load_dotenv("../.env.dev")
-    logger.info("Cargando variables de entorno desde .env.dev.")
-except FileNotFoundError:
-    try:
-        load_dotenv("../.env.prod")
-        logger.info("Cargando variables de entorno desde .env.prod.")
-    except FileNotFoundError:
-        logger.info("Cargando variables desde el entorno del sistema.")
+if env_file_path.exists():
+    logger.warning(f"Using .env file at {env_file_path.resolve()} for configuration.")
 
-# API CONFIGURATION
-API_VERSION = "v1"
-CORS_ALLOW_CREDENTIALS = os.environ.get("CORS_ALLOW_CREDENTIALS", "True")
-CORS_ALLOW_ORIGINS = os.environ.get("CORS_ALLOW_ORIGINS", "*").split(",")
-CORS_ALLOW_METHODS = os.environ.get("CORS_ALLOW_METHODS", "*").split(",")
-CORS_ALLOW_HEADERS = os.environ.get("CORS_ALLOW_HEADERS", "*").split(",")
-logger.debug(f"CORS_ALLOW_CREDENTIALS: {CORS_ALLOW_CREDENTIALS}")
-logger.debug(f"CORS_ALLOW_ORIGINS: {CORS_ALLOW_ORIGINS}")
-logger.debug(f"CORS_ALLOW_METHODS: {CORS_ALLOW_METHODS}")
-logger.debug(f"CORS_ALLOW_HEADERS: {CORS_ALLOW_HEADERS}")
-PORT = int(os.environ.get("PORT", "80"))
 
-# MODELS CONFIGURATION
-# Palm detection model
-PALM_MODEL_NAME = "coco_palm_dataset_v1.0_palm_detection_yolo11x_640_b7218a073a3942339689b2e7f4e0b543"
-PALM_MODEL_CLASS_NAMES = {0: "palmera"}
-PALM_MODEL_PATH = MODELS_DIR / f"{PALM_MODEL_NAME}.pt"
-PALM_MODEL_OVERLAP_FILTER = "NMS"
-PALM_MODEL_NMS_THRESHOLD = 0.25
-PALM_MODEL_MIN_CONFIDENCE = 0.75
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=env_file, env_file_encoding="utf-8")
 
-# RPW detection model
-RPW_MODEL_NAME = "coco_palm_dataset_v1.0_rpw_detection_yolo11x_640_stage_training_4b1667b39a5140749b939fc7ec743b84"
-RPW_MODEL_CLASS_NAMES = {0: "palmera-sana", 1: "palmera-infectada", 2: "palmera-muerta"}
-RPW_MODEL_PATH = MODELS_DIR / f"{RPW_MODEL_NAME}.pt"
-RPW_MODEL_OVERLAP_FILTER = "NMM"
-RPW_MODEL_NMM_THRESHOLD = 0.75
-RPW_MODEL_MIN_CONFIDENCE = 0.75
+    resources_dir: Path = ROOT_DIR / "resources"
+    models_dir: Path = resources_dir / "ia_models"
 
-# COMMON MODEL CONFIGURATION
-TARGET_IMG_SIZE_WH = (640, 640)
-OVERLAP_RATIO_WH = (0.4, 0.4)
+    api_version: str = "v1"
+    port: int = 80
+
+    cors_allow_credentials: bool = True
+    cors_allow_origins: list[str] = ["*"]
+    cors_allow_methods: list[str] = ["*"]
+    cors_allow_headers: list[str] = ["*"]
+
+    keycloak_url: str = "http://localhost:7000"
+    keycloak_realm: str = "mis-palmeras-app"
+    keycloak_client_id: str = "prediction-app-backend"
+    keycloak_client_secret: str
+
+    target_img_size_wh: tuple[int, int] = (640, 640)
+    overlap_ratio_wh: tuple[float, float] = (0.4, 0.4)
+
+    palm_model_name: str = "palm_detection_yolo11x_640_a3a50bd4646e4044bed83f02f8bb03f4"
+    palm_model_path: Path = models_dir / f"{palm_model_name}.pt"
+    palm_model_class_names: dict[int, str] = {0: "palmera"}
+    palm_min_ratio: float = 0.8
+    palm_nms_iou_threshold: float = 0.8
+    palm_containerment_threshold: float = 0.8
+    palm_confidence: float = 0.5
+
+    rpw_model_name: str = "rpw_detection_yolo11x_640_freeze_learning_5008788e1d99471e97b877bca45f169f"
+    rpw_model_path: Path = models_dir / f"{rpw_model_name}.pt"
+    rpw_model_class_names: dict[int, str] = {0: "palmera-sana", 1: "palmera-infectada", 2: "palmera-muerta"}
+    rpw_min_ratio: float = 0.8
+    rpw_nms_iou_threshold: float = 0.8
+    rpw_containerment_threshold: float = 0.8
+    rpw_confidence: float = 0.5
+
+    timeout_keep_alive: int = 600
+
+
+settings = Settings()
+logger.debug(f"Settings loaded: {json.dumps(settings.model_dump(), indent=2, default=str)}")

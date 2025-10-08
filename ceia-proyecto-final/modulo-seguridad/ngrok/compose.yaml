@@ -1,0 +1,15 @@
+name: picudo-rojo-project
+
+services:
+  ngrok:
+    image: ngrok/ngrok:${NGROK_VERSION:-latest}
+    command:
+      - "http"
+      - "${MLFLOW_SERVICE_URL:-http://host.docker.internal:5000}"
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+    ports:
+      - 4040:4040
+
+networks:
+  main:

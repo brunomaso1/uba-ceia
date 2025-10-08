@@ -1,0 +1,14 @@
+[Unit]
+Description=Arranque de servicios Docker para CEIA Proyecto Final
+After=network-online.target docker.service
+Wants=network-online.target docker.service
+
+[Service]
+Type=oneshot
+User=maso
+WorkingDirectory=/opt/ceia-proyecto-final
+ExecStart=/opt/ceia-proyecto-final/vagrant-scripts/04-start-prod-ubuntu-services.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

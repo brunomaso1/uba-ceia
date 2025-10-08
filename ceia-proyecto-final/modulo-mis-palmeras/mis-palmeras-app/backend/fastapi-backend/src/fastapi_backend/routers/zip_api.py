@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 
-from fastapi_backend.dependencies.in_memory_store_api import InMemoryStore, get_store_api
-from fastapi_backend.services.zip_service import ZipService
+# Local imports
+from ..dependencies.in_memory_store_api import InMemoryStore, get_store_api
+from ..services.zip_service import ZipService
 
 
 router = APIRouter(prefix="/zip", tags=["zip"])

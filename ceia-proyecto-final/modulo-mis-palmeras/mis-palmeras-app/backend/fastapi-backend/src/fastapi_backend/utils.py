@@ -1,5 +1,6 @@
-from fastapi_backend.dependencies.in_memory_store_api import InMemoryStore
-from fastapi_backend.schemas.data_types.store_data_type import StoreDataType
+# Local imports
+from .dependencies.in_memory_store_api import InMemoryStore
+from .schemas.data_types.store_data_type import StoreDataType
 
 
 def fetch_store_entry_with_checks(store_api: InMemoryStore, image_id: int) -> StoreDataType:

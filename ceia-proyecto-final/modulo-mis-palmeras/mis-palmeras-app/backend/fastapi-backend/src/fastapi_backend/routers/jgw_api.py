@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, UploadFile, status, HTTPException
+from fastapi import APIRouter, Depends, status, HTTPException
 from loguru import logger
 
-from fastapi_backend.dependencies.in_memory_store_api import InMemoryStore, get_store_api
-from fastapi_backend.schemas.data_types.jgw_data_type import JGWDataType
-from fastapi_backend.schemas.responses_types.upload_image_response import UploadImageResponse
-from fastapi_backend.schemas.responses_types.upload_jgw_data_response import UploadJGWDataResponse
+# Local imports
+from ..dependencies.in_memory_store_api import InMemoryStore, get_store_api
+from ..schemas.data_types.jgw_data_type import JGWDataType
+from ..schemas.responses_types.upload_jgw_data_response import UploadJGWDataResponse
 
 router = APIRouter(prefix="/jgw", tags=["jgw"])
 

@@ -1,10 +1,10 @@
 import json
 from fastapi import APIRouter, Depends, Response, status, HTTPException
-from fastapi.responses import FileResponse
 from loguru import logger
 
-from fastapi_backend.dependencies.in_memory_store_api import InMemoryStore, get_store_api
-from fastapi_backend.errors.errors_codes import ERROR_CODES
+# Local imports
+from ..dependencies.in_memory_store_api import InMemoryStore, get_store_api
+from ..errors.errors_codes import ERROR_CODES
 
 router = APIRouter(prefix="/geolocalization", tags=["geolocalization"])
 
@@ -85,7 +85,7 @@ async def download_geojson(image_id: int, store_api: InMemoryStore = Depends(get
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=ERROR_CODES[2],
         )
-    
+
     # Serializar el GeoJSON a una cadena JSON
     geojson_String = json.dumps(geojson)
 

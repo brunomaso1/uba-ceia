@@ -87,72 +87,73 @@ def create_coco_annotations_from_yolo_result(
     Returns:
         dict[str, Any]: Diccionario con las anotaciones en formato COCO, incluyendo info, licenses, categories, images y annotations.
     """
-    bboxes_result = results.boxes.cpu()
-    names = results.names
-    coco_annotations = {
-        "info": CONFIG.coco_dataset.to_dict()["info"],
-        "licenses": CONFIG.coco_dataset.to_dict()["licenses"],
-        "categories": CONFIG.coco_dataset.to_dict()["categories"],
-        "images": [],
-        "annotations": [],
-    }
+    # bboxes_result = results.boxes.cpu()
+    # names = results.names
+    # coco_annotations = {
+    #     "info": CONFIG.coco_dataset.to_dict()["info"],
+    #     "licenses": CONFIG.coco_dataset.to_dict()["licenses"],
+    #     "categories": CONFIG.coco_dataset.to_dict()["categories"],
+    #     "images": [],
+    #     "annotations": [],
+    # }
 
-    category_map = {cat["name"]: cat["id"] for cat in coco_annotations["categories"]}
-    image_height, image_width = results.orig_shape
+    # category_map = {cat["name"]: cat["id"] for cat in coco_annotations["categories"]}
+    # image_height, image_width = results.orig_shape
 
-    image = {
-        "id": 1,
-        "width": image_width,
-        "height": image_height,
-        "file_name": f"{pic_name}.jpg",
-        "date_captured": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-    }
+    # image = {
+    #     "id": 1,
+    #     "width": image_width,
+    #     "height": image_height,
+    #     "file_name": f"{pic_name}.jpg",
+    #     "date_captured": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    # }
 
-    coco_annotations["images"] = [image]
+    # coco_annotations["images"] = [image]
 
-    if not results.boxes:
-        LOGGER.warning("No se encontraron resultados de detección de objetos.")
-        return coco_annotations
+    # if not results.boxes:
+    #     LOGGER.warning("No se encontraron resultados de detección de objetos.")
+    #     return coco_annotations
 
-    annotations = []
-    for index, bbox_result in enumerate(bboxes_result):
-        id = index + 1
-        category_name = names[bbox_result.cls.int().item()]
-        category_id = category_map.get(category_name, None)
-        if category_id is None:
-            LOGGER.warning(f"Categoría '{category_name}' no encontrada en el mapa de categorías.")
-            continue
+    # annotations = []
+    # for index, bbox_result in enumerate(bboxes_result):
+    #     id = index + 1
+    #     category_name = names[bbox_result.cls.int().item()]
+    #     category_id = category_map.get(category_name, None)
+    #     if category_id is None:
+    #         LOGGER.warning(f"Categoría '{category_name}' no encontrada en el mapa de categorías.")
+    #         continue
 
-        x_min, y_min, x_max, y_max = bbox_result.xyxy[0].numpy()
-        ancho = x_max - x_min
-        alto = y_max - y_min
-        area = ancho * alto
+    #     x_min, y_min, x_max, y_max = bbox_result.xyxy[0].numpy()
+    #     ancho = x_max - x_min
+    #     alto = y_max - y_min
+    #     area = ancho * alto
 
-        conf = bbox_result.conf[0].numpy()
+    #     conf = bbox_result.conf[0].numpy()
 
-        # Casteamos a float para evitar problemas de serialización
-        conf = float(conf)
-        x_min, y_min, ancho, alto = map(float, [x_min, y_min, ancho, alto])
-        area = float(area)
+    #     # Casteamos a float para evitar problemas de serialización
+    #     conf = float(conf)
+    #     x_min, y_min, ancho, alto = map(float, [x_min, y_min, ancho, alto])
+    #     area = float(area)
 
-        annotation = {
-            "id": id,
-            "image_id": image["id"],
-            "category_id": category_id,
-            "bbox": [x_min, y_min, ancho, alto],
-            "area": area,
-            "iscrowd": 0,
-            "attributes": {
-                "occluded": False,
-                "rotation": 0.0,
-            },
-            "confidence": conf,
-        }
-        annotations.append(annotation)
+    #     annotation = {
+    #         "id": id,
+    #         "image_id": image["id"],
+    #         "category_id": category_id,
+    #         "bbox": [x_min, y_min, ancho, alto],
+    #         "area": area,
+    #         "iscrowd": 0,
+    #         "attributes": {
+    #             "occluded": False,
+    #             "rotation": 0.0,
+    #         },
+    #         "confidence": conf,
+    #     }
+    #     annotations.append(annotation)
 
-    coco_annotations["annotations"] = annotations
+    # coco_annotations["annotations"] = annotations
 
-    return coco_annotations
+    # return coco_annotations
+    raise Exception("Función obsoleta. Usa create_coco_annotations_from_detections en su lugar.")
 
 
 def get_yolo_training_dataloader(
