@@ -1,19 +1,24 @@
+# Dependencias del sistema
 from dataclasses import dataclass, field
-import sys, os
 from typing import Optional
 
+# Dependencias propias
+from modulo_utilidades.config import MinioConfig, settings as CONFIG
+
+# Dependencias de terceros
 import boto3
 from botocore.exceptions import ClientError
 from botocore.client import BaseClient
 
-from modulo_utilidades.config import MinioConfig, config as CONFIG
+# Configuraciones
+MINIO_CONFIG: MinioConfig = CONFIG.minio
 
 
 @dataclass
 class S3Client:
     """Clase para manejar la conexión a S3 usando dataclass."""
 
-    s3client_config: Optional[MinioConfig] = field(default_factory=lambda: CONFIG.minio)
+    s3client_config: Optional[MinioConfig] = field(default_factory=lambda: MINIO_CONFIG)
     client: BaseClient = field(init=False)
 
     def __post_init__(self) -> None:

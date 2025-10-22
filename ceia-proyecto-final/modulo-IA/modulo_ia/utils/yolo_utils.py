@@ -1,19 +1,15 @@
+# Dependencias del sistema
 import datetime, yaml
-
 from pathlib import Path
 from typing import Any
 
-from loguru import logger as LOGGER
-from matplotlib import pyplot as plt
-from modulo_ia.config import config as CONFIG
 
+# Dependencias de terceros
+from matplotlib import pyplot as plt
 from ultralytics.engine.results import Results
 from ultralytics.data.build import InfiniteDataLoader
 from ultralytics.data import build_dataloader, build_yolo_dataset
 from ultralytics.cfg import get_cfg
-
-from deprecated import deprecated
-from torch.utils.data import DataLoader
 
 
 def filter_results_by_confidence(
@@ -58,102 +54,6 @@ def filter_results_by_confidence(
     results_filtered.save_dir = result.save_dir
 
     return [results_filtered]
-
-
-@deprecated(
-    version="1.0.0",
-    reason="Esta función está obsoleta y será eliminada en futuras versiones. Usa create_coco_annotations_from_detections en su lugar.",
-)
-def create_coco_annotations_from_yolo_result(
-    results: list[dict[str, Any]],
-    pic_name: str,
-) -> dict[str, Any]:
-    """
-    Convierte los resultados de detección de objetos en formato YOLO a anotaciones en formato COCO.
-
-    Esta función toma una imagen y sus resultados de detección, y genera un diccionario
-    que sigue la estructura del formato COCO. Se espera que los resultados contengan
-    información sobre las cajas delimitadoras, categorías y confianza de las detecciones.
-    Solamente se procesa una imagen a la vez.
-
-    Args:
-        image (np.ndarray): Imagen en formato numpy array sobre la que se realizó la detección.
-        results (dict[str, Any]): Resultados de la detección de objetos, típicamente una lista de predicciones YOLO.
-        pic_name (str): Nombre base del archivo de la imagen (sin extensión).
-
-    Raises:
-        ValueError: Si los resultados contienen detecciones para más de una imagen.
-
-    Returns:
-        dict[str, Any]: Diccionario con las anotaciones en formato COCO, incluyendo info, licenses, categories, images y annotations.
-    """
-    # bboxes_result = results.boxes.cpu()
-    # names = results.names
-    # coco_annotations = {
-    #     "info": CONFIG.coco_dataset.to_dict()["info"],
-    #     "licenses": CONFIG.coco_dataset.to_dict()["licenses"],
-    #     "categories": CONFIG.coco_dataset.to_dict()["categories"],
-    #     "images": [],
-    #     "annotations": [],
-    # }
-
-    # category_map = {cat["name"]: cat["id"] for cat in coco_annotations["categories"]}
-    # image_height, image_width = results.orig_shape
-
-    # image = {
-    #     "id": 1,
-    #     "width": image_width,
-    #     "height": image_height,
-    #     "file_name": f"{pic_name}.jpg",
-    #     "date_captured": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-    # }
-
-    # coco_annotations["images"] = [image]
-
-    # if not results.boxes:
-    #     LOGGER.warning("No se encontraron resultados de detección de objetos.")
-    #     return coco_annotations
-
-    # annotations = []
-    # for index, bbox_result in enumerate(bboxes_result):
-    #     id = index + 1
-    #     category_name = names[bbox_result.cls.int().item()]
-    #     category_id = category_map.get(category_name, None)
-    #     if category_id is None:
-    #         LOGGER.warning(f"Categoría '{category_name}' no encontrada en el mapa de categorías.")
-    #         continue
-
-    #     x_min, y_min, x_max, y_max = bbox_result.xyxy[0].numpy()
-    #     ancho = x_max - x_min
-    #     alto = y_max - y_min
-    #     area = ancho * alto
-
-    #     conf = bbox_result.conf[0].numpy()
-
-    #     # Casteamos a float para evitar problemas de serialización
-    #     conf = float(conf)
-    #     x_min, y_min, ancho, alto = map(float, [x_min, y_min, ancho, alto])
-    #     area = float(area)
-
-    #     annotation = {
-    #         "id": id,
-    #         "image_id": image["id"],
-    #         "category_id": category_id,
-    #         "bbox": [x_min, y_min, ancho, alto],
-    #         "area": area,
-    #         "iscrowd": 0,
-    #         "attributes": {
-    #             "occluded": False,
-    #             "rotation": 0.0,
-    #         },
-    #         "confidence": conf,
-    #     }
-    #     annotations.append(annotation)
-
-    # coco_annotations["annotations"] = annotations
-
-    # return coco_annotations
-    raise Exception("Función obsoleta. Usa create_coco_annotations_from_detections en su lugar.")
 
 
 def get_yolo_training_dataloader(

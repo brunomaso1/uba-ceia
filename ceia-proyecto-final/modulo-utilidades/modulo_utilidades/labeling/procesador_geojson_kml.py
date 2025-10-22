@@ -1,46 +1,49 @@
+# Dependencias del sistema
 from concurrent.futures import ProcessPoolExecutor
-import io
-import datetime, json, os, zipfile
+import datetime, json, os, zipfile, io
 
+# Dependencias propias
+from modulo_utilidades.config import COCOCategory, settings as CONFIG
+from modulo_utilidades.database_comunication.mongodb_client import mongodb as DB
+from ..core.labeling.procesador_geojson_kml_core import create_geojson_from_annotations, generate_kml_from_geojson
+from ..core.labeling.convertor_cordenadas_core import (
+    convert_point_image_to_patch,
+    convert_point_image_to_world,
+    convert_point_world_to_image,
+)
+from .procesador_anotaciones_coco_dataset import load_annotations_from_path
+
+# Dependencias de terceros
 from tqdm import tqdm
-
 import kml2geojson
 import requests
-
-import pandas as pd
 import geopandas as gpd
 from fastkml import kml
-
 from pathlib import Path
-from typing import Any, Optional, TextIO
-
-from shapely.geometry import Point, Polygon
-
+from typing import Any, Optional
+from shapely.geometry import Polygon
 import typer
-
 from loguru import logger as LOGGER
-from modulo_utilidades.config import config as CONFIG
-from modulo_utilidades.database_comunication.mongodb_client import mongodb as DB
 
-import modulo_utilidades.labeling.procesador_anotaciones_coco_dataset as CocoDatasetUtils
-import modulo_utilidades.labeling.convertor_cordenadas as ConvertorCoordenadas
-import modulo_utilidades.labeling.procesador_anotaciones_mongodb as ProcesadorAnotacionesMongoDB
-
-DOWNLOAD_TEMP_FOLDER = CONFIG.folders.download_temp_folder
-DOWNLOAD_GOOGLE_MAPS_FOLDER = CONFIG.folders.download_google_maps_folder
-DOWNLOAD_KMLS_FOLDER = CONFIG.folders.download_kmls_folder
-DOWNLOAD_GEOJSON_FOLDER = CONFIG.folders.download_geojson_folder
-
-COCO_DATASET_DATA = CONFIG.coco_dataset.to_dict()
-COCO_DATASET_CATEGORIES = CONFIG.coco_dataset.categories
+# Configuraciones
+DOWNLOAD_TEMP_FOLDER: Path = CONFIG.folders.download_temp_folder
+DOWNLOAD_GOOGLE_MAPS_FOLDER: Path = CONFIG.folders.download_google_maps_folder
+DOWNLOAD_KMLS_FOLDER: Path = CONFIG.folders.download_kmls_folder
+DOWNLOAD_GEOJSON_FOLDER: Path = CONFIG.folders.download_geojson_folder
+COCO_DATASET_DATA: dict[str, Any] = CONFIG.coco_dataset.model_dump()
+COCO_DATASET_CATEGORIES: COCOCategory = CONFIG.coco_dataset.categories
+CODIGO_EPSG_DEFAULT: str = CONFIG.georeferenciacion.codigo_epsg
+GOOGLE_MAPS_BASE_URL: str = CONFIG.google_maps.base_url
+GOOGLE_MAPS_MID: str = CONFIG.google_maps.mid
+BBOX_SIZE_DEFAULT_WH: tuple[int, int] = (CONFIG.bbox_size.width, CONFIG.bbox_size.height)
 
 app = typer.Typer()
 
 
 @app.command()
 def download_kmz_from_gmaps(
-    base_url: str = CONFIG.google_maps.base_url,
-    mid: str = CONFIG.google_maps.mid,
+    base_url: str = GOOGLE_MAPS_BASE_URL,
+    mid: str = GOOGLE_MAPS_MID,
     output_filename: Optional[Path] = None,
 ) -> Path:
     """Descarga un archivo KMZ desde Google Maps y lo descomprime.
@@ -166,140 +169,22 @@ def convert_kml_to_geojson_from_path(
     return convert_kml_to_geojson(kml_text, **kwargs)
 
 
-def create_geojson_from_annotations(
+def create_geojson_from_annotations_wrapper(
     pic_name: str,
     coco_annotations: dict[str, Any],
     jgw_data: dict[str, Any],
-    should_download: bool = False,
-    output_filename: Path = DOWNLOAD_GEOJSON_FOLDER / "annotations.geojson",
+    output_file_path: Optional[Path] = None,
     upload_to_drive: bool = False,
-    epsg_code: str = CONFIG.georeferenciacion.codigo_epsg,
+    epsg_code: str = CODIGO_EPSG_DEFAULT,
 ) -> gpd.GeoDataFrame:
-    """
-    Crea un GeoDataFrame a partir de las anotaciones COCO y los datos de georreferenciación (JGW),
-    y opcionalmente guarda el resultado como un archivo GeoJSON.
-
-    Args:
-        pic_name (str): Nombre de la imagen para la cual se generarán las anotaciones geográficas.
-        coco_annotations (dict[str, Any]): Diccionario con las anotaciones en formato COCO, incluyendo
-            categorías, imágenes y anotaciones.
-        jgw_data (dict[str, Any]): Diccionario con los datos de georreferenciación provenientes del archivo JGW.
-        should_download (bool, opcional): Indica si el GeoDataFrame generado debe guardarse como un archivo GeoJSON.
-            Por defecto es False.
-        output_filename (Path, opcional): Ruta del archivo donde se guardará el GeoJSON si `should_download` es True.
-            Por defecto es "annotations.geojson" en la carpeta `DOWNLOAD_GEOJSON_FOLDER`.
-        upload_to_drive (bool, opcional): Indica si el archivo GeoJSON generado debe subirse a Google Drive.
-            Por defecto es False. Actualmente no implementado.
-        geo_sistema_referencia (str, opcional): Código EPSG del sistema de referencia geográfico que se asignará
-            al GeoDataFrame. Por defecto se toma de la configuración global `CONFIG.georeferenciacion.codigo_epsg`.
-
-    Returns:
-        gpd.GeoDataFrame: GeoDataFrame que contiene las anotaciones geográficas con sus propiedades y geometrías.
-        Si no se encuentran anotaciones para la imagen especificada, se devuelve un GeoDataFrame vacío.
-
-    Raises:
-        NotImplementedError: Si `upload_to_drive` es True, ya que la funcionalidad de subida a Google Drive
-        no está implementada.
-
-    Notas:
-        - Las coordenadas globales de los bounding boxes se calculan utilizando los datos de georreferenciación
-          proporcionados en el archivo JGW.
-        - Las geometrías generadas son puntos (centroides) basados en los bounding boxes de las anotaciones.
-        - El archivo GeoJSON se guarda en el sistema de archivos si `should_download` es True.
-    """
-    # 1 - Configuraciones generales
-    category_map = {cat["id"]: cat["name"] for cat in coco_annotations["categories"]}
-
-    # 2 - Obtener el id de la imagen en las anotaciones
-    image_id = CocoDatasetUtils.get_image_id_from_annotations(pic_name, coco_annotations)
-
-    # 3 - Obtener las anotaciones de la imagen
-    annotations = [ann for ann in coco_annotations["annotations"] if ann["image_id"] == image_id]
-    if not annotations:
-        LOGGER.warning(f"No se encontraron anotaciones para la imagen {pic_name}.")
-        return gpd.GeoDataFrame()
-
-    # 4 - Preparar listas para almacenar los datos
-    geometries = []
-    properties = []
-
-    # 5 - Para cada anotación, obtener el bbox y la categoría
-    for annotation in annotations:
-        bbox = annotation["bbox"]
-        category_name = category_map.get(annotation["category_id"], "Sin categoría")
-        confidence_raw = annotation.get("confidence", "Sin datos")
-        confidence = str(round(float(confidence_raw), 2)) if confidence_raw != "Sin datos" else None
-
-        # 5.1 - Convertir el bbox a coordenadas geográficas utilizando los datos del archivo JGW
-        global_coordinates = ConvertorCoordenadas.convert_bbox_image_to_world(bbox, jgw_data)
-
-        # 5.2 - Obtener el centroide del bbox
-        x_coords = [
-            global_coordinates["tl"][0],
-            global_coordinates["tr"][0],
-            global_coordinates["br"][0],
-            global_coordinates["bl"][0],
-        ]
-        y_coords = [
-            global_coordinates["tl"][1],
-            global_coordinates["tr"][1],
-            global_coordinates["br"][1],
-            global_coordinates["bl"][1],
-        ]
-        centroid_x = sum(x_coords) / len(x_coords)
-        centroid_y = sum(y_coords) / len(y_coords)
-        centroid = (centroid_x, centroid_y)
-
-        # 5.3 - Crear un objeto Point de Shapely con las coordenadas del centroide
-        point = Point(centroid)
-
-        # 5.4 - Guardar la geometría y propiedades
-        geometries.append(point)
-        properties.append(
-            {
-                "name": category_name,
-                "annotation_id": annotation.get("id", None),
-                "confidence": confidence,
-                "bbox_x": bbox[0],
-                "bbox_y": bbox[1],
-                "bbox_width": bbox[2],
-                "bbox_height": bbox[3],
-                "global_tl_x": global_coordinates["tl"][0],
-                "global_tl_y": global_coordinates["tl"][1],
-                "global_br_x": global_coordinates["br"][0],
-                "global_br_y": global_coordinates["br"][1],
-            }
-        )
-
-    # 6 - Crear un DataFrame con las propiedades
-    properties_df = pd.DataFrame(properties)
-
-    # 7 - Crear un GeoDataFrame con las geometrías y propiedades
-    gdf = gpd.GeoDataFrame(properties_df, geometry=geometries)
-
-    # 8 - Configurar el sistema de coordenadas (CRS)
-    gdf.crs = epsg_code
-
-    # 9 - Reproyectar a EPSG:4326 si es necesario
-    # Reproyectar a WGS84 (EPSG:4326) si no está ya en ese CRS
-    if gdf.crs is not None and gdf.crs != "EPSG:4326":
-        try:
-            gdf = gdf.to_crs(epsg=4326)
-            LOGGER.debug("GeoDataFrame reproyectado a EPSG:4326.")
-        except Exception as e:
-            raise ValueError(
-                f"Error al reproyectar el GeoDataFrame a EPSG:4326: {e}. Asegúrate de que el CRS original sea válido."
-            )
-
-    if should_download:
-        output_filename.parent.mkdir(parents=True, exist_ok=True)
-        gdf.to_file(output_filename, driver="GeoJSON")
-        LOGGER.info(f"GeoJSON guardado en {output_filename}")
-        # 10 - Opcional: Subir a Google Drive si se solicita
-        if upload_to_drive:
-            # Aquí iría tu código para subir a Drive
-            raise NotImplementedError("Subida a Google Drive no implementada.")
-    return gdf
+    return create_geojson_from_annotations(
+        pic_name,
+        coco_annotations,
+        jgw_data,
+        output_file_path=output_file_path,
+        upload_to_drive=upload_to_drive,
+        epsg_code=epsg_code,
+    )
 
 
 @app.command()
@@ -335,7 +220,7 @@ def generate_geojson_from_annotations_from_path(
     if not jgw_data_path.exists():
         raise FileNotFoundError(f"El archivo JGW {jgw_data_path} no existe.")
 
-    coco_annotations = CocoDatasetUtils.load_annotations_from_path(coco_annotation_path)
+    coco_annotations = load_annotations_from_path(coco_annotation_path)
     with open(jgw_data_path, "r") as f:
         jgw_data = json.load(f)
 
@@ -349,90 +234,21 @@ def generate_geojson_from_annotations_from_path(
     if geo_sistema_referencia is not None:
         kwargs["geo_sistema_referencia"] = geo_sistema_referencia
 
-    return create_geojson_from_annotations(pic_name, coco_annotations, jgw_data, **kwargs)
+    return create_geojson_from_annotations_wrapper(pic_name, coco_annotations, jgw_data, **kwargs)
 
 
-def generate_kml_from_geojson(
+def generate_kml_from_geojson_wrapper(
     gdf: gpd.GeoDataFrame,
     category_column: str = "name",
     target_category: Optional[str] = None,
-    should_download: bool = False,
-    output_filename: Path = DOWNLOAD_KMLS_FOLDER / "palmeras.kml",
+    output_file_path: Optional[Path] = None,
 ) -> Optional[kml.KML]:
-    """
-    Genera un archivo KML a partir de un GeoDataFrame de GeoPandas.
-
-    Args:
-        gdf (gpd.GeoDataFrame): GeoDataFrame que contiene las geometrías y atributos.
-        category_column (str): Nombre de la columna que contiene las categorías. Por defecto es "category".
-        target_category (Optional[str]): Categoría específica que se desea filtrar. Si es None, se incluyen todas las categorías.
-        should_download (bool): Indica si el archivo KML generado debe guardarse en disco. Por defecto es False.
-        output_filename (Path): Ruta y nombre del archivo KML a guardar. Por defecto es "palmeras.kml" en la carpeta definida por DOWNLOAD_KMLS_FOLDER.
-
-    Returns:
-        Optional[kml.KML]: Objeto KML generado. Retorna None si el GeoDataFrame está vacío o si no se encuentran elementos con la categoría especificada.
-
-    Raises:
-        ValueError: Si ocurre un error al reproyectar el GeoDataFrame a EPSG:4326.
-
-    Notas:
-        - Solo se procesan geometrías de tipo "Point". Las demás geometrías se ignoran.
-        - Si `should_download` es True, el archivo KML se guarda en la ubicación especificada por `output_filename`.
-        - El CRS del GeoDataFrame debe ser válido para realizar la reproyección.
-    """
-    if gdf.empty:
-        LOGGER.warning("El GeoDataFrame está vacío. No se creará el archivo KML.")
-        return None
-
-    k = kml.KML()
-    ns = "{http://www.opengis.net/kml/2.2}"
-
-    # Crear un documento KML
-    palm_document = kml.Document(ns, id="docid", description="PalmTrees")
-    k.append(palm_document)
-
-    # Crear una carpeta para las palmeras
-    palm_folder = kml.Folder(ns, id="palmeras_folder", name="Palmeras")
-    palm_document.append(palm_folder)
-
-    if target_category:
-        palm_gdf = gdf[gdf[category_column] == target_category].copy()
-    else:
-        palm_gdf = gdf.copy()
-
-    if palm_gdf.empty:
-        LOGGER.warning(
-            f"No se encontraron elementos con la categoría '{target_category}'. No se creará el archivo KML."
-        )
-        return None
-
-    # Reproyectar a WGS84 (EPSG:4326) si no está ya en ese CRS
-    if palm_gdf.crs is not None and palm_gdf.crs != "EPSG:4326":
-        try:
-            palm_gdf = palm_gdf.to_crs(epsg=4326)
-            LOGGER.debug("GeoDataFrame reproyectado a EPSG:4326 para el KML.")
-        except Exception as e:
-            raise ValueError(
-                f"Error al reproyectar el GeoDataFrame a EPSG:4326: {e}. Asegúrate de que el CRS original sea válido."
-            )
-
-    for index, row in palm_gdf.iterrows():
-        if row.geometry.geom_type == "Point":
-            coords = (row.geometry.x, row.geometry.y)
-            point = Point(coords)
-            p = kml.Placemark(ns, id=f"palmera_{index}", name=f"{row[category_column]}", geometry=point)
-            palm_folder.append(p)
-        else:
-            LOGGER.warning(f"La geometría del elemento con índice {index} no es un Point. No se agregará al KML.")
-
-    if should_download:
-        output_filename.parent.mkdir(parents=True, exist_ok=True)
-        try:
-            k.write(output_filename)
-            LOGGER.info(f"Archivo KML guardado en {output_filename}")
-        except Exception as e:
-            LOGGER.error(f"Error al guardar el archivo KML: {e}")
-    return k
+    return generate_kml_from_geojson(
+        gdf,
+        category_column=category_column,
+        target_category=target_category,
+        output_file_path=output_file_path,
+    )
 
 
 @app.command()
@@ -441,8 +257,7 @@ def generate_kml_from_geojson_from_path(
     category_column: str = None,
     target_category: Optional[str] = None,
     reproject: bool = None,
-    should_download: bool = None,
-    output_filename: Path = None,
+    output_file_path: Optional[Path] = None,
 ) -> Optional[kml.KML]:
     """
     Genera un archivo KML a partir de un archivo GeoJSON ubicado en una ruta específica.
@@ -470,12 +285,10 @@ def generate_kml_from_geojson_from_path(
         kwargs["target_category"] = target_category
     if reproject is not None:
         kwargs["reproject"] = reproject
-    if should_download is not None:
-        kwargs["should_download"] = should_download
-    if output_filename is not None:
-        kwargs["output_filename"] = output_filename
+    if output_file_path is not None:
+        kwargs["output_file_path"] = output_file_path
 
-    return generate_kml_from_geojson(gdf, **kwargs)
+    return generate_kml_from_geojson_wrapper(gdf, **kwargs)
 
 
 def _load_gdf_from_path(
@@ -502,7 +315,7 @@ def _process_single_patch(
     imagen: dict[str, Any],
     patch: dict[str, Any],
     gdf: gpd.GeoDataFrame,
-    bbox_size: tuple[float, float] = (CONFIG.bbox_size.width, CONFIG.bbox_size.height),
+    bbox_size: tuple[float, float] = BBOX_SIZE_DEFAULT_WH,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """
     Procesa un solo parche de imagen y genera las anotaciones COCO correspondientes para los puntos del GeoDataFrame que caen dentro del parche.
@@ -544,9 +357,7 @@ def _process_single_patch(
     ]
 
     # Convertir las coordenadas del parche a coordenadas globales
-    esquinas_mundo = [
-        ConvertorCoordenadas.convert_point_image_to_world(punto, jgw_data=jgw_data) for punto in esquinas_imagen
-    ]
+    esquinas_mundo = [convert_point_image_to_world(punto, jgw_data=jgw_data) for punto in esquinas_imagen]
 
     poligono_parche = Polygon(esquinas_mundo)
 
@@ -563,12 +374,10 @@ def _process_single_patch(
         punto_mundo = (row.geometry.x, row.geometry.y)
 
         # Convertir a coordenadas de imagen
-        punto_imagen = ConvertorCoordenadas.convert_point_world_to_image(punto_mundo, jgw_data)
+        punto_imagen = convert_point_world_to_image(punto_mundo, jgw_data)
 
         # Convertir a coordenadas locales del parche
-        punto_parche = ConvertorCoordenadas.convert_point_image_to_patch(
-            punto_imagen, x_start, y_start, patch_width, patch_height
-        )
+        punto_parche = convert_point_image_to_patch(punto_imagen, x_start, y_start, patch_width, patch_height)
 
         # Crear el bounding box
         bbox_ancho, bbox_alto = bbox_size

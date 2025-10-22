@@ -1,35 +1,36 @@
+# Dependencias del sistema
 from pathlib import Path
-import shutil
+import shutil, yaml
 from typing import Any, Optional
 
-from deprecated import deprecated
+# Dependencias locales
+from modulo_ia.config import settings as CONFIG
+from .utils.types import DatasetFormat
+
+# Dependencias propias
+from modulo_utilidades.s3_comunication.procesador_s3 import download_images_from_s3, download_patches_from_s3
+from modulo_utilidades.labeling.procesador_anotaciones_mongodb import (
+    list_images_w_ann_from_mongodb,
+    list_patches_w_ann_from_mongodb,
+    download_annotations_as_coco_from_mongodb,
+)
+
+# Dependencias de terceros
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 import typer
-
 import fiftyone as fo
 from fiftyone import ViewField as F
-
 from loguru import logger as LOGGER
-import yaml
-from modulo_ia.config import config as CONFIG
-from modulo_utilidades.database_comunication.mongodb_client import mongodb as DB
 
-import modulo_utilidades.s3_comunication.procesador_s3 as ProcesadorS3
-import modulo_utilidades.labeling.procesador_anotaciones_mongodb as ProcesadorAnotacionesMongoDB
-import modulo_utilidades.labeling.procesador_recortes as ProcesadorRecortes
-from modulo_ia.utils.types import DatasetFormat
 
-RAW_DATA_FOLDER = CONFIG.folders.raw_data_folder
-EXTERNAL_DATA_FOLDER = CONFIG.folders.external_data_folder
-INTERIM_DATA_FOLDER = CONFIG.folders.interim_data_folder
-PROCESSED_DATA_FOLDER = CONFIG.folders.processed_data_folder
-
-DATA_QUALITY_FOLDER = CONFIG.fiftyone.data_quality_folder
-
-DATASET_NAME = CONFIG.names.palm_dataset_name
-
-RANDOM_SEED = CONFIG.seed
+RAW_DATA_FOLDER: Path = CONFIG.folders.raw_data_folder
+EXTERNAL_DATA_FOLDER: Path = CONFIG.folders.external_data_folder
+INTERIM_DATA_FOLDER: Path = CONFIG.folders.interim_data_folder
+PROCESSED_DATA_FOLDER: Path = CONFIG.folders.processed_data_folder
+DATA_QUALITY_FOLDER: Path = CONFIG.fiftyone.data_quality_folder
+DATASET_NAME: str = CONFIG.names.palm_dataset_name
+RANDOM_SEED: int = CONFIG.seed
 
 app = typer.Typer()
 
@@ -69,11 +70,11 @@ def download_images_raw_dataset(
 
     data_folder_path = output_folder / "data"
     data_folder_path.mkdir(parents=True, exist_ok=True)
-    images_metadata = ProcesadorAnotacionesMongoDB.list_images_w_ann_from_mongodb(is_test_split=test_split)
-    ProcesadorS3.download_images_from_s3(images_metadata, data_folder_path)
+    images_metadata = list_images_w_ann_from_mongodb(is_test_split=test_split)
+    download_images_from_s3(images_metadata, data_folder_path)
 
     if with_annotations:
-        ProcesadorAnotacionesMongoDB.download_annotations_as_coco_from_mongodb(
+        download_annotations_as_coco_from_mongodb(
             field_name=annotations_field_name,
             images_names=[img.image_name for img in images_metadata],
             output_filename=annotations_output_filename,
@@ -116,11 +117,11 @@ def download_patches_raw_dataset(
 
     data_folder_path = output_folder / "data"
     data_folder_path.mkdir(parents=True, exist_ok=True)
-    patches_metadata = ProcesadorAnotacionesMongoDB.list_patches_w_ann_from_mongodb(is_test_split=test_split)
-    ProcesadorS3.download_patches_from_s3(patches_metadata, data_folder_path)
+    patches_metadata = list_patches_w_ann_from_mongodb(is_test_split=test_split)
+    download_patches_from_s3(patches_metadata, data_folder_path)
 
     if with_annotations:
-        ProcesadorAnotacionesMongoDB.download_annotations_as_coco_from_mongodb(
+        download_annotations_as_coco_from_mongodb(
             field_name=annotations_field_name,
             patches_names=[img.image_name for img in patches_metadata],
             output_filename=annotations_output_filename,

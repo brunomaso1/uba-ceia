@@ -1,20 +1,18 @@
+# Dependencias propias
+from modulo_ia.config import settings as CONFIG
+
+# Dependencias de terceros
 from mlflow.tracking import MlflowClient
+from loguru import logger as LOGGER
 
-# Dirección de tu servidor de MLflow
-TRACKING_URI = "http://192.168.0.4:5000"
-
-# ID del run que querés actualizar
-RUN_ID = "b7218a073a3942339689b2e7f4e0b543"
+# Configuraciones.
+TRACKING_URI = CONFIG.mlflow.tracking_uri
+RUN_ID = "b7218a073a3942339689b2e7f4e0b543"  # ID a interactuar.
 
 
-def fix_run_status():
+def finish_run():
     client = MlflowClient(tracking_uri=TRACKING_URI)
 
     # Forzamos el estado a FINISHED
     client.set_terminated(run_id=RUN_ID, status="FINISHED")
-
-    print(f"✅ Run {RUN_ID} actualizado a FINISHED")
-
-
-if __name__ == "__main__":
-    fix_run_status()
+    LOGGER.success(f"Run {RUN_ID} actualizado a FINISHED")

@@ -1,30 +1,30 @@
+# Dependencias del sistema
 import shutil, zipfile
-
 from pathlib import Path
 from typing import Any, Optional
 
+# Dependencias internas
+from modulo_utilidades.config import settings as CONFIG
+from modulo_utilidades.database_comunication.mongodb_client import mongodb as DB
+from ..core.labeling.convertor_cordenadas_core import convert_bbox_image_to_patch
+from .procesador_anotaciones_coco_dataset import load_annotations_from_path
 
+# Dependencias de terceros
 from cvat_sdk import make_client
 from cvat_sdk.core.proxies.types import Location
-
 from tqdm import tqdm
-
 import typer
-
 from loguru import logger as LOGGER
-from modulo_utilidades.config import config as CONFIG
-from modulo_utilidades.database_comunication.mongodb_client import mongodb as DB
 
-import modulo_utilidades.labeling.procesador_anotaciones_coco_dataset as CocoDatasetUtils
-import modulo_utilidades.labeling.convertor_cordenadas as ConvertorCoordenadas
-
-CVAT_URL = CONFIG.cvat.url
-CVAT_USER = CONFIG.cvat.user
-CVAT_PASSWORD = CONFIG.cvat.password
-MINIO_PATCHES_PATH = CONFIG.minio.paths.patches
-DOWNLOAD_TEMP_FOLDER = CONFIG.folders.download_temp_folder
-DOWNLOAD_JOBS_FOLDER = CONFIG.folders.download_jobs_folder
-DOWNLOAD_TASKS_FOLDER = CONFIG.folders.download_tasks_folder
+# Configuraciones
+CVAT_URL: str = CONFIG.cvat.url
+CVAT_USER: str = CONFIG.cvat.user
+CVAT_PASSWORD: str = CONFIG.cvat.password
+CVAT_EXPORT_FORMAT: str = CONFIG.cvat.export_format
+MINIO_PATCHES_PATH: str = CONFIG.minio.paths.patches
+DOWNLOAD_TEMP_FOLDER: Path = CONFIG.folders.download_temp_folder
+DOWNLOAD_JOBS_FOLDER: Path = CONFIG.folders.download_jobs_folder
+DOWNLOAD_TASKS_FOLDER: Path = CONFIG.folders.download_tasks_folder
 
 app = typer.Typer()
 
@@ -86,7 +86,7 @@ def download_annotations_from_cvat(
                 )
 
             retrieved.export_dataset(
-                format_name=CONFIG.cvat.export_format,
+                format_name=CVAT_EXPORT_FORMAT,
                 filename=str(output_filename),
                 include_images=False,
                 location=Location.LOCAL,
@@ -169,7 +169,7 @@ def load_annotations_from_cvat(task_id: int = None, job_id: int = None, clean_fi
         raise Exception(f"Error al descargar las anotaciones: {e}")
 
     if file_path:
-        annotations = CocoDatasetUtils.load_annotations_from_path(file_path)
+        annotations = load_annotations_from_path(file_path)
         LOGGER.debug(f"Anotaciones cargadas desde {file_path}.")
         if clean_files and file_path and file_path.exists():
             try:
@@ -229,7 +229,7 @@ def convert_image_annotations_to_cvat_annotations(
             raise ValueError(
                 f"La imagen {image['id']} no tiene un group_id asociado. Todas las imágenes deben tener un group_id."
             )
-        
+
         for db_patch in db_image["patches"]:
             patch_data = {}
             file_name = f"{MINIO_PATCHES_PATH}/{groupId}/{image_name}/{db_patch['patch_name']}.jpg"
@@ -242,7 +242,7 @@ def convert_image_annotations_to_cvat_annotations(
             patch_data["annotations"] = []
             for annotation in image_annotations:
                 # Verificar si el bbox de la imagen está dentro del parche
-                patch_bbox = ConvertorCoordenadas.convert_bbox_image_to_patch(
+                patch_bbox = convert_bbox_image_to_patch(
                     annotation["bbox"],
                     db_patch["x_start"],
                     db_patch["y_start"],
@@ -320,11 +320,12 @@ def convert_patch_annotations_to_cvat_annotations(
         image_name = imagenes.find_one({"patches.patch_name": patch_name})
         if not image_name:
             raise ValueError(f"No se encontró la imagen original para el parche {patch_name}.")
-        
+
         group_id = image_name.get("group_id", None)
         if group_id is None:
-            raise ValueError(f"La imagen {image_name['id']} no tiene un group_id asociado. Todas las imágenes deben tener un group_id.")
-        
+            raise ValueError(
+                f"La imagen {image_name['id']} no tiene un group_id asociado. Todas las imágenes deben tener un group_id."
+            )
 
         image["file_name"] = f"{MINIO_PATCHES_PATH}/{group_id}/{image_name['file_download_id']}/{image["file_name"]}"
 

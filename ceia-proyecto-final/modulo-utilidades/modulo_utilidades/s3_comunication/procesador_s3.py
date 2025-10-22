@@ -1,32 +1,32 @@
+# Dependencias del sistema
 from io import BufferedReader
 import re
 from pathlib import Path
 
-from tqdm import tqdm
-import typer
-
-import botocore
-from loguru import logger as LOGGER
-from modulo_utilidades.config import config as CONFIG
+# Dependencias propias
+from modulo_utilidades.config import settings as CONFIG
 from modulo_utilidades.database_comunication.mongodb_client import mongodb as DB
 from modulo_utilidades.s3_comunication.s3_client import s3client as S3_CLIENT
+from ..utils.types import ImageMetadata
 
-from modulo_utilidades.utils.types import ImageMetadata
+# Dependencias de terceros
+from tqdm import tqdm
+import typer
+import botocore
+from loguru import logger as LOGGER
 
-
-DOWNLOAD_FOLDER = CONFIG.folders.download_folder
-DOWNLOAD_IMAGES_FOLDER = CONFIG.folders.download_images_folder
-DOWNLOAD_PATCHES_FOLDER = CONFIG.folders.download_patches_folder
-DOWNLOAD_CUTOUTS_FOLDER = CONFIG.folders.download_cutouts_folder
-DOWNLOAD_CUTOUTS_METADATA_FOLDER = CONFIG.folders.download_cutouts_metadata_folder
-
-S3_BUCKET = CONFIG.minio.bucket
-S3_IMAGE_PATH = CONFIG.minio.paths.images
-S3_PATCHES_PATH = CONFIG.minio.paths.patches
-S3_CUTOUTS_PATH = CONFIG.minio.paths.cutouts
-S3_CUTOUTS_METADATA_PATH = CONFIG.minio.paths.cutouts_metadata
-S3_JGW_PATH = CONFIG.minio.paths.metadata
-
+# Configuraciones
+DOWNLOAD_FOLDER: Path = CONFIG.folders.download_folder
+DOWNLOAD_IMAGES_FOLDER: Path = CONFIG.folders.download_images_folder
+DOWNLOAD_PATCHES_FOLDER: Path = CONFIG.folders.download_patches_folder
+DOWNLOAD_CUTOUTS_FOLDER: Path = CONFIG.folders.download_cutouts_folder
+DOWNLOAD_CUTOUTS_METADATA_FOLDER: Path = CONFIG.folders.download_cutouts_metadata_folder
+S3_BUCKET: str = CONFIG.minio.bucket
+S3_IMAGE_PATH: str = CONFIG.minio.paths.images
+S3_PATCHES_PATH: str = CONFIG.minio.paths.patches
+S3_CUTOUTS_PATH: str = CONFIG.minio.paths.cutouts
+S3_CUTOUTS_METADATA_PATH: str = CONFIG.minio.paths.cutouts_metadata
+S3_JGW_PATH: str = CONFIG.minio.paths.metadata
 
 app = typer.Typer()
 
@@ -147,7 +147,7 @@ def download_patch_from_s3(
         return None
 
     image_name = image["file_download_id"]
-    patch_key = f"{CONFIG.minio.paths.patches}/{group_id}/{image_name}/{patch_name}.jpg"
+    patch_key = f"{S3_PATCHES_PATH}/{group_id}/{image_name}/{patch_name}.jpg"
 
     try:
         S3_CLIENT.download_file(Bucket=bucket_name, Key=patch_key, Filename=output_filename)

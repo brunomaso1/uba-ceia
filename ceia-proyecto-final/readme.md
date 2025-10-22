@@ -43,7 +43,7 @@ Link al documento: TODO
 
 ### Gestor de dependencias
 
-Para gestionar las dependencias del proyecto, se utiliza Poetry.
+Para gestionar las dependencias del proyecto, se utiliza UV.
 
 ### Entornos
 
@@ -208,7 +208,7 @@ docker exec traefik netstat -tlnp 2>/dev/null || docker exec traefik ss -tlnp
 ```
 
 
-#### Poetry
+#### Poetry (deprecado en favor de UV)
 
 - Instalar proyecto:
 ```bash
@@ -263,6 +263,24 @@ poetry env use <ruta-al-intérprete-python>
 [tool.poetry]
 package-mode = false
 ```
+
+#### UV
+
+- Chequeo de versiones:
+```bash
+uv --version
+uv lock --check
+```
+
+- Crear entorno virtual:
+```bash
+uv sync --all-extras # para instalar dependencias opcionales
+```
+> [!NOTE]  
+> Por defecto, cuando se crea el entorno virtual, UV instala las dependencias en modo desarrollo. Para instalar en modo producción, se debe usar el flag `--no-editable --no-dev`.
+> Las dependencias en desarrollo se encuentran en `[dependency-groups].dev`. Se puede manejar explícitamente con `[project.optional-dependencies]` definiendo un grupo `dev` y luego instalando con `uv sync --all-extras`.
+> El comando `uv sync --all-extras`, a diferencia de `uv sync`, que por defecto es `uv sync --dev`, es que con el primero se instalan las dependencias "optional-dependencies" y el segundo instala las dependencias "dependency-groups".
+
 
 #### Vagrant
 
@@ -367,6 +385,31 @@ cat /proc/cpuinfo # Verifica si AVX está habilitado
 grep -m1 -o 'avx[^ ]*' /proc/cpuinfo
 grep -E 'avx' /proc/cpuinfo
 egrep "svm|vmx" /proc/cpuinfo
+```
+
+- Chequear GPU:
+```bash
+sudo lshw -C display
+```
+
+- Chequear drivers de NVIDIA:
+<!-- https://documentation.ubuntu.com/server/how-to/graphics/install-nvidia-drivers/ -->
+```bash
+cat /proc/driver/nvidia/version
+nvidia-smi
+nvcc --version
+```
+
+- Instalar drivers de NVIDIA:
+```bash
+sudo ubuntu-drivers list --gpgpu # Lista los drivers disponibles
+sudo ubuntu-drivers install --gpgpu nvidia:580-server # Instala el driver recomendado
+sudo apt install nvidia-utils-580-server # Instala las utilidades de nvidia
+```
+
+- Verificar sistema operativo:
+```bash
+cat /etc/os-release
 ```
 
 #### MLFlow

@@ -1,4 +1,4 @@
-import sys
+# Dependencias externas
 import cv2
 import numpy as np
 import loguru as LOGGER
@@ -30,6 +30,7 @@ def is_white_image(image: np.ndarray, threshold_percent=50, white_threshold=250)
     white_percentage = (white_pixel_count / total_pixels) * 100
 
     return white_percentage > threshold_percent, white_percentage
+
 
 def set_log_to_file(log_file: str, level: str) -> None:
     """

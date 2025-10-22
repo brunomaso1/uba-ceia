@@ -1,60 +1,56 @@
+# Dependencias del sistema
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 import os, re, zipfile, requests, shutil
+
+# Dependencias propias
+from modulo_utilidades.config import settings as CONFIG
+from modulo_utilidades.database_comunication.mongodb_client import mongodb as DB
+from ..utils.helpers import is_white_image
+from ..s3_comunication.procesador_s3 import upload_image_to_s3, upload_jgw_to_s3, upload_patch_to_s3
+from ..utils.types import DownloadFileMetadata, JGWData, Patch
+
+# Dependencias de terceros
 from bs4 import BeautifulSoup
 from tqdm import tqdm
-from modulo_utilidades.config import config as CONFIG
-from loguru import logger as LOGGER
-
-from modulo_utilidades.database_comunication.mongodb_client import mongodb as DB
-
-import modulo_utilidades.s3_comunication.procesador_s3 as ProcesadorS3
-import modulo_utilidades.utils.helpers as Helpers
-
 import cv2
-
+from loguru import logger as LOGGER
 import typer
 
-from modulo_utilidades.utils.types import DownloadFileMetadata, JGWData, Patch
-
 # Configuracion
-DOWNLOAD_FOLDER = CONFIG.folders.download_folder
-PATCHES_FOLDER = CONFIG.folders.download_patches_folder
-ZIP_FOLDER = CONFIG.folders.download_zip_folder
-EXCTRACT_FOLDER = CONFIG.folders.download_extract_folder
-
-
-TILE_SIZE = (4096, 4096)
-OVER_LAP = 400
-PURGE_WHITE_IMAGES = True
-DEFAULT_THRESHOLD_PERCENT = 60
-DEFAULT_WHITE_THRESHOLD = 200
-S3_BUCKET_IMAGES_PATH = CONFIG.minio.paths.images
-S3_BUCKET_PATCHES_PATH = CONFIG.minio.paths.patches
-S3_BUCKET_METADATA_PATH = CONFIG.minio.paths.metadata
-S3_BUCKET = CONFIG.minio.bucket
-
-# Constantes
-URL_MAIN_PAGE = "https://gis.montevideo.gub.uy/pmapper/map.phtml?&config=default&me=548000,6130000,596000,6162000"
-URL_TOC = "https://intgis.montevideo.gub.uy/pmapper/incphp/xajax/x_toc.php?"
-URL_GENERATE_DRON_ZIP = "https://intgis.montevideo.gub.uy/sit/php/common/datos/generar_zip2.php?nom_jpg=/inetpub/wwwroot/sit/mapserv/data/fotos_dron/{id}&tipo=jpg"
-URL_GENERATE_FOTOS2024_ZIP = "https://intgis.montevideo.gub.uy/sit/php/common/datos/generar_zip2.php?nom_jpg=/inetpub/wwwroot/sit/mapserv/data/fotos_2024/{id}&tipo=jpg"
-URL_DOWNLOAD_ZIP = "https://intgis.montevideo.gub.uy/sit/tmp/{id}.zip"
-URL_JS = "https://intgis.montevideo.gub.uy/pmapper/config/default/custom.js"
-
-HEADERS_COMMON = {
+DOWNLOAD_FOLDER: Path = CONFIG.folders.download_folder
+PATCHES_FOLDER: Path = CONFIG.folders.download_patches_folder
+ZIP_FOLDER: Path = CONFIG.folders.download_zip_folder
+EXCTRACT_FOLDER: Path = CONFIG.folders.download_extract_folder
+TILE_SIZE: tuple[int, int] = (4096, 4096)
+OVER_LAP: int = 400
+PURGE_WHITE_IMAGES: bool = True
+DEFAULT_THRESHOLD_PERCENT: int = 60
+DEFAULT_WHITE_THRESHOLD: int = 200
+S3_BUCKET_IMAGES_PATH: str = CONFIG.minio.paths.images
+S3_BUCKET_PATCHES_PATH: str = CONFIG.minio.paths.patches
+S3_BUCKET_METADATA_PATH: str = CONFIG.minio.paths.metadata
+S3_BUCKET: str = CONFIG.minio.bucket
+URL_MAIN_PAGE: str = "https://gis.montevideo.gub.uy/pmapper/map.phtml?&config=default&me=548000,6130000,596000,6162000"
+URL_TOC: str = "https://intgis.montevideo.gub.uy/pmapper/incphp/xajax/x_toc.php?"
+URL_GENERATE_DRON_ZIP: str = (
+    "https://intgis.montevideo.gub.uy/sit/php/common/datos/generar_zip2.php?nom_jpg=/inetpub/wwwroot/sit/mapserv/data/fotos_dron/{id}&tipo=jpg"
+)
+URL_GENERATE_FOTOS2024_ZIP: str = (
+    "https://intgis.montevideo.gub.uy/sit/php/common/datos/generar_zip2.php?nom_jpg=/inetpub/wwwroot/sit/mapserv/data/fotos_2024/{id}&tipo=jpg"
+)
+URL_DOWNLOAD_ZIP: str = "https://intgis.montevideo.gub.uy/sit/tmp/{id}.zip"
+URL_JS: str = "https://intgis.montevideo.gub.uy/pmapper/config/default/custom.js"
+HEADERS_COMMON: dict[str, str] = {
     "User-Agent": "Mozilla/5.0",
 }
-
-HEADERS_TOC = {
+HEADERS_TOC: dict[str, str] = {
     "User-Agent": "Mozilla/5.0",
     "Referer": URL_MAIN_PAGE,
     "X-Requested-With": "XMLHttpRequest",
     "Content-Type": "application/x-www-form-urlencoded",
 }
-
-BODY_TOC = {"dummy": "dummy"}
+BODY_TOC: dict[str, str] = {"dummy": "dummy"}
 
 app = typer.Typer()
 
@@ -435,11 +431,11 @@ def _upload_img_to_s3(jpg_path: Path, jgw_path: Path, group_id: str, download_id
     try:
         # Upload JPG file
         with open(jpg_path, "rb") as jpg_file:
-            ProcesadorS3.upload_image_to_s3(jpg_file, f"{download_id}.jpg", group_id)
+            upload_image_to_s3(jpg_file, f"{download_id}.jpg", group_id)
 
         # Upload JGW file
         with open(jgw_path, "rb") as jgw_file:
-            ProcesadorS3.upload_jgw_to_s3(jgw_file, f"{download_id}.jgw", group_id)
+            upload_jgw_to_s3(jgw_file, f"{download_id}.jgw", group_id)
         LOGGER.debug(f"Files uploaded to S3: {download_id}")
     except Exception as e:
         raise Exception(f"Error uploading files to S3 for {download_id}: {str(e)}")
@@ -567,7 +563,7 @@ def _split_image_with_overlap(
             tile_name = f"{download_id}_patch_{patch_id}"
 
             # Chequear si la mayoría de la imagen es blanca.
-            img_is_white = Helpers.is_white_image(tile, threshold_percent, white_threshold)[0]
+            img_is_white = is_white_image(tile, threshold_percent, white_threshold)[0]
 
             # Si la mayoría es blanca, y está activada la opción, no guardar la imagen.
             patch_filename = output_dir / f"{tile_name}.jpg"
@@ -623,7 +619,7 @@ def _upload_patches_to_s3(download_id: str, group_id: str, patches_dir: Path) ->
         for patch_filename in os.listdir(patches_dir):
             patch_path = patches_dir / patch_filename
             with open(patch_path, "rb") as patch_file:
-                ProcesadorS3.upload_patch_to_s3(patch_file, download_id, patch_filename, group_id)
+                upload_patch_to_s3(patch_file, download_id, patch_filename, group_id)
         LOGGER.debug(f"Patches uploaded to S3: {download_id}")
     except Exception as e:
         raise Exception(f"Error uploading patches to S3 for {download_id}: {str(e)}")

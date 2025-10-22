@@ -1,11 +1,10 @@
-# visualizations.py
+# Dependencias de terceros
 import pandas as pd
 import matplotlib.pyplot as plt
-from typing import Union
 
 
 class TrainingVisualizer:
-    def __init__(self, data: Union[str, pd.DataFrame]):
+    def __init__(self, data: str | pd.DataFrame):
         """
         Inicializa el visualizador.
         Args:

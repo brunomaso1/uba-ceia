@@ -5,6 +5,7 @@ import { MatIconModule } from "@angular/material/icon";
 import { MatToolbarModule } from "@angular/material/toolbar";
 import { RouterLink, RouterLinkActive } from "@angular/router";
 import { OidcSecurityService, UserDataResult } from "angular-auth-oidc-client";
+import { IfAuthenticatedDirective } from "../auth/if-authenticated.directive";
 
 @Component({
   selector: "app-layout-header",

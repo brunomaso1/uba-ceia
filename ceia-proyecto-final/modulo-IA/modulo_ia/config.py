@@ -1,131 +1,114 @@
-import os
+# Dependencias del sistema
 from pathlib import Path
-from dotenv import load_dotenv
-from loguru import logger as LOGGER
-from dataclasses import dataclass
+import json, os
 
+# Dependencias de terceros
+from loguru import logger as LOGGER
+from pydantic import BaseModel, Field, computed_field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Configuraciones.
+PROJECT_DIR = Path(__file__).parent.parent.resolve()
+ROOT_DIR = PROJECT_DIR / "modulo_ia"
 OPENCV_IO_MAX_IMAGE_PIXELS = 50000 * 50000  # Para imágenes grandes, ej: barrio3Ombues_20180801_dji_pc_3cm.jpg
 os.environ["OPENCV_IO_MAX_IMAGE_PIXELS"] = str(OPENCV_IO_MAX_IMAGE_PIXELS)
 
-# Colab
-# PROJECT_DIR = Path('/content/drive/MyDrive/ModuloIA/modulo_ia')
-PROJECT_DIR = Path(__file__).resolve().parent
-ROOT_DIR = PROJECT_DIR.parent
+# Env resolution.
+env_file_path = PROJECT_DIR / ".env"
+env_file = str(env_file_path)
+if env_file_path.exists():
+    LOGGER.warning(f"Using .env file at {env_file_path.resolve()} for configuration.")
 
-env_dev_path = PROJECT_DIR / ".env.dev"
-env_prod_path = PROJECT_DIR / ".env.prod"
+class FoldersConfig(BaseModel):
+    root_dir: Path = ROOT_DIR
+    data_folder: Path = PROJECT_DIR / "data"
+    models_folder: Path = PROJECT_DIR / "models"
+    palm_detection_yolov11_folder: Path = PROJECT_DIR / "notebooks" / "deteccion_palmeras" / "yolov11"
+    rpw_detection_yolov11_folder: Path = PROJECT_DIR / "notebooks" / "deteccion_picudo_rojo" / "yolov11"
 
-LOGGER.info(f"Directorio de configuración raíz: {ROOT_DIR}")
-LOGGER.info(f"Directorio de configuración del proyecto: {PROJECT_DIR}")
+    @computed_field
+    def raw_data_folder(self) -> Path:
+        return self.data_folder / "raw"
 
-if env_dev_path.exists():
-    load_dotenv(env_dev_path)
-    LOGGER.info("Variables de entorno cargadas desde .env.dev.")
-elif env_prod_path.exists():
-    load_dotenv(env_prod_path)
-    LOGGER.info("Variables de entorno cargadas desde .env.prod.")
-else:
-    LOGGER.info("No se encontraron archivos .env. Cargando variables desde el entorno del sistema.")
+    @computed_field
+    def external_data_folder(self) -> Path:
+        return self.data_folder / "external"
 
+    @computed_field
+    def interim_data_folder(self) -> Path:
+        return self.data_folder / "interim"
 
-@dataclass
-class FoldersConfig:
-    data_folder: Path = ROOT_DIR / "data"
-    models_folder: Path = ROOT_DIR / "models"
-    palm_detection_yolov11_folder: Path = ROOT_DIR / "notebooks" / "deteccion_palmeras" / "yolov11"
-    rpw_detection_yolov11_folder: Path = ROOT_DIR / "notebooks" / "deteccion_picudo_rojo" / "yolov11"
+    @computed_field
+    def processed_data_folder(self) -> Path:
+        return self.data_folder / "processed"
 
-    def __post_init__(self):
-        self.raw_data_folder: Path = self.data_folder / "raw"
-        self.external_data_folder: Path = self.data_folder / "external"
-        self.interim_data_folder: Path = self.data_folder / "interim"
-        self.processed_data_folder: Path = self.data_folder / "processed"
-        self.temp_data_folder: Path = self.data_folder / "temp"
+    @computed_field
+    def temp_data_folder(self) -> Path:
+        return self.data_folder / "temp"
 
 
-@dataclass
-class NamesConfig:
+class NamesConfig(BaseModel):
     palm_dataset_name: str = "coco_palm_dataset"
 
 
-@dataclass
-class RawVersionsConfig:
+class RawVersionsConfig(BaseModel):
     v11: str = "v1.1"
 
-@dataclass
-class ProcessedVersionsConfig:
+
+class ProcessedVersionsConfig(BaseModel):
     v111: str = "v1.1.1"
-    v112: str = "v1.1.2" # Undersampling = 5000
+    v112: str = Field(default="v1.1.2", description="Undersampling = 5000")
 
 
-@dataclass
-class DatasetsProcessedFormatConfig:
+class DatasetsProcessedFormatConfig(BaseModel):
     yolo: str = "yolo"
     huggingface: str = "huggingface"
 
 
-@dataclass
-class FiftyoneConfig:
-    host: str
-    port: int
-    data_quality_folder: Path = ROOT_DIR.parent / "modulo-calidad-datos" / "fiftyone" / "data"
+class FiftyoneConfig(BaseModel):
+    host: str = "localhost"
+    port: int = 5151
+    schema: str = "http"
+    data_quality_folder: Path = PROJECT_DIR.parent / "modulo-calidad-datos" / "fiftyone" / "data"
 
-    def __post_init__(self):
-        self.address: str = f"http://{self.host}:{self.port}"
-
-
-@dataclass
-class MLFlowConfig:
-    host: str
-    port: int
-    mlflow_tracking_username: str
-    mlflow_tracking_password: str
-    schema: str
-
-    def __post_init__(self):
-        self.tracking_uri: str = f"{self.schema}://{self.host}:{self.port}"
+    @computed_field
+    def address(self) -> str:
+        return f"{self.schema}://{self.host}:{self.port}"
 
 
-class Config:
-    """Clase principal de configuración del sistema"""
+class MLFlowConfig(BaseModel):
+    host: str = "localhost"
+    port: int = 5000
+    tracking_username: str
+    tracking_password: str
+    schema: str = "http"
 
-    def __init__(self):
-        # Configuración general
-        self.environment = os.getenv("ENVIRONMENT", "dev")
-        self.seed = 42
-
-        self.folders = FoldersConfig()
-        self.names = NamesConfig()
-        self.raw_versions = RawVersionsConfig()
-        self.processed_versions = ProcessedVersionsConfig()
-        self.datasets_processed_format = DatasetsProcessedFormatConfig()
-        self.fiftyone = self._get_fiftyone_config()
-        self.mlflow = self._get_mlflow_config()
-
-    def _get_fiftyone_config(self) -> FiftyoneConfig:
-        """Obtiene la configuración de FiftyOne desde las variables de entorno"""
-        return FiftyoneConfig(host=os.getenv("FIFTYONE_HOST", "localhost"), port=int(os.getenv("FIFTYONE_PORT", 5151)))
-
-    def _get_mlflow_config(self) -> MLFlowConfig:
-        """Obtiene la configuración de MLflow desde las variables de entorno"""
-        return MLFlowConfig(
-            host=os.getenv("MLFLOW_HOST", "localhost"),
-            port=int(os.getenv("MLFLOW_PORT", 5000)),
-            schema=os.getenv("MLFLOW_SCHEMA", "http"),
-            mlflow_tracking_username=os.getenv("MLFLOW_TRACKING_USERNAME", ""),
-            mlflow_tracking_password=os.getenv("MLFLOW_TRACKING_PASSWORD", ""),
-        )
+    @computed_field
+    def tracking_uri(self) -> str:
+        return f"{self.schema}://{self.host}:{self.port}"
 
 
-# If tqdm is installed, configure loguru with tqdm.write
-# https://github.com/Delgan/loguru/issues/135
-try:
-    from tqdm import tqdm
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=env_file,
+        env_nested_delimiter="_",
+        env_nested_max_split=1,
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
-    LOGGER.remove(1)
-    LOGGER.add(lambda msg: tqdm.write(msg, end=""), colorize=True)
-except Exception:
-    pass
+    environment: str = "dev"
+    seed: int = 42
 
-# Instancia global de configuración
-config = Config()
+    folders: FoldersConfig = Field(default_factory=FoldersConfig)
+    names: NamesConfig = Field(default_factory=NamesConfig)
+    raw_dataset_versions: RawVersionsConfig = Field(default_factory=RawVersionsConfig)
+    processed_dataset_versions: ProcessedVersionsConfig = Field(default_factory=ProcessedVersionsConfig)
+    processed_dataset_format: DatasetsProcessedFormatConfig = Field(default_factory=DatasetsProcessedFormatConfig)
+    fiftyone: FiftyoneConfig = Field(default_factory=FiftyoneConfig)
+    mlflow: MLFlowConfig = Field(default_factory=MLFlowConfig)
+
+
+settings = Settings()
+LOGGER.debug(f"Settings loaded: {json.dumps(settings.model_dump(), indent=2, default=str)}")
+

@@ -1,29 +1,30 @@
+# Dependencias del sistema
 import copy, datetime, json
-
 from pathlib import Path
 from typing import Any, Optional
 
-from pymongo import UpdateOne
-
-import typer
-
-from loguru import logger as LOGGER
-from modulo_utilidades.config import config as CONFIG
+# Dependencias locales
+from modulo_utilidades.config import COCOCategory, settings as CONFIG
 from modulo_utilidades.database_comunication.mongodb_client import mongodb as DB
+from .procesador_anotaciones_cvat import (
+    convert_image_annotations_to_cvat_annotations,
+    convert_patch_annotations_to_cvat_annotations,
+)
+from ..core.labeling.convertor_cordenadas_core import convert_bbox_patch_to_image
+from .procesador_anotaciones_coco_dataset import load_annotations_from_path
+from ..utils.types import AnnotationType, ImageMetadata
 
-from modulo_utilidades.utils.types import AnnotationType
+# Dependencias de terceros
+from pymongo import UpdateOne
+import typer
+from loguru import logger as LOGGER
 
-import modulo_utilidades.labeling.procesador_anotaciones_coco_dataset as CocoDatasetUtils
-import modulo_utilidades.labeling.convertor_cordenadas as ConvertorCoordenadas
-import modulo_utilidades.labeling.procesador_anotaciones_cvat as ProcesadorAnotacionesCVAT
-from modulo_utilidades.utils.types import ImageMetadata
-
-MINIO_PATCHES_PATH = CONFIG.minio.paths.patches
-DOWNLOAD_COCO_ANNOTATIONS_FOLDER = CONFIG.folders.download_coco_annotations_folder
-DOWNLOAD_JGW_FOLDER = CONFIG.folders.download_jgw_folder
-
-COCO_DATASET_DATA = CONFIG.coco_dataset.to_dict()
-COCO_DATASET_CATEGORIES = CONFIG.coco_dataset.categories
+# Configuraciones
+MINIO_PATCHES_PATH: str = CONFIG.minio.paths.patches
+DOWNLOAD_COCO_ANNOTATIONS_FOLDER: Path = CONFIG.folders.download_coco_annotations_folder
+DOWNLOAD_JGW_FOLDER: Path = CONFIG.folders.download_jgw_folder
+COCO_DATASET_DATA: dict[str, Any] = CONFIG.coco_dataset.model_dump()
+COCO_DATASET_CATEGORIES: COCOCategory = CONFIG.coco_dataset.categories
 
 app = typer.Typer()
 
@@ -75,13 +76,9 @@ def save_coco_annotations(
     upsert_operations = []
 
     if annotation_type == "images":
-        images, annotations = ProcesadorAnotacionesCVAT.convert_image_annotations_to_cvat_annotations(
-            images, annotations
-        )
+        images, annotations = convert_image_annotations_to_cvat_annotations(images, annotations)
     elif annotation_type == "patches":
-        images, annotations = ProcesadorAnotacionesCVAT.convert_patch_annotations_to_cvat_annotations(
-            images, annotations
-        )
+        images, annotations = convert_patch_annotations_to_cvat_annotations(images, annotations)
     else:
         pass
 
@@ -274,9 +271,7 @@ def _create_images_fields(
                 **ann,
                 "category_id": category_map[ann["category_name"]],
                 "image_id": image["id"],
-                "bbox": ConvertorCoordenadas.convert_bbox_patch_to_image(
-                    ann["bbox"], patch["x_start"], patch["y_start"]
-                ),
+                "bbox": convert_bbox_patch_to_image(ann["bbox"], patch["x_start"], patch["y_start"]),
             }
             for i, ann in enumerate(patch_annotations)
         ]
@@ -423,7 +418,7 @@ def _load_coco_annotation_from_mongodb(
         raise Exception(f"Error al descargar las anotaciones: {e}")
 
     if file_path:
-        annotations = CocoDatasetUtils.load_annotations_from_path(file_path)
+        annotations = load_annotations_from_path(file_path)
         LOGGER.debug(f"Anotaciones cargadas desde {file_path}.")
         if clean_files and file_path and file_path.exists():
             try:
@@ -599,7 +594,7 @@ def load_coco_annotations_from_mongodb(
         raise Exception(f"Error al descargar las anotaciones: {e}")
 
     if file_path:
-        annotations = CocoDatasetUtils.load_annotations_from_path(file_path)
+        annotations = load_annotations_from_path(file_path)
         LOGGER.debug(f"Anotaciones cargadas desde {file_path}.")
         if clean_files and file_path and file_path.exists():
             try:
@@ -615,8 +610,7 @@ def load_coco_annotations_from_mongodb(
 def load_jgw_file_from_mongodb(
     image_name: Optional[str] = None,
     patch_name: Optional[str] = None,
-    should_download: bool = False,
-    output_filename: Path = DOWNLOAD_JGW_FOLDER / "jgw_data.json",
+    output_file_path: Optional[Path] = None,
 ) -> Optional[dict[str, Any]]:
     """
     Carga un archivo JGW desde MongoDB.
@@ -681,11 +675,11 @@ def load_jgw_file_from_mongodb(
             "y_origin": y_origin_patch,
         }
 
-    if should_download:
-        output_filename.parent.mkdir(parents=True, exist_ok=True)
-        with open(output_filename, "w") as f:
+    if output_file_path:
+        output_file_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_file_path, "w") as f:
             json.dump(jgw_data, f, indent=4)
-            LOGGER.success(f"Archivo JGW guardado en {output_filename}.")
+            LOGGER.success(f"Archivo JGW guardado en {output_file_path}.")
 
     return jgw_data
 

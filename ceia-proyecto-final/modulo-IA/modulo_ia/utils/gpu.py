@@ -1,3 +1,4 @@
+# Dependencias de terceros
 import platform, psutil, GPUtil, gc
 from GPUtil import showUtilization as gpu_usage
 import torch
@@ -67,5 +68,3 @@ def show_system_info():
             print(f"GPU Memory Used: {gpu.memoryUsed} MB")
             print(f"GPU Load: {gpu.load * 100}%")
             print(f"GPU Temperature: {gpu.temperature}°C")
-
-

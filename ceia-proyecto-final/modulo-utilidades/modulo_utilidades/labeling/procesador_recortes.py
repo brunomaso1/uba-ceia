@@ -1,28 +1,29 @@
+# Dependencias del sistema
 import datetime, json, os
-
 from pathlib import Path
 from typing import Any, Optional
-import numpy as np
 
+# Dependencias propias
+from modulo_utilidades.config import settings as CONFIG
+from modulo_utilidades.s3_comunication.s3_client import s3client as S3_CLIENT
+from ..core.labeling.procesador_anotaciones_coco_dataset_core import get_image_id_from_annotations
+from .procesador_anotaciones_mongodb import download_annotations_as_coco_from_mongodb, list_images_w_ann_from_mongodb
+from .procesador_anotaciones_coco_dataset import load_annotations_from_path
+
+# Dependencias de terceros
+import typer
+import cv2 as cv
+import numpy as np
 from loguru import logger as LOGGER
 from tqdm import tqdm
-from modulo_utilidades.config import config as CONFIG
-from modulo_utilidades.s3_comunication.s3_client import s3client as S3_CLIENT
 
-import modulo_utilidades.labeling.procesador_anotaciones_coco_dataset as CocoDatasetUtils
-import modulo_utilidades.labeling.procesador_anotaciones_mongodb as ProcesadorCocoDataset
-import modulo_utilidades.s3_comunication.procesador_s3 as ProcesadorS3
-
-import typer
-
-import cv2 as cv
-
-MINIO_BUCKET = CONFIG.minio.bucket
-DOWNLOAD_CUTOUTS_FOLDER = CONFIG.folders.download_cutouts_folder
-DOWNLOAD_CUTOUTS_METADATA_FOLDER = CONFIG.folders.download_cutouts_metadata_folder
-MINIO_CUTOUTS_PATH = CONFIG.minio.paths.cutouts
-MINIO_CUTOUTS_METADATA_PATH = CONFIG.minio.paths.cutouts_metadata
-DOWNLOAD_IMAGES_FOLDER = CONFIG.folders.download_images_folder
+# Configuraciones
+MINIO_BUCKET: str = CONFIG.minio.bucket
+DOWNLOAD_CUTOUTS_FOLDER: Path = CONFIG.folders.download_cutouts_folder
+DOWNLOAD_CUTOUTS_METADATA_FOLDER: Path = CONFIG.folders.download_cutouts_metadata_folder
+MINIO_CUTOUTS_PATH: str = CONFIG.minio.paths.cutouts
+MINIO_CUTOUTS_METADATA_PATH: str = CONFIG.minio.paths.cutouts_metadata
+DOWNLOAD_IMAGES_FOLDER: Path = CONFIG.folders.download_images_folder
 
 app = typer.Typer()
 
@@ -104,7 +105,7 @@ def cut_palms_from_image(
         raise ValueError(f"La imagen {pic_name} no se pudo cargar. Verifique la ruta y el formato.")
 
     # Buscar el id de la imagen en las anotaciones dependiendo de si se proporciona el nombre del parche o de la imagen
-    image_id = CocoDatasetUtils.get_image_id_from_annotations(pic_name, coco_annotations)
+    image_id = get_image_id_from_annotations(pic_name, coco_annotations)
 
     # Filtrar las anotaciones para la imagen actual
     annotations: list = [ann for ann in coco_annotations["annotations"] if ann["image_id"] == image_id]
@@ -192,7 +193,7 @@ def cut_palms_from_image_path(
     """
     image = cv.imread(str(image_path))
     pic_name = image_path.stem
-    coco_annotations = CocoDatasetUtils.load_annotations_from_path(coco_annotations_path)
+    coco_annotations = load_annotations_from_path(coco_annotations_path)
 
     return cut_palms_from_image(
         image=image,
@@ -226,7 +227,7 @@ def cut_palms_from_images_path(
 
     >>> py -m modulo_apps.labeling.procesador_recortes cut-palms-from-images-path --images-paths "img1.jpg" --images-paths "img2.jpg" --coco-annotations-path "coco_anotations.json"
     """
-    coco_annotations = CocoDatasetUtils.load_annotations_from_path(coco_annotations_path)
+    coco_annotations = load_annotations_from_path(coco_annotations_path)
     images = [cv.imread(str(image_path)) for image_path in images_paths]
     pic_names = [image_path.stem for image_path in images_paths]
 
@@ -347,7 +348,7 @@ def process_cutouts():
     asegurando que las imágenes recortadas y sus metadatos estén disponibles para su uso posterior.
     """
     # 1. Descargar todas las imágenes que tienen anotaciones en MongoDB.
-    images_names = ProcesadorCocoDataset.list_images_w_ann_from_mongodb()
+    images_names = list_images_w_ann_from_mongodb()
     if not images_names:
         LOGGER.warning("No se encontraron imágenes con anotaciones en MongoDB.")
         return
@@ -355,14 +356,13 @@ def process_cutouts():
     # ProcesadorS3.download_images_from_minio(images_names, DOWNLOAD_IMAGES_FOLDER)
     images_paths = [DOWNLOAD_IMAGES_FOLDER / f"{image_name}.jpg" for image_name in images_names]
     # 2. Descargar las anotaciones en formato COCO desde MongoDB.
-    annotations_path = ProcesadorCocoDataset.download_annotations_as_coco_from_mongodb(
-        images_names=images_names, field_name="cvat"
-    )
+    annotations_path = download_annotations_as_coco_from_mongodb(images_names=images_names, field_name="cvat")
     # 3. Recortar las imágenes utilizando las anotaciones.
     cut_palms_from_images_path(images_paths=images_paths, coco_annotations_path=annotations_path)
-    
+
     # 4. Subir los recortes y sus metadatos a MinIO.
     upload_cutouts_to_mino()
+
 
 if __name__ == "__main__":
     app()

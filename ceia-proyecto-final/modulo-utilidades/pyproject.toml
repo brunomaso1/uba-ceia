@@ -1,45 +1,63 @@
 [project]
 name = "modulo-utilidades"
 version = "0.1.0"
-description = ""
-authors = [{ name = "brunomaso1", email = "brunomaso1@hotmail.com" }]
-requires-python = ">=3.13,<4.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13, <4.0"
 dependencies = [
-    "loguru (>=0.7.3,<0.8.0)",
-    "python-dotenv (>=1.1.1,<2.0.0)",
-    "pymongo (>=4.9.2,<5.0.0)",
-    "boto3 (>=1.38.44,<2.0.0)",
-    "boto3-stubs[essential] (>=1.38.44,<2.0.0)",
-    "tqdm (>=4.67.1,<5.0.0)",
-    "typer (>=0.16.0,<0.17.0)",
-    "numpy (>=2.3.0,<3.0.0)",
-    "pydantic (>=2.11.7,<3.0.0)",
-    "cvat-sdk (==2.42.0)",
-    "kml2geojson (>=5.1.0,<6.0.0)",
-    "pandas (>=2.3.0,<3.0.0)",
-    "geopandas (>=1.1.0,<2.0.0)",
-    "fastkml (>=1.1.0,<2.0.0)",
-    "shapely (>=2.1.1,<3.0.0)",
-    "lxml (>=5.4.0,<6.0.0)",
-    "opencv-python (>=4.11.0.86,<5.0.0.0)",
-    "matplotlib (>=3.10.3,<4.0.0)",
-    "layoutparser (>=0.3.4,<0.4.0)",
-    "pycocotools (>=2.0.10,<3.0.0)",
-    "supervision (>=0.25.1,<0.26.0)",
-    "pytest (>=8.4.1,<9.0.0)",
-    "scikit-learn (>=1.7.1,<2.0.0)",
-    "beautifulsoup4 (>=4.13.4,<5.0.0)",
-    "deprecated (>=1.2.18,<2.0.0)",
+    "fastkml>=1.2.0",
+    "geopandas>=1.1.1",
+    "loguru>=0.7.3",
+    "lxml>=6.0.2",
+    "pandas>=2.3.3",
+    "pydantic>=2.12.3",
+    "pydantic-settings>=2.11.0",
+    "shapely>=2.1.2",
+    "supervision>=0.26.1",
 ]
 
-[tool.poetry]
-packages = [{ include = "modulo_utilidades" }]
+# Bien, para importar en el otro módulo (IA), no se define este grupo, sino se utiliza el de abajo.
+# Esto es porque no se podía importar el módulo utilidades desde otro proyecto con este grupo, no se instalaba las dependencias,
+# pero la ruta del módulo se reconocía bien (no se cargaba correctamente el .env).
+# [dependency-groups]
+# dev = [
+#     "loguru>=0.7.3",
+#     ...
+# ]
 
-[tool.pytest.ini_options]
-pythonpath = ["."]
-testpaths = ["tests"]
-
+[project.optional-dependencies]
+dev = [
+    "pymongo>=4.9.2",
+    "boto3>=1.38.44",
+    "boto3-stubs[essential]>=1.38.44",
+    "tqdm>=4.67.1",
+    "typer>=0.16.0",
+    "numpy>=2.3.0",
+    "pydantic>=2.11.7",
+    "cvat-sdk==2.42.0",
+    "kml2geojson>=5.1.0",
+    "opencv-python>=4.11.0.86",
+    "matplotlib>=3.10.3",
+    "layoutparser>=0.3.4",
+    "pycocotools>=2.0.10",
+    "pytest>=8.4.1",
+    "scikit-learn>=1.7.1",
+    "beautifulsoup4>=4.13.4",
+    "deprecated>=1.2.18",
+]
 
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["uv_build>=0.9.4,<0.10.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "modulo_utilidades"
+module-root = ""
+source-exclude = [
+    "modulo_utilidades/main.py",
+    "modulo_utilidades/database_comunication",
+    "modulo_utilidades/labeling",
+    "modulo_utilidades/s3_comunication",
+    "modulo_utilidades/utils",
+    "modulo_utilidades/webscrapping"
+]

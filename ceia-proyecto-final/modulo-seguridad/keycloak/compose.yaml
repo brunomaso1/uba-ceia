@@ -2,11 +2,13 @@ name: picudo-rojo-project
 
 services:
   keycloak_web:
-    image: quay.io/keycloak/keycloak:${KEYCLOAK_VERSION:-26.3} 
+    image: quay.io/keycloak/keycloak:${KEYCLOAK_VERSION:-26.3}
     container_name: keycloak_web
     environment:
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://keycloakdb:5432/keycloak
+      # KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN}
+      # KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
       KC_DB_USERNAME: ${KC_DB_USERNAME}
       KC_DB_PASSWORD: ${KC_DB_PASSWORD}
 
@@ -20,8 +22,18 @@ services:
       KC_HEALTH_ENABLED: true
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
-    command: start-dev
-    # command: start # Uncomment for production use, but needs to configure HTTPS keys/certificates
+
+      # Eventos de auditoría
+      # KC_EVENTS_LISTENERS: jpa,jboss-logging
+
+      # # Guardara eventos de administración
+      # KC_EVENTS_ENABLED: true
+      # KC_EVENTS_STORE_ENABLED: true
+
+      KC_HTTP_ENABLED: true # Enable HTTP (not recommended for production)
+    command:
+      - start-dev
+    # command: start
     depends_on:
       - keycloakdb
     ports:
@@ -31,6 +43,8 @@ services:
 
   keycloakdb:
     image: postgres:${POSTGRES_VERSION:-17.5}
+    container_name: keycloakdb
+    restart: unless-stopped
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
     environment:

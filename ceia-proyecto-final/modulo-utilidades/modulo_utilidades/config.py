@@ -1,57 +1,114 @@
-import os
+# Dependencias del sistema
 from pathlib import Path
-from dotenv import load_dotenv
-from loguru import logger
-from dataclasses import asdict, dataclass, field
-from typing import List, Dict, Any, Tuple, Optional
+import json, os
+from typing import Any
 
+# Dependencias de terceros
+from loguru import logger as LOGGER
+from pydantic import BaseModel, Field, computed_field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Configuration.
+PROJECT_DIR = Path(__file__).parent.parent.resolve()
+ROOT_DIR = PROJECT_DIR / "modulo_utilidades"
 OPENCV_IO_MAX_IMAGE_PIXELS = 50000 * 50000  # Para imágenes grandes, ej: barrio3Ombues_20180801_dji_pc_3cm.jpg
 os.environ["OPENCV_IO_MAX_IMAGE_PIXELS"] = str(OPENCV_IO_MAX_IMAGE_PIXELS)
 
-PROJECT_DIR = Path(__file__).resolve().parent
-ROOT_DIR = PROJECT_DIR.parent
+# Env resolution.
+env_file_path = PROJECT_DIR / ".env"
+env_file = str(env_file_path)
+if env_file_path.exists():
+    LOGGER.warning(f"Using .env file at {env_file_path.resolve()} for configuration.")
 
-# Construir las rutas con respecto al directorio raíz.
-env_dev_path = PROJECT_DIR / ".env.dev"
-env_prod_path = PROJECT_DIR / ".env.prod"
+class FoldersConfig(BaseModel):
+    root_dir: Path = ROOT_DIR
+    download_folder: Path = PROJECT_DIR / "downloads"
 
-logger.info(f"Directorio de configuración raíz: {ROOT_DIR}")
+    @computed_field()
+    def download_images_folder(self) -> Path:
+        return self.download_folder / "images"
 
-if env_dev_path.exists():
-    load_dotenv(env_dev_path)
-    logger.info("Variables de entorno cargadas desde .env.dev.")
-elif env_prod_path.exists():
-    load_dotenv(env_prod_path)
-    logger.info("Variables de entorno cargadas desde .env.prod.")
-else:
-    logger.info("No se encontraron archivos .env. Cargando variables desde el entorno del sistema.")
+    @computed_field
+    def download_patches_folder(self) -> Path:
+        return self.download_folder / "patches"
+
+    @computed_field
+    def download_temp_folder(self) -> Path:
+        return self.download_folder / "temp"
+
+    @computed_field
+    def download_jobs_folder(self) -> Path:
+        return self.download_folder / "jobs"
+
+    @computed_field
+    def download_tasks_folder(self) -> Path:
+        return self.download_folder / "tasks"
+
+    @computed_field
+    def download_coco_annotations_folder(self) -> Path:
+        return self.download_folder / "coco_annotations"
+
+    @computed_field
+    def download_google_maps_folder(self) -> Path:
+        return self.download_folder / "google_maps"
+
+    @computed_field
+    def download_kmls_folder(self) -> Path:
+        return self.download_folder / "kmls"
+
+    @computed_field
+    def download_cutouts_folder(self) -> Path:
+        return self.download_folder / "cutouts"
+
+    @computed_field
+    def download_cutouts_metadata_folder(self) -> Path:
+        return self.download_folder / "cutouts_metadata"
+
+    @computed_field
+    def download_geojson_folder(self) -> Path:
+        return self.download_folder / "geojson"
+
+    @computed_field
+    def download_jgw_folder(self) -> Path:
+        return self.download_folder / "jgw"
+
+    @computed_field
+    def download_zip_folder(self) -> Path:
+        return self.download_folder / "zips"
+
+    @computed_field
+    def download_extract_folder(self) -> Path:
+        return self.download_folder / "extract"
 
 
-@dataclass
-class MongoDBConfig:
-    database: str
-    host: str
-    port: str
+class MongoDBConfig(BaseModel):
+    database: str = "picudo-rojo"
+    host: str = "localhost"
+    port: int = 27017
     user: str
     password: str
 
-    @property
+    @computed_field
     def connection_string(self) -> str:
         return f"mongodb://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
 
 
-@dataclass
-class CVATConfig:
-    url: str
+class CVATConfig(BaseModel):
+    host: str = "localhost"
+    port: int = 8080
+    scheme: str = "http"
     user: str
     password: str
     export_format: str = "COCO 1.0"
     task_export_path: str = "annotations\\instances_default.json"
     job_export_path: str = "annotations\\instances_default.json"
 
+    @computed_field
+    def url(self) -> str:
+        return f"{self.scheme}://{self.host}:{self.port}"
 
-@dataclass
-class MinioPaths:
+
+class MinioPaths(BaseModel):
     images: str = "imagenes"
     metadata: str = "imagenes_metadatos"
     patches: str = "patches"
@@ -59,39 +116,22 @@ class MinioPaths:
     cutouts_metadata: str = "recortes_metadatos"
 
 
-@dataclass
-class MinioConfig:
-    bucket: str
-    endpoint_url: str
+class MinioConfig(BaseModel):
+    bucket: str = "picudo-rojo-bucket"
+    host: str = "localhost"
+    port: int = 9000
+    scheme: str = "http"
     access_key: str
     secret_key: str
     region: str = "nl-ams"
-    paths: MinioPaths = field(default_factory=MinioPaths)
+    paths: MinioPaths = Field(default_factory=MinioPaths)
+
+    @computed_field
+    def endpoint_url(self) -> str:
+        return f"{self.scheme}://{self.host}:{self.port}"
 
 
-@dataclass
-class FoldersConfig:
-    download_folder: Path = Path("downloads")
-
-    def __post_init__(self):
-        self.download_images_folder: Path = self.download_folder / "images"
-        self.download_patches_folder: Path = self.download_folder / "patches"
-        self.download_temp_folder: Path = self.download_folder / "temp"
-        self.download_jobs_folder: Path = self.download_folder / "jobs"
-        self.download_tasks_folder: Path = self.download_folder / "tasks"
-        self.download_coco_annotations_folder: Path = self.download_folder / "coco_annotations"
-        self.download_google_maps_folder: Path = self.download_folder / "google_maps"
-        self.download_kmls_folder: Path = self.download_folder / "kmls"
-        self.download_cutouts_folder: Path = self.download_folder / "cutouts"
-        self.download_cutouts_metadata_folder: Path = self.download_folder / "cutouts_metadata"
-        self.download_geojson_folder: Path = self.download_folder / "geojson"
-        self.download_jgw_folder: Path = self.download_folder / "jgw"
-        self.download_zip_folder: Path = self.download_folder / "zips"
-        self.download_extract_folder: Path = self.download_folder / "extract"
-
-
-@dataclass
-class URLsConfig:
+class URLsConfig(BaseModel):
     main_page: str = "https://gis.montevideo.gub.uy/pmapper/map.phtml?&config=default&me=548000,6130000,596000,6162000"
     toc: str = "https://intgis.montevideo.gub.uy/pmapper/incphp/xajax/x_toc.php?"
     generate_zip: str = (
@@ -101,44 +141,37 @@ class URLsConfig:
     js: str = "https://intgis.montevideo.gub.uy/pmapper/config/default/custom.js"
 
 
-@dataclass
-class CommonHeaders:
+class CommonHeaders(BaseModel):
     user_agent: str = "Mozilla/5.0"
 
 
-@dataclass
-class TOCHeaders:
+class TOCHeaders(BaseModel):
     user_agent: str = "Mozilla/5.0"
     referer: str = "https://gis.montevideo.gub.uy/pmapper/map.phtml?&config=default&me=548000,6130000,596000,6162000"
     x_requested_with: str = "XMLHttpRequest"
     content_type: str = "application/x-www-form-urlencoded"
 
 
-@dataclass
-class HeadersConfig:
-    common: CommonHeaders = field(default_factory=CommonHeaders)
-    toc: TOCHeaders = field(default_factory=TOCHeaders)
+class HeadersConfig(BaseModel):
+    common: CommonHeaders = Field(default_factory=CommonHeaders)
+    toc: TOCHeaders = Field(default_factory=TOCHeaders)
 
 
-@dataclass
-class TOCRequestBody:
+class TOCRequestBody(BaseModel):
     dummy: str = "dummy"
 
 
-@dataclass
-class RequestBodyConfig:
-    toc: TOCRequestBody = field(default_factory=TOCRequestBody)
+class RequestBodyConfig(BaseModel):
+    toc: TOCRequestBody = Field(default_factory=TOCRequestBody)
 
 
-@dataclass
-class PatchesConfig:
-    tile_size: Tuple[int, int] = (4096, 4096)
+class PatchesConfig(BaseModel):
+    tile_size: tuple[int, int] = (4096, 4096)
     over_lap: int = 400
     purge_white_images: bool = True
 
 
-@dataclass
-class COCOInfo:
+class COCOInfo(BaseModel):
     description: str = "Conjunto de imágenes para la detección del picudo rojo"
     url: str = "https://picudo-rojo.org"
     version: str = "1.0"
@@ -147,29 +180,26 @@ class COCOInfo:
     date_created: str = "2025/01/01"
 
 
-@dataclass
-class COCOLicense:
+class COCOLicense(BaseModel):
     id: int
     name: str
     url: str
 
 
-@dataclass
-class COCOCategory:
+class COCOCategory(BaseModel):
     id: int
     name: str
     supercategory: str = ""
 
 
-@dataclass
-class COCODatasetConfig:
-    info: COCOInfo = field(default_factory=COCOInfo)
-    licenses: List[COCOLicense] = field(
+class COCODatasetConfig(BaseModel):
+    info: COCOInfo = Field(default_factory=COCOInfo)
+    licenses: list[COCOLicense] = Field(
         default_factory=lambda: [
             COCOLicense(id=1, name="CC BY-NC-SA 4.0", url="https://creativecommons.org/licenses/by-nc-sa/4.0/")
         ]
     )
-    categories: List[COCOCategory] = field(
+    categories: list[COCOCategory] = Field(
         default_factory=lambda: [
             COCOCategory(id=0, name="palmera-sana"),
             COCOCategory(id=1, name="palmera-infectada"),
@@ -178,20 +208,18 @@ class COCODatasetConfig:
         ]
     )
 
-    def to_dict(self) -> Dict[str, Any]:
-        """Convierte la configuración del dataset COCO a un diccionario"""
+    def model_dump(self, **kwargs) -> dict[str, Any]:
         return {
-            "info": asdict(self.info),
-            "licenses": [asdict(lic) for lic in self.licenses],
-            "categories": [asdict(cat) for cat in self.categories],
+            "info": self.info.model_dump(),
+            "licenses": [lic.model_dump() for lic in self.licenses],
+            "categories": [cat.model_dump() for cat in self.categories],
         }
 
 
-@dataclass
-class LayoutParserDrawBox:
+class LayoutParserDrawBox(BaseModel):
     box_width: int = 10
     box_alpha: int = 0
-    color_map: Dict[str, str] = field(
+    color_map: dict[str, str] = Field(
         default_factory=lambda: {
             "palmera-sana": "green",
             "palmera-inf-leve": "yellow",
@@ -203,22 +231,19 @@ class LayoutParserDrawBox:
     show_element_id: bool = True
 
 
-@dataclass
-class LayoutParserConfig:
-    draw_box: LayoutParserDrawBox = field(default_factory=LayoutParserDrawBox)
+class LayoutParserConfig(BaseModel):
+    draw_box: LayoutParserDrawBox = Field(default_factory=LayoutParserDrawBox)
 
-    def to_dict(self) -> Dict[str, Any]:
-        """Convierte la configuración de LayoutParser a un diccionario"""
+    def model_dump(self, **kwargs) -> dict[str, Any]:
         return {
-            "draw_box": asdict(self.draw_box),
+            "draw_box": self.draw_box.model_dump(),
         }
 
 
-@dataclass
-class OpenCVDrawBox:
+class OpenCVDrawBox(BaseModel):
     box_width: int = 5
     box_alpha: float = 0.5
-    color_map: Dict[int, List[int]] = field(
+    color_map: dict[int, list[int]] = Field(
         default_factory=lambda: {
             1: [0, 255, 0],
             2: [255, 255, 0],
@@ -231,120 +256,67 @@ class OpenCVDrawBox:
     font_thickness: int = 2
 
 
-@dataclass
-class OpenCVDrawConfig:
-    draw_box: OpenCVDrawBox = field(default_factory=OpenCVDrawBox)
+class OpenCVDrawConfig(BaseModel):
+    draw_box: OpenCVDrawBox = Field(default_factory=OpenCVDrawBox)
 
-    def to_dict(self) -> Dict[str, Any]:
-        """Convierte la configuración de OpenCV Draw a un diccionario"""
+    def model_dump(self, **kwargs) -> dict[str, Any]:
         return {
-            "draw_box": asdict(self.draw_box),
+            "draw_box": self.draw_box.model_dump(),
         }
 
 
-@dataclass
-class GoogleMapsCategory:
+class GoogleMapsCategory(BaseModel):
     id: int
     name: str
     supercategory: str = ""
 
 
-@dataclass
-class GoogleMapsConfig:
+class GoogleMapsConfig(BaseModel):
     mid: str = "1yCQ986yfEy6SmUXEREmedCEptZEA_h0"
     base_url: str = "https://www.google.com/maps/d/u/0/kml"
-    categories: List[GoogleMapsCategory] = field(
+    categories: list[GoogleMapsCategory] = Field(
         default_factory=lambda: [GoogleMapsCategory(id=1, name="palmera-google-maps")]
     )
 
 
-@dataclass
-class GeoreferencingConfig:
+class GeoreferencingConfig(BaseModel):
     sistema_referencia: str = "WGS84"
     proyeccion: str = "UTM 21S"
     codigo_epsg: str = "EPSG:32721"
 
 
-@dataclass
-class BBoxSizeConfig:
+class BBoxSizeConfig(BaseModel):
     width: int = 10
     height: int = 10
 
 
-class Config:
-    """Clase principal de configuración del sistema"""
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=env_file,
+        env_nested_delimiter="_",
+        env_nested_max_split=1,
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
-    def __init__(self):
-        # Configuración general
-        self.environment = os.getenv("ENVIRONMENT", "dev")
-        self.seed = 42
+    environment: str = "dev"  # Opciones: dev, prod
+    seed: int = 42
 
-        self.mongodb = self._get_mongodb_config()
-        self.cvat = self._get_cvat_config()
-        self.minio = self._get_minio_config()
-        self.folders = FoldersConfig()
-        self.urls = URLsConfig()
-        self.headers = HeadersConfig()
-        self.request_body = RequestBodyConfig()
-        self.patches = PatchesConfig()
-        self.coco_dataset = COCODatasetConfig()
-        self.layoutparser = LayoutParserConfig()
-        self.opencv_draw = OpenCVDrawConfig()
-        self.google_maps = GoogleMapsConfig()
-        self.georeferenciacion = GeoreferencingConfig()
-        self.bbox_size = BBoxSizeConfig()
-
-    def _get_mongodb_config(self) -> MongoDBConfig:
-        """Obtiene la configuración de MongoDB desde variables de entorno"""
-        return MongoDBConfig(
-            database=os.getenv("MONGODB_INITDB_DATABASE", ""),
-            host=os.getenv("MONGODB_SERVER_HOST", ""),
-            port=os.getenv("MONGODB_SERVER_PORT", ""),
-            user=os.getenv("MONGODB_USER", ""),
-            password=os.getenv("MONGODB_PASSWORD", ""),
-        )
-
-    def _get_cvat_config(self) -> CVATConfig:
-        """Obtiene la configuración de CVAT desde variables de entorno"""
-        return CVATConfig(
-            url=os.getenv("CVAT_URL", ""), user=os.getenv("CVAT_USER", ""), password=os.getenv("CVAT_PASSWORD", "")
-        )
-
-    def _get_minio_config(self) -> MinioConfig:
-        """Obtiene la configuración de MinIO desde variables de entorno"""
-        return MinioConfig(
-            bucket=os.getenv("MINIO_BUCKET", ""),
-            endpoint_url=os.getenv("MINIO_ENDPOINT_URL", ""),
-            access_key=os.getenv("MINIO_ACCESS_KEY", ""),
-            secret_key=os.getenv("MINIO_SECRET_KEY", ""),
-        )
-
-    def get_headers_dict(self) -> Dict[str, Dict[str, str]]:
-        """Convierte las configuraciones de headers a diccionarios para uso con requests"""
-        return {
-            "common": {"User-Agent": self.headers.common.user_agent},
-            "toc": {
-                "User-Agent": self.headers.toc.user_agent,
-                "Referer": self.headers.toc.referer,
-                "X-Requested-With": self.headers.toc.x_requested_with,
-                "Content-Type": self.headers.toc.content_type,
-            },
-        }
-
-    def get_request_body_dict(self) -> Dict[str, Dict[str, Any]]:
-        """Convierte las configuraciones de request body a diccionarios"""
-        return {"toc": {"dummy": self.request_body.toc.dummy}}
+    mongodb: MongoDBConfig = Field(default_factory=MongoDBConfig)
+    cvat: CVATConfig = Field(default_factory=CVATConfig)
+    minio: MinioConfig = Field(default_factory=MinioConfig)
+    folders: FoldersConfig = Field(default_factory=FoldersConfig)
+    urls: URLsConfig = Field(default_factory=URLsConfig)
+    headers: HeadersConfig = Field(default_factory=HeadersConfig)
+    request_body: RequestBodyConfig = Field(default_factory=RequestBodyConfig)
+    patches: PatchesConfig = Field(default_factory=PatchesConfig)
+    coco_dataset: COCODatasetConfig = Field(default_factory=COCODatasetConfig)
+    layoutparser: LayoutParserConfig = Field(default_factory=LayoutParserConfig)
+    opencv_draw: OpenCVDrawConfig = Field(default_factory=OpenCVDrawConfig)
+    google_maps: GoogleMapsConfig = Field(default_factory=GoogleMapsConfig)
+    georeferenciacion: GeoreferencingConfig = Field(default_factory=GeoreferencingConfig)
+    bbox_size: BBoxSizeConfig = Field(default_factory=BBoxSizeConfig)
 
 
-# If tqdm is installed, configure loguru with tqdm.write
-# https://github.com/Delgan/loguru/issues/135
-try:
-    from tqdm import tqdm
-
-    logger.remove(0)
-    logger.add(lambda msg: tqdm.write(msg, end=""), colorize=True)
-except ModuleNotFoundError:
-    pass
-
-# Instancia global de configuración
-config = Config()
+settings = Settings()
+LOGGER.debug(f"Settings loaded: {json.dumps(settings.model_dump(), indent=2, default=str)}")

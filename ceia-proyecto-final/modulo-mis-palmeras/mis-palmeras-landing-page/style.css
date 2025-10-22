@@ -1,208 +1,95 @@
-:root {
-    --primary-color: #2E7D32;
-    --secondary-color: #37474F;
-    --accent-color: #C62828;
-    --light-gray: #f5f5f5;
-    --white: #ffffff;
-}
+/* Import CSS Variables and Main Styles */
+@import url('./css/variables.css');
+@import url('./css/main.css');
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
+/* Custom styles specific to Mis Palmeras landing page */
 body {
-    font-family: 'Arial', sans-serif;
-    line-height: 1.6;
+  font-family: var(--font-family-body);
+  background-color: var(--light-background-color);
+  color: var(--dark-text-color);
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px;
+*, *::before, *::after {
+  box-sizing: inherit;
 }
 
-/* Header */
-.header {
-    background: var(--white);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    position: fixed;
-    width: 100%;
-    z-index: 1000;
+/* Custom utility classes */
+.text-primary {
+  color: var(--primary-color);
 }
 
-.nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    height: 70px;
+.bg-primary {
+  background-color: var(--primary-color);
 }
 
-.nav-menu {
-    display: flex;
-    gap: 30px;
-    list-style: none;
+.border-primary {
+  border-color: var(--primary-color);
 }
 
-.nav-menu a {
-    text-decoration: none;
-    color: var(--secondary-color);
-    font-weight: 500;
+/* Header specific styles */
+.sticky-header {
+  backdrop-filter: blur(8px);
+  background-color: rgba(255, 255, 255, 0.95);
 }
 
-/* Hero Section */
-.hero {
-    background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), 
-                url('hero-palmeras.jpg') center/cover;
-    height: 100vh;
-    display: flex;
-    align-items: center;
-    color: var(--white);
-    text-align: center;
-    padding-top: 70px;
+/* Hero section enhancements */
+.hero-section {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
 }
 
-.hero h1 {
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
+.hero-content {
+  position: relative;
+  z-index: 10;
 }
 
-.hero-subtitle {
-    font-size: 1.2rem;
-    margin-bottom: 2rem;
+/* CTA section styles */
+.cta-section {
+  background: linear-gradient(135deg, var(--primary-color), var(--accent3-color));
+  position: relative;
 }
 
-/* Sections */
-.section {
-    padding: 5rem 0;
+.cta-overlay {
+  background: rgba(0, 0, 0, 0.1);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
-.section-title {
-    text-align: center;
-    margin-bottom: 3rem;
-    color: var(--secondary-color);
+/* Footer specific styles */
+.footer-section {
+  background-color: var(--dark-background-color);
+  color: white;
 }
 
-/* Problem Section */
-.problem-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-    align-items: center;
+.footer-links a {
+  transition: color 0.2s ease;
 }
 
-.problem-image {
-    width: 100%;
-    border-radius: 8px;
+.footer-links a:hover {
+  color: var(--accent4-color);
 }
 
-/* Solution Steps */
-.solution-steps {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 2rem;
-}
-
-.step {
-    text-align: center;
-    padding: 2rem;
-    background: var(--light-gray);
-    border-radius: 8px;
-}
-
-.step-number {
-    width: 50px;
-    height: 50px;
-    background: var(--primary-color);
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 1rem;
-}
-
-/* Benefits Grid */
-.benefits-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 2rem;
-}
-
-.benefit {
-    text-align: center;
-    padding: 2rem;
-}
-
-.benefit-icon {
-    width: 80px;
-    margin-bottom: 1rem;
-}
-
-/* CTA Section */
-.cta {
-    background: var(--primary-color);
-    color: var(--white);
-    padding: 4rem 0;
-}
-
-.contact-form {
-    max-width: 500px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-input, select {
-    padding: 0.8rem;
-    border: none;
-    border-radius: 4px;
-}
-
-.btn {
-    display: inline-block;
-    padding: 1rem 2rem;
-    background: var(--accent-color);
-    color: white;
-    text-decoration: none;
-    border-radius: 4px;
-    transition: opacity 0.3s;
-}
-
-.btn:hover {
-    opacity: 0.9;
-}
-
-/* Footer */
-.footer {
-    background: var(--secondary-color);
-    color: var(--white);
-    padding: 3rem 0;
-}
-
-.footer-content {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 2rem;
-    margin-bottom: 2rem;
-}
-
-/* Responsive Design */
+/* Mobile responsiveness */
 @media (max-width: 768px) {
-    .nav-menu {
-        display: none;
-    }
+  .container {
+    padding: 0 1rem;
+  }
+  
+  .hero-section {
+    min-height: 80vh;
+  }
+}
 
-    .problem-grid,
-    .solution-steps,
-    .benefits-grid,
-    .footer-content {
-        grid-template-columns: 1fr;
-    }
-
-    .hero h1 {
-        font-size: 2rem;
-    }
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
 }

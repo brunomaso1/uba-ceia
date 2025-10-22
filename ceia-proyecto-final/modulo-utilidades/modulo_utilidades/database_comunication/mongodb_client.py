@@ -1,20 +1,25 @@
+# Dependencias del sistema
 from dataclasses import dataclass, field
 from typing import Optional
 
-from pymongo import MongoClient
-from pymongo.database import Database
-
-from modulo_utilidades.config import config as CONFIG
+# Dependencias locales
+from modulo_utilidades.config import settings as CONFIG
 from modulo_utilidades.config import MongoDBConfig
 
-from loguru import logger
+# Dependencias de terceros
+from pymongo import MongoClient
+from pymongo.database import Database
+from loguru import logger as LOGGER
+
+# Configuraciones
+MONGODB_CONFIG: MongoDBConfig = CONFIG.mongodb
 
 
 @dataclass
 class MongoDB:
     """Clase para manejar la conexión a MongoDB usando dataclass."""
 
-    mongodb_config: Optional[MongoDBConfig] = field(default_factory=lambda: CONFIG.mongodb)
+    mongodb_config: Optional[MongoDBConfig] = field(default_factory=lambda: MONGODB_CONFIG)
     db: Optional[Database] = field(init=False)
 
     def __post_init__(self) -> None:
@@ -32,7 +37,7 @@ class MongoDB:
     def close_connection(self) -> None:
         """Cierra la conexión a MongoDB."""
         if self.client:
-            logger.debug("Cerrando conexión a MongoDB.")
+            LOGGER.debug("Cerrando conexión a MongoDB.")
             self.client.close()
             self.client = None  # Resetear el cliente después de cerrar
 

@@ -1,24 +1,29 @@
-import os
-
-from matplotlib import pyplot as plt
-import numpy as np
-
+# Dependencias del sistema
 from pathlib import Path
 from typing import Any, Optional
-import layoutparser as lp
 
+# Dependencias propias
+from modulo_utilidades.config import LayoutParserDrawBox, settings as CONFIG
+from modulo_utilidades.labeling.procesador_anotaciones_coco_dataset import (
+    get_image_id_from_annotations_wrapper,
+    load_annotations_from_path,
+)
+
+# Dependencias de terceros
+from matplotlib import pyplot as plt
+import numpy as np
+import layoutparser as lp
 import cv2 as cv
 from pycocotools.coco import COCO
 
-from modulo_utilidades.config import config as CONFIG
-
-DOWNLOAD_FOLDER = CONFIG.folders.download_folder
-DOWNLOAD_IMAGES_FOLDER = CONFIG.folders.download_images_folder
-DOWNLOAD_PATCHES_FOLDER = CONFIG.folders.download_patches_folder
-DOWNLOAD_CUTOUTS_FOLDER = CONFIG.folders.download_cutouts_folder
-DOWNLOAD_CUTOUTS_METADATA_FOLDER = CONFIG.folders.download_cutouts_metadata_folder
-
-import modulo_utilidades.labeling.procesador_anotaciones_coco_dataset as CocoDatasetUtils
+# Configuraciones
+DOWNLOAD_FOLDER: Path = CONFIG.folders.download_folder
+DOWNLOAD_IMAGES_FOLDER: Path = CONFIG.folders.download_images_folder
+DOWNLOAD_PATCHES_FOLDER: Path = CONFIG.folders.download_patches_folder
+DOWNLOAD_CUTOUTS_FOLDER: Path = CONFIG.folders.download_cutouts_folder
+DOWNLOAD_CUTOUTS_METADATA_FOLDER: Path = CONFIG.folders.download_cutouts_metadata_folder
+LAYOUTPARSER_DRAW_BOX: LayoutParserDrawBox = CONFIG.layoutparser.draw_box
+OPENCV_DRAW_DRAW_BOX: dict[str, Any] = CONFIG.opencv_draw.draw_box.model_dump()
 
 
 def _load_coco_annotations(annotations: list[dict[str, Any]], coco: Any = None):
@@ -56,7 +61,7 @@ def show_annotated_image_path(
     use_layoutparser: bool = False,
     should_download_annotated_image: bool = False,
 ) -> None:
-    coco_annotations = CocoDatasetUtils.load_annotations_from_path(annotation_path)
+    coco_annotations = load_annotations_from_path(annotation_path)
     image = cv.imread(str(image_path), cv.IMREAD_COLOR_RGB)
 
     if image is None:
@@ -66,6 +71,7 @@ def show_annotated_image_path(
         image=image,
         coco_annotations=coco_annotations,
         image_name=image_name,
+        annotation_path=annotation_path,
         fig_size=fig_size,
         use_layoutparser=use_layoutparser,
         should_download_annotated_image=should_download_annotated_image,
@@ -76,11 +82,12 @@ def show_annotated_image(
     image: np.ndarray,
     coco_annotations: dict[str, Any],
     image_name: str,
+    annotation_path: Optional[Path] = None,
     fig_size: Optional[tuple[int, int]] = None,
     use_layoutparser: bool = False,
     should_download_annotated_image: bool = False,
 ) -> None:
-    image_id = CocoDatasetUtils.get_image_id_from_annotations(image_name, coco_annotations)
+    image_id = get_image_id_from_annotations_wrapper(image_name, coco_annotations)
     if use_layoutparser:
         coco = COCO(annotation_path)
         annotations = coco.loadAnns(coco.getAnnIds([image_id]))
@@ -90,7 +97,7 @@ def show_annotated_image(
         if fig_size:
             plt.figure(figsize=fig_size)
 
-        layoutparser_draw_box_config = CONFIG.layoutparser.draw_box
+        layoutparser_draw_box_config = LAYOUTPARSER_DRAW_BOX
         viz = lp.draw_box(
             image,
             layout,
@@ -109,7 +116,7 @@ def show_annotated_image(
         else:
             plt.figure()
 
-        drawbox_config = CONFIG.opencv_draw.to_dict()["draw_box"]
+        drawbox_config = OPENCV_DRAW_DRAW_BOX
         color_map = {k: tuple(v) for k, v in drawbox_config["color_map"].items()}
         category_map = {cat["id"]: cat["name"] for cat in coco_annotations["categories"]}
 
@@ -119,7 +126,7 @@ def show_annotated_image(
                 x, y, w, h = annotation["bbox"]
                 color = color_map.get(annotation["category_id"], (0, 255, 0))
                 cv.rectangle(
-                    image, (int(x), int(y)), (int(x + w), int(y + h)), color, CONFIG.opencv_draw.draw_box.box_width
+                    image, (int(x), int(y)), (int(x + w), int(y + h)), color, OPENCV_DRAW_DRAW_BOX["box_width"]
                 )
 
                 # Obtener la confianza (si existe) y formatearla
@@ -134,9 +141,9 @@ def show_annotated_image(
                     text,
                     (int(x), int(y) - 10),
                     cv.FONT_HERSHEY_SIMPLEX,
-                    CONFIG.opencv_draw.draw_box.font_scale,
+                    OPENCV_DRAW_DRAW_BOX["font_scale"],
                     color,
-                    CONFIG.opencv_draw.draw_box.font_thickness,
+                    OPENCV_DRAW_DRAW_BOX["font_thickness"],
                 )
 
         DOWNLOAD_IMAGES_FOLDER.mkdir(parents=True, exist_ok=True)
@@ -147,3 +154,18 @@ def show_annotated_image(
         plt.axis("off")
         plt.title(f"Imagen: {image_name}")
         plt.show()
+
+if __name__ == "__main__":
+    # Ejemplo de uso
+    example_image_name = "example_image.jpg"
+    example_image_path = DOWNLOAD_IMAGES_FOLDER / example_image_name
+    example_annotation_path = DOWNLOAD_FOLDER / "annotations.json"
+
+    show_annotated_image_path(
+        image_path=example_image_path,
+        annotation_path=example_annotation_path,
+        image_name=example_image_name,
+        fig_size=(10, 10),
+        use_layoutparser=True,
+        should_download_annotated_image=True,
+    )

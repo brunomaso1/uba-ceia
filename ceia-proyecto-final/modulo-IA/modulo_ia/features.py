@@ -1,35 +1,32 @@
+# Dependencias del sistema
 from collections import Counter, defaultdict
 from pathlib import Path
 import shutil
 from typing import Optional
-from matplotlib import pyplot as plt
-import numpy as np
-from pydash import sample
 import random, yaml
 
+# Dependencias locales
+from modulo_ia.config import settings as CONFIG
+from .utils.types import DatasetFormat
+
+# Dependencias propias
+from modulo_utilidades.utils.helpers import is_white_image
+
+# Dependencias de terceros
 from loguru import logger as LOGGER
-from modulo_ia.config import config as CONFIG
-
 import cv2  # Debe venir después de la importación del config por configuraciones de variables de entorno.
-
 import typer
-
 from tqdm import tqdm
 import typer
-
-from modulo_ia.utils.types import DatasetFormat
-import modulo_utilidades.utils.helpers as Helpers
-
 import fiftyone as fo
 from fiftyone import ViewField as F
-
 from deprecated import deprecated
 
-RAW_DATA_FOLDER = CONFIG.folders.raw_data_folder
-EXTERNAL_DATA_FOLDER = CONFIG.folders.external_data_folder
-INTERIM_DATA_FOLDER = CONFIG.folders.interim_data_folder
-PROCESSED_DATA_FOLDER = CONFIG.folders.processed_data_folder
-TEMP_DATA_FOLDER = CONFIG.folders.temp_data_folder
+RAW_DATA_FOLDER: Path = CONFIG.folders.raw_data_folder
+EXTERNAL_DATA_FOLDER: Path = CONFIG.folders.external_data_folder
+INTERIM_DATA_FOLDER: Path = CONFIG.folders.interim_data_folder
+PROCESSED_DATA_FOLDER: Path = CONFIG.folders.processed_data_folder
+TEMP_DATA_FOLDER: Path = CONFIG.folders.temp_data_folder
 
 app = typer.Typer()
 
@@ -183,7 +180,7 @@ def _crop_and_adjust_annotations(
             # o sea, tengo un rectángulo de imagen de tamaño crop_size x crop_size
             # que comienza en (actual_x, actual_y) y termina en (actual_x + crop_size, actual_y + crop_size)
             crop_img = img[actual_y : actual_y + crop_size, actual_x : actual_x + crop_size]
-            if Helpers.is_white_image(crop_img)[0]:
+            if is_white_image(crop_img)[0]:
                 LOGGER.debug(f"El recorte de la imagen {image_file} en ({actual_x}, {actual_y}) es blanco. Saltando.")
                 num_white_crops += 1
                 continue
@@ -676,6 +673,7 @@ def balance_dataset_v1(
     # Finalmente, exportamos el dataset balanceado
     _export_dataset(dataset_path, output_path, export_categories, same_folder, export_view)
 
+
 def _export_dataset(dataset_path, output_path, export_categories, same_folder, export_view):
     """Exporta el dataset balanceado a la ruta especificada, manejando el caso de sobrescribir en la misma carpeta."""
     export_categories_list = [cat["name"] for cat in export_categories]
@@ -809,7 +807,11 @@ def _validate_class_names(dataset_path: Path, all_classes: bool, dataset_yaml_pa
 
 
 def under_sample_dataset(
-    dataset_path: Path, output_path: Path, export_categories: list[str], target_size: int, dataset_format: DatasetFormat = DatasetFormat.YOLO
+    dataset_path: Path,
+    output_path: Path,
+    export_categories: list[str],
+    target_size: int,
+    dataset_format: DatasetFormat = DatasetFormat.YOLO,
 ) -> None:
     """
     Aplica undersampling a un dataset de YOLO.
@@ -831,7 +833,7 @@ def under_sample_dataset(
     if images_count <= target_size:
         LOGGER.warning(f"El dataset ya tiene {images_count} imágenes, menor o igual al tamaño objetivo {target_size}.")
         return
-    
+
     images_to_delete_count = images_count - target_size
     LOGGER.info(f"Reduciendo el dataset de {images_count} a {target_size} imágenes mediante undersampling.")
     random_samples_view = dataset.shuffle().take(images_to_delete_count)
@@ -839,6 +841,7 @@ def under_sample_dataset(
     export_view = dataset.exclude(samples_to_delete_id)
 
     _export_dataset(dataset_path, output_path, export_categories, same_folder, export_view)
+
 
 if __name__ == "__main__":
     # app()
@@ -850,6 +853,8 @@ if __name__ == "__main__":
     dataset_path = Path(
         "E:/Documentos/Git Repositories/uba-ceia-proy-final/ceia-proyecto-final/modulo-IA/data/interim/coco_palm_dataset_v1.1_step"
     )
-    output_path = Path("E:/Documentos/Git Repositories/uba-ceia-proy-final/ceia-proyecto-final/modulo-IA/data/interim/coco_palm_dataset_v1.1_under_sample")
+    output_path = Path(
+        "E:/Documentos/Git Repositories/uba-ceia-proy-final/ceia-proyecto-final/modulo-IA/data/interim/coco_palm_dataset_v1.1_under_sample"
+    )
     target_size = 1000
     under_sample_dataset(dataset_path, output_path, CATEGORIES, target_size)

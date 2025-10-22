@@ -1,18 +1,26 @@
+# Dependencias del sistema.
 from itertools import count
 import datetime, json
 from pathlib import Path
 from typing import Any, Optional
 
-from deprecated import deprecated
-from loguru import logger as LOGGER
-from modulo_utilidades.config import config as CONFIG
-from modulo_utilidades.utils.types import Metadata
+# Dependencias internas.
+from modulo_utilidades.config import COCOCategory, COCOInfo, COCOLicense, settings as CONFIG
+from ..core.labeling.procesador_anotaciones_coco_dataset_core import (
+    create_coco_annotations_from_detections,
+)
+from ..core.labeling.convertor_cordenadas_core import convert_bbox_patch_to_image
+from ..utils.types import Metadata
 
+# Dependencias de terceros.
+from loguru import logger as LOGGER
 from supervision import Detections
 
-import modulo_utilidades.labeling.convertor_cordenadas as ConvertorCordenadas
-
-DOWNLOAD_COCO_ANNOTATIONS_FOLDER = CONFIG.folders.download_coco_annotations_folder
+# Configuraciones
+DOWNLOAD_COCO_ANNOTATIONS_FOLDER: Path = CONFIG.folders.download_coco_annotations_folder
+COCO_DATASET_INFO: COCOInfo = CONFIG.coco_dataset.info
+COCO_DATASET_LICENSES: COCOLicense = CONFIG.coco_dataset.licenses
+COCO_DATASET_CATEGORIES: COCOCategory = CONFIG.coco_dataset.categories
 
 
 def load_annotations_from_path(file_path: Path) -> dict[str, Any]:
@@ -41,7 +49,7 @@ def load_annotations_from_path(file_path: Path) -> dict[str, Any]:
         raise Exception(f"Error inesperado al cargar el archivo {file_path}: {e}")
 
 
-def get_image_id_from_annotations(image_name: str, coco_annotations: dict[str, Any]) -> Optional[int]:
+def get_image_id_from_annotations_wrapper(image_name: str, coco_annotations: dict[str, Any]) -> Optional[int]:
     """
     Obtiene el ID de una imagen a partir de las anotaciones en formato COCO.
 
@@ -126,9 +134,9 @@ def merge_patches_for_image(
     """
 
     merged_annotations = {
-        "info": CONFIG.coco_dataset.info,
-        "licenses": CONFIG.coco_dataset.licenses,
-        "categories": CONFIG.coco_dataset.categories,
+        "info": COCO_DATASET_INFO,
+        "licenses": COCO_DATASET_LICENSES,
+        "categories": COCO_DATASET_CATEGORIES,
         "images": [],
         "annotations": [],
     }
@@ -186,189 +194,24 @@ def _convert_patch_bboxes_to_image(
             )
             for annotation in coco_annotation["annotations"]:
                 if annotation["image_id"] == image["id"]:
-                    annotation["bbox"] = ConvertorCordenadas.convert_bbox_patch_to_image(
-                        annotation["bbox"], x_start, y_start
-                    )
+                    annotation["bbox"] = convert_bbox_patch_to_image(annotation["bbox"], x_start, y_start)
     return coco_annotations
 
 
-@deprecated(reason="Usar create_coco_annotations_from_detections_v1 en su lugar.", version="1.0")
-def create_coco_annotations_from_detections(
-    detections: Detections,
-    image_size_hw: tuple[int, int],
-    pic_name: str,
-    category_map: Optional[dict[int, str]] = None,
-    should_download: bool = False,
-    output_filename: Path = DOWNLOAD_COCO_ANNOTATIONS_FOLDER / "coco_annotations.json",
-) -> dict[str, Any]:
-    """
-    Genera anotaciones en formato COCO a partir de detecciones de objetos.
-
-    Args:
-        detections (Detections): Objeto que contiene las detecciones realizadas, incluyendo coordenadas, clases y confianza.
-        image_size_hw (tuple[int, int]): Tamaño de la imagen en formato (alto, ancho).
-        pic_name (str): Nombre de la imagen (sin extensión) que será utilizada en las anotaciones.
-        category_map (Optional[dict[int, str]]): Mapa opcional que relaciona IDs de categorías con nombres de categorías.
-            Si no se proporciona, se utiliza el mapa de categorías definido en la configuración del dataset COCO.
-        should_download (bool): Indica si las anotaciones generadas deben ser guardadas en un archivo JSON.
-        output_filename (Path): Ruta del archivo donde se guardarán las anotaciones en caso de que `should_download` sea True.
-
-    Returns:
-        dict[str, Any]: Diccionario con las anotaciones en formato COCO, incluyendo información del dataset, licencias,
-        categorías, imágenes y anotaciones.
-
-    Notas:
-        - Si no se encuentran detecciones en el objeto `detections`, se devuelve un diccionario de anotaciones vacío.
-        - Las anotaciones incluyen información como el ID de la categoría, el cuadro delimitador (bbox), el área, y la confianza.
-        - Si `should_download` es True, las anotaciones se guardan en el archivo especificado por `output_filename`.
-
-    Advertencias:
-        - Si una categoría no se encuentra en el mapa de categorías, se omite la anotación correspondiente y se registra
-          una advertencia en el registro de eventos.
-    """
-    coco_annotations = {
-        "info": CONFIG.coco_dataset.to_dict()["info"],
-        "licenses": CONFIG.coco_dataset.to_dict()["licenses"],
-        "categories": CONFIG.coco_dataset.to_dict()["categories"],
-        "images": [],
-        "annotations": [],
-    }
-    if category_map is None:
-        category_map = {cat["id"]: cat["name"] for cat in coco_annotations["categories"]}
-    image_height, image_width = image_size_hw
-
-    image = {
-        "id": 1,
-        "width": image_width,
-        "height": image_height,
-        "file_name": f"{pic_name}.jpg",
-        "date_captured": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-    }
-
-    coco_annotations["images"] = [image]
-
-    if detections.is_empty():
-        LOGGER.warning("No se encontraron resultados de detección de objetos.")
-        return coco_annotations
-
-    annotations = []
-    for index in range(len(detections)):
-        id = index + 1
-        category_id = int(detections.class_id[index])
-        category_name = category_map.get(category_id, None)
-        if category_id is None:
-            LOGGER.warning(f"Categoría '{category_name}' no encontrada en el mapa de categorías.")
-            continue
-
-        x_min, y_min, x_max, y_max = map(float, detections.xyxy[index])
-        ancho = x_max - x_min
-        alto = y_max - y_min
-        area = ancho * alto
-
-        conf = float(detections.confidence[index])
-        annotation = {
-            "id": id,
-            "image_id": image["id"],
-            "category_id": category_id,
-            "bbox": [x_min, y_min, ancho, alto],
-            "area": area,
-            "iscrowd": 0,
-            "attributes": {
-                "occluded": False,
-                "rotation": 0.0,
-            },
-            "confidence": conf,
-        }
-        annotations.append(annotation)
-
-    coco_annotations["annotations"] = annotations
-
-    if should_download:
-        output_filename.parent.mkdir(parents=True, exist_ok=True)
-        with open(output_filename, "w", encoding="utf-8") as f:
-            json.dump(coco_annotations, f, indent=4, ensure_ascii=False)
-        LOGGER.success(f"Anotaciones COCO guardadas en {output_filename}")
-
-    return coco_annotations
-
-
-def create_coco_annotations_from_detections_v1(
+def create_coco_annotations_from_detections_wrapper(
     detections: Detections,
     image_size_hw: tuple[int, int],
     pic_name: str,
     categories: Optional[list[dict]] = None,
-    should_download: bool = False,
-    output_filename: Path = DOWNLOAD_COCO_ANNOTATIONS_FOLDER / "coco_annotations.json",
+    output_file_path: Optional[Path] = None,
 ) -> dict[str, Any]:
-    if categories is None:
-        categories = CONFIG.coco_dataset.to_dict()["categories"]
-        LOGGER.debug(
-            "No se proporcionó un mapa de categorías. Se utilizará el mapa de categorías predeterminado del dataset COCO. Categorías: {categories}"
-        )
-
-    coco_annotations = {
-        "info": CONFIG.coco_dataset.to_dict()["info"],
-        "licenses": CONFIG.coco_dataset.to_dict()["licenses"],
-        "categories": categories,
-        "images": [],
-        "annotations": [],
-    }
-    category_map = {cat["id"]: cat["name"] for cat in coco_annotations["categories"]}
-    image_height, image_width = image_size_hw
-
-    image = {
-        "id": 1,
-        "width": image_width,
-        "height": image_height,
-        "file_name": f"{pic_name}.jpg",
-        "date_captured": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-    }
-
-    coco_annotations["images"] = [image]
-
-    if detections.is_empty():
-        LOGGER.warning("No se encontraron resultados de detección de objetos.")
-        return coco_annotations
-
-    annotations = []
-    for index in range(len(detections)):
-        id = index + 1
-        category_id = int(detections.class_id[index])
-        category_name = category_map.get(category_id, None)
-        if category_id is None:
-            LOGGER.warning(f"Categoría '{category_name}' no encontrada en el mapa de categorías.")
-            continue
-
-        x_min, y_min, x_max, y_max = map(float, detections.xyxy[index])
-        ancho = x_max - x_min
-        alto = y_max - y_min
-        area = ancho * alto
-
-        conf = float(detections.confidence[index])
-        annotation = {
-            "id": id,
-            "image_id": image["id"],
-            "category_id": category_id,
-            "bbox": [x_min, y_min, ancho, alto],
-            "area": area,
-            "iscrowd": 0,
-            "attributes": {
-                "occluded": False,
-                "rotation": 0.0,
-            },
-            "confidence": conf,
-        }
-        annotations.append(annotation)
-
-    coco_annotations["annotations"] = annotations
-
-    if should_download:
-        output_filename.parent.mkdir(parents=True, exist_ok=True)
-        with open(output_filename, "w", encoding="utf-8") as f:
-            json.dump(coco_annotations, f, indent=4, ensure_ascii=False)
-        LOGGER.success(f"Anotaciones COCO guardadas en {output_filename}")
-
-    return coco_annotations
+    return create_coco_annotations_from_detections(
+        detections,
+        image_size_hw,
+        pic_name,
+        categories,
+        output_file_path,
+    )
 
 
 def assign_to_single_label(coco_annotations: dict[str, Any], class_name: str) -> dict[str, Any]:

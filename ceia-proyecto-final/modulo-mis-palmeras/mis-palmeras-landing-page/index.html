@@ -1,38 +1,148 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Landing Page</title>
-    <style>
-        /* Contenedor para centrar la imagen */
-        .container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
+    <meta name="description" content="Detección inteligente del picudo rojo mediante tecnología de drones e Inteligencia Artificial. Protege tus palmeras con monitoreo preciso y eficiente.">
+    <meta name="keywords" content="picudo rojo, palmeras, drones, inteligencia artificial, detección, agricultura, tecnología">
+    <meta name="author" content="Mis Palmeras">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://mispalmeras.com/">
+    <meta property="og:title" content="Mis Palmeras - Detección Inteligente del Picudo Rojo">
+    <meta property="og:description" content="Protege tus palmeras con tecnología de vanguardia. Detección temprana del picudo rojo mediante drones e IA.">
+    <meta property="og:image" content="https://imagedelivery.net/xaKlCos5cTg_1RWzIu_h-A/70a8925d-647c-449c-724f-47325fa5b200/public">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://mispalmeras.com/">
+    <meta property="twitter:title" content="Mis Palmeras - Detección Inteligente del Picudo Rojo">
+    <meta property="twitter:description" content="Protege tus palmeras con tecnología de vanguardia. Detección temprana del picudo rojo mediante drones e IA.">
+    <meta property="twitter:image" content="https://imagedelivery.net/xaKlCos5cTg_1RWzIu_h-A/70a8925d-647c-449c-724f-47325fa5b200/public">
+
+    <title>Mis Palmeras - Detección Inteligente del Picudo Rojo</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    
+    <!-- Preconnect to external domains for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://imagedelivery.net">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <script src="https://kit.fontawesome.com/8e98006f77.js" crossorigin="anonymous"></script>
+    
+    <!-- Tailwind CSS CDN (for production, consider using build process) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Custom Stylesheets -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Mis Palmeras",
+      "url": "https://mispalmeras.com",
+      "logo": "https://imagedelivery.net/xaKlCos5cTg_1RWzIu_h-A/70a8925d-647c-449c-724f-47325fa5b200/public",
+      "description": "Detección inteligente del picudo rojo mediante tecnología de drones e Inteligencia Artificial",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Montevideo",
+        "addressCountry": "UY"
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+598-99-999-999",
+        "contactType": "customer service",
+        "email": "info@mispalmeras.com"
+      }
+    }
+    </script>
+</head>
+<body class="h-full bg-white [font-family:var(--font-family-body)]">
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-[var(--primary-color)] text-white px-4 py-2 rounded-lg z-50">
+        Saltar al contenido principal
+    </a>
+
+    <div class="frame-root">
+        <div class="frame-content">
+            <!-- Header Section -->
+            <div id="header-section"></div>
+            
+            <!-- Main Content -->
+            <main id="main-content">
+                <!-- Hero Section -->
+                <div id="hero-section"></div>
+                
+                <!-- CTA Section -->
+                <div id="cta-section"></div>
+            </main>
+            
+            <!-- Footer Section -->
+            <div id="footer-section"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="script.js"></script>
+    
+    <!-- Load HTML sections -->
+    <script>
+        // Function to load HTML content into sections
+        async function loadSection(sectionId, filePath) {
+            try {
+                const response = await fetch(filePath);
+                if (response.ok) {
+                    const html = await response.text();
+                    document.getElementById(sectionId).innerHTML = html;
+                } else {
+                    console.error(`Failed to load ${filePath}: ${response.status}`);
+                }
+            } catch (error) {
+                console.error(`Error loading ${filePath}:`, error);
+            }
         }
 
-        /* Estilos para la imagen responsive */
-        .landing-image {
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        // Load all sections when DOM is ready
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Load sections
+            await Promise.all([
+                loadSection('header-section', 'sections/header.html'),
+                loadSection('hero-section', 'sections/hero.html'),
+                loadSection('cta-section', 'sections/cta.html'),
+                loadSection('footer-section', 'sections/footer.html')
+            ]);
+            
+            // Initialize page functionality after sections are loaded
+            if (typeof window.initializePage === 'function') {
+                window.initializePage();
+            }
+        });
+
+        // Analytics placeholder (replace with your analytics code)
+        if (typeof gtag !== 'undefined') {
+            gtag('config', 'GA_MEASUREMENT_ID');
         }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <p>Hi!</p>
-        <!-- <img 
-            src="images/landing-image.jpg" 
-            alt="Imagen principal de la landing page" 
-            class="landing-image"
-        > -->
-    </div>
+    </script>
+
+    <!-- Google Analytics placeholder (replace with your GA code) -->
+    <!--
+    <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'GA_MEASUREMENT_ID');
+    </script>
+    -->
 </body>
 </html>
