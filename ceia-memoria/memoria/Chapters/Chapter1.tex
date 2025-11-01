@@ -26,7 +26,7 @@ El picudo rojo, que puede observarse en la figura \ref{fig:picudo-rojo}, es un i
 \begin{figure}[htpb]
   \centering
   \includegraphics[scale=0.25]{./Figures/picudo-rojo.png}
-  \caption{Picudo rojo \protect\footnotemark.}
+  \caption[Picudo rojo]{Picudo rojo \protect\footnotemark.}
   \label{fig:picudo-rojo}
 \end{figure}
 
@@ -51,7 +51,7 @@ La plaga del picudo rojo llegó a Uruguay en 2022 \citep{mgap_informacion_nodate
     \caption{Palmeras muertas en la ruta 5 de Uruguay.}
     \label{fig:palmeras-ruta5}
   \end{subfigure}
-  \caption{Infección y muerte de palmeras por el picudo rojo.}
+  \caption[Infección y muerte de palmeras por el picudo rojo.]{Ejemplos de infección y muerte de palmeras por el picudo rojo detectados en Uruguay.}
   \label{fig:infeccion-y-muerte-palmeras}
 \end{figure}
 
@@ -62,7 +62,7 @@ Uno de los recursos aún no explotados por la IM para el monitoreo de la plaga e
 \begin{figure}[H]
   \centering
   \includegraphics[scale=0.4]{./Figures/ortomosaico.png}
-  \caption{Ejemplo de ortomosaico \protect\footnotemark.}
+  \caption[Ortomosaico]{Ejemplo de ortomosaico tomado del parque rodó de Montevideo \protect\footnotemark.}
   \label{fig:ejemplo-ortomosaico}
 \end{figure}
 
@@ -91,7 +91,7 @@ Entre los estudios analizados, la implementación de la detección mediante imá
 \begin{figure}[htpb]
   \centering
   \includegraphics[scale=1.8]{./Figures/kagan_automatic_2021-process.jpg}
-  \caption{Proceso de detección realizado por Kagan et al \protect\footnotemark.}
+  \caption[Detección de Kagan et al]{Proceso de detección realizado por Kagan et al, utilizando \textit{Street View} \protect\footnotemark.}
   \label{fig:kagan-automatic-2021-process}
 \end{figure}
 
@@ -99,26 +99,26 @@ Entre los estudios analizados, la implementación de la detección mediante imá
 
 Por otro lado, la detección de palmeras sí es ampliamente estudiada en la literatura, siendo un tema recurrente en la investigación de VPC. Se han desarrollado diversos estudios. En \textit{Implementation of slicing aided hyper inference (SAHI) in YOLOv8 to counting oul palm trees using high-resolution aereal imagery data} \citep{zhorif_implementation_2024} se presenta un enfoque que utiliza la arquitectura YOLOv8 para detectar palmeras en imágenes aéreas de alta resolución. Además, utiliza \textit{Slicing Aided Hyper Inference} para mejorar la precisión de la detección. Este enfoque se basa en la idea de dividir las imágenes en regiones más pequeñas y realizar inferencias en cada una de ellas, lo que permite una detección más precisa de los objetos de interés, algo esencial en el caso de objetos pequeños como las palmeras. Para el estudio, se utilizaron imágenes RGB capturadas con un dron Trinity F90+ a 200 metros de altura y una implementación de segmentación (SAHI) de \SI{3000}{}\,\texttimes\,\SI{3000}{\pixel}. Si bien el estudio se centra en la detección de palmeras de aceite, su metodología puede ser adaptada para la detección del picudo rojo. La tabla \ref{tab:papers-deteccion-palmeras} resume los métodos utilizados en la detección de palmeras en diferentes estudios anteriores.
 
-\begin{table}[h]
+\begin{table}[H]
   \centering
-  \caption[comparativa-papers]{Comparación entre diferentes estudios de detección de palmeras\footnotemark.}
-  % \begin{adjustbox}{width=\textwidth}
-  \begin{tabular}{l c c}
-    % \begin{tabular}{{l p{4cm} p{4cm}}}
+  \caption[Comparativa de estudios]{Comparación entre diferentes estudios de detección de palmeras \footnotemark.}
+
+  % Definimos el ancho total y las columnas: X para Autor, p{2cm} para Método, X para Evaluación. El X permite que la columna se ajuste automáticamente al ancho disponible.
+  % Usamos >{\raggedright\arraybackslash} para que las columnas justifiquen el texto y se alineen a la izquierda.
+  \begin{tabularx}{\textwidth}{ >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}p{2cm} >{\raggedright\arraybackslash}X }
     \toprule
-    \textbf{Autor y año}                                               & \textbf{Método}       & \textbf{Evaluación}               \\
+    \textbf{Autor y año}                                               & \textbf{Método}                    & \textbf{Evaluación}                                                \\
     \midrule
-    Mukhles Sir Monea et al, 2022 \citep{muna_development_2023}        & YOLOv3                & 5.76\% (MAPE)                     \\
-    Hery Wibowo et al, 2022 \citep{wibowo_large-scale_2022}            & \makecell[c]{YOLOv3,                                      \\YOLOv4, \\YOLOv5m}            & \makecell[c]{97.28\% (v3), \\97.74\% (v4), \\94.94\% (v5m). \\(F1-Score)}              \\
-    Adel Ammar et al, 2022 \citep{ammar_deep-learning-based_2021}      & Faster R-CNN          & \makecell[c]{94.99\% (Precision), \\84\% (Recall), \\83\% (AP IoU)}                 \\
-    Wardana et al, 2023 \citep{wardana_detection_2023}                 & YOLOv8                & \makecell[c]{98.50\%              \\(Overall Accuracy)}        \\
-    Deta Sandya Prasitha et al, 2022 \citep{prasvita_automatic_nodate} & \makecell[c]{YOLOv5s,                                     \\YOLOv5m, \\YOLOv5l, \\YOLOv5x} & \makecell[c]{0.82 (v5s), \\0.84 (v5m), \\0.85 (v5l), \\0.86 (v5x). \\(Average F1-Score)} \\
-    Nuwar et al, 2022 \citep{nuwara_modern_2022}                       & YOLOv5                & 0.895 (F1-Score)                  \\
-    Junos et al, 2022 \citep{junos_notitle_nodate}                     & YOLOv3n               & \makecell[c]{97.20\% (mAP),       \\0.91 (F1-Score)}                                     \\
+    Mukhles Sir Monea et al, 2022 \citep{muna_development_2023}        & YOLOv3                             & 5.76\% (MAPE)                                                      \\
+    Hery Wibowo et al, 2022 \citep{wibowo_large-scale_2022}            & YOLOv3, YOLOv4, YOLOv5m            & 97.28\% (v3), 97.74\% (v4), 94.94\% (v5m). (F1-Score)              \\
+    Adel Ammar et al, 2022 \citep{ammar_deep-learning-based_2021}      & Faster R-CNN                       & 94.99\% (Precision), 84\% (Recall), 83\% (AP IoU)                  \\
+    Wardana et al, 2023 \citep{wardana_detection_2023}                 & YOLOv8                             & 98.50\% (Overall Accuracy)                                         \\
+    Deta Sandya Prasitha et al, 2022 \citep{prasvita_automatic_nodate} & YOLOv5s, YOLOv5m, YOLOv5l, YOLOv5x & 0.82 (v5s), 0.84 (v5m), 0.85 (v5l), 0.86 (v5x). (Average F1-Score) \\
+    Nuwar et al, 2022 \citep{nuwara_modern_2022}                       & YOLOv5                             & 0.895 (F1-Score)                                                   \\
+    Junos et al, 2022 \citep{junos_notitle_nodate}                     & YOLOv3n                            & 97.20\% (mAP), 0.91 (F1-Score)                                     \\
     \bottomrule
     \hline
-  \end{tabular}
-  % \end{adjustbox}
+  \end{tabularx}
   \label{tab:papers-deteccion-palmeras}
 \end{table}
 

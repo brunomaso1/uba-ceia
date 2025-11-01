@@ -1,5 +1,5 @@
 %----------------------------------------------------------------------------------------
-% Preambulo y Configuración
+% Preámbulo y Configuración
 %----------------------------------------------------------------------------------------
 
 \documentclass[
@@ -29,6 +29,7 @@
 \usepackage{adjustbox}
 \usepackage{xurl}
 \usepackage{pmboxdraw}
+\usepackage{tabularx}
 
 \usepackage{siunitx}
 \sisetup{per-mode=symbol}
@@ -39,8 +40,8 @@
 
 % Redefinición de caracteres problemáticos en marcadores
 \hypersetup{
-    pdftitle={Título del Documento},
-    pdfauthor={Autor del Documento},
+    pdftitle={Sistema de monitoreo de \textit{Rhynchophorus Ferrugineus} en palmeras de Montevideo},
+    pdfauthor={Esp. Ing. Bruno Masoller},
     pdfkeywords={Sistemas Embebidos, Internet de las Cosas, Inteligencia Artificial},
     pdfstartview={FitH},
     unicode=true,
@@ -63,8 +64,8 @@
 
 
 % Definir comandos requeridos por la clase
-\newcommand{\degreename}{Ing} % Cambia según tu título
-\newcommand{\univname}{Universidad Nacional de Ejemplo} % Cambia según tu universidad
+\newcommand{\degreename}{Esp. Ing.} % Cambia según tu título
+\newcommand{\univname}{Universidad de la República Uruguay} % Cambia según tu universidad
 \newcommand{\keywordnames}{Palabras clave:}
 %----------------------------------------------------------------------------------------
 % Documento Principal
@@ -73,7 +74,7 @@
 \begin{document}
 
 % Configuración de la portada
-\posgrado{Carrera / Maestría}
+\posgrado{Especialización en Inteligencia Artificial} % Cambia según tu programa
 \keywords{Sistemas Embebidos, Internet de las Cosas, Inteligencia Artificial}
 
 % Incluir la portada desde un archivo separado
@@ -98,10 +99,10 @@
 % Agradecimientos
 %----------------------------------------------------------------------------------------
 
-\begin{acknowledgements}
-  \vspace{1.5cm}
-  Esta sección es para agradecimientos personales y es totalmente \textbf{OPCIONAL}.
-\end{acknowledgements}
+% \begin{acknowledgements}
+%   \vspace{1.5cm}
+%   Esta sección es para agradecimientos personales y es totalmente \textbf{OPCIONAL}.
+% \end{acknowledgements}
 
 %----------------------------------------------------------------------------------------
 % Índice
@@ -115,7 +116,7 @@
 % Dedicatoria
 %----------------------------------------------------------------------------------------
 
-\dedicatory{\textbf{Dedicado a... [OPCIONAL]}}
+% \dedicatory{\textbf{Dedicado a... [OPCIONAL]}}
 
 %----------------------------------------------------------------------------------------
 % Capítulos

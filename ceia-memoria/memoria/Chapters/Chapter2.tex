@@ -84,10 +84,10 @@ Los modelos de dos etapas, representados de manera destacada por Faster R-CNN, s
 
 En contraste, los modelos de una etapa, como YOLO, abordan el problema de la detección en un único paso. Estos modelos dividen la imagen en una cuadrícula y, de forma simultánea, predicen la probabilidad de presencia de un objeto y la localización de su correspondiente caja delimitadora. Esta integración de procesos permite una mayor velocidad de inferencia, lo que hace de YOLO una opción idónea para aplicaciones en tiempo real, aunque hay antecedentes del uso de este tipo de modelos para la detección de objetos con una alta eficiencia en la sección \ref{sec:estadoArte}.
 YOLO v11 \citep{yolo11_ultralytics} es una de las últimas versiones de la familia de modelos YOLO, desarrollada por Ultralytics. Esta versión introduce mejoras significativas en términos de precisión y velocidad, optimizando tanto la arquitectura, que se puede observar en la figura \ref{fig:yolov11-arquitectura}, del modelo como los algoritmos de entrenamiento.
-\begin{figure}[htpb]
+\begin{figure}[H]
 	\centering
 	\includegraphics[scale=0.3]{./Figures/yolov11_arquitectura.png}
-	\caption{Arquitectura de Yolo V11 \protect\footnotemark.}
+	\caption[Arquitectura básica YOLO v11]{Arquitectura de YoloV11 para el caso de segmentación, análogo a la tarea de detección, en donde se cambian los cabezales de segmentación por cabezales de detección \protect\footnotemark.}
 	\label{fig:yolov11-arquitectura}
 \end{figure}
 
@@ -129,7 +129,7 @@ Un resumen intuitivo de estas métricas se puede visualizar en la imagen \ref{fi
 \begin{figure}[htpb]
 	\centering
 	\includegraphics[scale=0.5]{./Figures/precision-recall-accuracy.png}
-	\caption{Matriz de confusion \protect\footnotemark.}
+	\caption[Matriz de confusión clásica]{Cálculo de precisión, recuperación y exactitud a partir de la matriz de confusión \protect\footnotemark.}
 	\label{fig:presicion-recall-accuracy}
 \end{figure}
 

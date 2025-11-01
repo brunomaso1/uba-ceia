@@ -3,7 +3,7 @@
 \chapter{Conclusiones} % Main chapter title
 
 \label{Chapter5} % Change X to a consecutive number; for referencing this chapter elsewhere, use \ref{ChapterX}
-Todos los capítulos deben comenzar con un breve párrafo introductorio que indique cuál es el contenido que se encontrará al leerlo.  La redacción sobre el contenido de la memoria debe hacerse en presente y todo lo referido al proyecto en pasado, siempre de modo impersonal.
+En el presente capítulo se exponen las conclusiones generales del trabajo realizado, se destacan los logros alcanzados y se reflexiona sobre los desafíos enfrentados. Además, se delinean los próximos pasos a seguir para continuar el desarrollo y mejora continua de la plataforma.
 
 
 %----------------------------------------------------------------------------------------
@@ -14,26 +14,40 @@ Todos los capítulos deben comenzar con un breve párrafo introductorio que indi
 
 \section{Conclusiones generales }
 
-La idea de esta sección es resaltar cuáles son los principales aportes del trabajo realizado y cómo se podría continuar. Debe ser especialmente breve y concisa. Es buena idea usar un listado para enumerar los logros obtenidos.
+La implementación de este sistema de detección basado en aprendizaje profundo ha demostrado ser una forma efectiva para abordar el problema de la identificación del picudo rojo en imágenes aéreas de palmeras. Si bien el objetivo inicial era enfocarse en la detección temprana, durante el trabajo se identificó que este problema es complejo y aún no resuelto, sin embargo, se podía aportar valor en una detección tardía a gran escala. Este sistema permite mejorar la gestión de la plaga y reducir los costos asociados al monitoreo manual, al tiempo que contribuye a la preservación del arbolado público.
 
-En esta sección no se deben incluir ni tablas ni gráficos.
+Desde el punto de vista de la intendencia de Montevideo, este trabajo marca un hito importante en la aplicación de tecnologías avanzadas en la agricultura urbana, posicionándose como uno de los referentes en el uso de inteligencia artificial para la protección del arbolado público. Esto construye hacia una ciudad más inteligente y sostenible, alineada con las tendencias globales de \textit{smart cities}.
 
-Algunas preguntas que pueden servir para completar este capítulo:
+Desde el punto de vista académico, este trabajo es pionero en la detección tardía del picudo rojo, no solo en la región, sino que a nivel mundial. La combinación de técnicas de visión por computadora y aprendizaje profundo aplicada a imágenes aéreas representa un avance en el campo de teledetección y observación terrestre (\textit{Earth Observation}).
+
+A lo largo del trabajo, se logró varios hitos importantes:
 
 \begin{itemize}
-\item ¿Cuál es el grado de cumplimiento de los requerimientos?
-\item ¿Cuán fielmente se puedo seguir la planificación original (cronograma incluido)?
-\item ¿Se manifestó algunos de los riesgos identificados en la planificación? ¿Fue efectivo el plan de mitigación? ¿Se debió aplicar alguna otra acción no contemplada previamente?
-\item Si se debieron hacer modificaciones a lo planificado ¿Cuáles fueron las causas y los efectos?
-\item ¿Qué técnicas resultaron útiles para el desarrollo del proyecto y cuáles no tanto?
+    \item Se desarrolló y entrenó un modelo de detección del picudo rojo utilizando la arquitectura YoloV11, adaptándola a las características específicas del dominio.
+    \item Se implementó técnicas de \textit{data augmentation} y \textit{transfer learning} para mejorar el rendimiento del modelo a pesar de la limitada disponibilidad de datos.
+    \item Se diseñó una arquitectura de sistema robusta y escalable, que permite la integración de nuevos datos y la actualización del modelo de manera eficiente.
+    \item Se validaron herramientas y frameworks open source alineados con las tecnologías actuales presentes en la IM.
+    \item Se establecieron métricas claras de evaluación, como el mAP y la matriz de confusión, que permitieron un análisis detallado del desempeño del modelo.
+    \item Se logró un mAP superior al 0.85 en la detección del picudo rojo, lo que cumple con los objetivos iniciales del proyecto.
+    \item Se integró el modelo en una aplicación web y se lo disponibilizó al sector de arbolado de la IM.
 \end{itemize}
 
+Más allá de los logros técnicos, este trabajo ha sentado las bases para futuros proyectos, investigaciones y desarrollos en el campo de la visión por computadora. Se espera que los resultados obtenidos sirvan como referencia para otros proyectos similares dentro de la organización y en el ámbito académico.
+
+Finalmente, destacar los desafíos enfrentados durante el desarrollo del trabajo, como la correcta gestión de la calidad de los datos, la necesidad de soluciones a medida en dominios específicos y la integración del sistema en un entorno real. Estos desafíos han sido superados con éxito, demostrando la viabilidad y efectividad del enfoque adoptado.
 
 %----------------------------------------------------------------------------------------
 %	SECTION 2
 %----------------------------------------------------------------------------------------
 \section{Próximos pasos}
 
-Acá se indica cómo se podría continuar el trabajo más adelante.
+A partir de los logros alcanzados, se identifican varias áreas para continuar el trabajo en el futuro:
 
-% Agregar gestor de scripts (mini-apps) con apache flow y agregar MLflow para el flujo de trabajo de ML.
+\begin{itemize}
+    \item Integrar datos de técnicas de detección temprana del picudo rojo, como dispositivos sonoros o sensores químicos, para complementar la detección visual.
+    \item Incorporar técnicas de auto etiquetado que no pudieron ser implementadas en esta etapa.
+    \item Ampliar la base de datos de imágenes para incluir más variabilidad principalmente en las clases palmera muerta e infectada.
+    \item Adaptar otros módulos como el módulo de reportes al sistema.
+    \item Desarrollar un plan de mantenimiento y actualización del modelo que contemple la incorporación de nuevos datos y la adaptación a cambios en el entorno.
+    \item Extender la detección a todo el país, aprovechando los recursos de entidades nacionales como Ministerio de Ganadería, Agricultura y Pesca (MGAP) y el Ministerio de Ambiente.
+\end{itemize}
