@@ -61,3 +61,16 @@ html {
 	--mat-sys-neutral10: #1a1c18;
 }
 ```
+
+## Reducir tamaño PDF
+
+Para reducir el tamaño del PDF generado, se puede utilizar la herramienta `ghostscript`. A continuación se muestra un comando de ejemplo para comprimir el archivo PDF:
+
+```powershell
+gswin64c -sDEVICE=pdfwrite -o converted.pdf -dCompatibilityLevel='1.4' -dPDFSETTINGS=/printer -dNOPAUSE -dQUIET -dBATCH memorianueva.pdf
+```
+Los valores posibles son:
+- /screen → máxima compresión (menor calidad)
+- /ebook → buena calidad (recomendado)
+- /printer → alta calidad
+- /prepress → casi sin compresión

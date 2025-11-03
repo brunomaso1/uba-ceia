@@ -70,7 +70,7 @@ El módulo gestor de datos es el encargado de almacenar los metadatos de las im�
 
 El módulo de etiquetado de datos permite ejecutar el proceso de etiquetado de imágenes y se comunica tanto con el módulo de seguridad para el manejo de diferentes niveles de información. Su acoplamiento es muy bajo, con el objetivo de que pueda ser sustituido por otro software de etiquetado, dado la gran variedad de herramientas disponibles en el mercado. Se comunica con el módulo de repositorio de objetos para obtener las imágenes a etiquetar y con el módulo de seguridad para gestionar los usuarios y permisos. Asimismo, este módulo también brinda una interfaz gráfica para que el usuario pueda realizar el etiquetado de manera sencilla.
 
-El módulo de calidad de datos se ocupa de realizar un análisis cualitativo de los datos, lo que mejora la eficiencia de los modelos al utilizar datos de alta calidad. Este módulo permite que un equipo de control de calidad pueda analizar y generar informes específicos sobre los datos, lo que habilita una traza y evolución de lás imágenes, esencial en proyectos de VPC donde la variable temporal afecta el resultado de las predicciones, como lo es este trabajo. Este módulo también se comunica con el usuario mediante una interfaz gráfica que permite una correcta gestión de la calidad de los datos.
+El módulo de calidad de datos se ocupa de realizar un análisis cualitativo de los datos, lo que mejora la eficiencia de los modelos al utilizar datos de alta calidad. Este módulo permite que un equipo de control de calidad pueda analizar y generar informes específicos sobre los datos, lo que habilita una traza y evolución de lás imágenes, esencial en proyectos de CV donde la variable temporal afecta el resultado de las predicciones, como lo es este trabajo. Este módulo también se comunica con el usuario mediante una interfaz gráfica que permite una correcta gestión de la calidad de los datos.
 
 El módulo de repositorio de objetos es el responsable del almacenamiento y gestión de las imágenes, en este caso las generadas por drones. Este módulo administra grandes volúmenes de datos y garantiza la disponibilidad continua de esta información mediante APIs. Para esta tarea, usualmente se utilizan sistemas de almacenamiento de objetos como Amazon S3 \citep{amazon_web_services_aws_nodate} o algún otro proveedor de nube. La comunicación con otros módulos se realiza mediante APIs REST, lo que permite una integración sencilla y eficiente.
 
@@ -293,16 +293,7 @@ picudo-rojo-bucket
 
 La división en estos grupos también permite separar cuales imágenes son de entrenamiento y cuales son testing. Simplemente agregando un nuevo grupo llamado \lstinline[language=sh]|task-testing|, se pueden separar las imágenes de testing de las de entrenamiento. En este proyecto no se utilizó dicha separación, dado que la división se realizó después por la poca cantidad de datos de las clases minoritarias.
 
-A la vez que se guardaban las imágenes en MinIO, se almacenaban los metadatos en MongoDB. Estos metadatos incluyen información relevante sobre cada imagen, como su nombre, resolución, fecha de captura y coordenadas geográficas. Esta información es esencial para la gestión y análisis de las imágenes, ya que permite realizar búsquedas y filtrados basados en diferentes criterios. La estructura de los documentos en MongoDB se diseñó para facilitar la consulta y actualización de los metadatos, asegurando una gestión eficiente de la información. Específicamente, se creó una colección llamada \lstinline[language=sh]|imagenes|, en donde cada documento representa una imagen ortorectificada y contiene los campos que puede verse en la figura \ref{fig:metadatos-mongodb}.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[scale=0.12]{./Figures/metadatos-mongodb.png}
-  \caption[Estructura MongoDB]{Estructura de los metadatos en MongoDB, junto a un ejemplo real de un documento almacenado.}
-  \label{fig:metadatos-mongodb}
-\end{figure}
-
-Un aspecto importante a destacar es el nodo \lstinline[language=sh]|jgw_data|. Este nodo contiene la información necesaria para georreferenciar la imagen, lo que permite que se pueda ubicar en un sistema de coordenadas geográficas. Esta información está adjunta con la imagen cuando se descarga desde el SIG.
+A la vez que se guardaban las imágenes en MinIO, se almacenaban los metadatos en MongoDB. Estos metadatos incluyen información relevante sobre cada imagen, como su nombre, resolución, fecha de captura y coordenadas geográficas. Esta información es esencial para la gestión y análisis de las imágenes, ya que permite realizar búsquedas y filtrados basados en diferentes criterios. La estructura de los documentos en MongoDB se diseñó para facilitar la consulta y actualización de los metadatos, asegurando una gestión eficiente de la información. Un aspecto importante a destacar es el nodo \lstinline[language=sh]|jgw_data| dentro de la estructura. Este nodo contiene la información necesaria para georreferenciar la imagen, lo que permite que se pueda ubicar en un sistema de coordenadas geográficas. Esta información está adjunta con la imagen cuando se descarga desde el SIG.
 
 Una vez que se completó la descarga de las imágenes, se procedió a la carga de las mismas en CVAT para su posterior etiquetado. Este proceso se realizó de manera manual, utilizando la interfaz gráfica de CVAT para seleccionar y cargar las imágenes desde MinIO. Se creó un proyecto en CVAT llamado picudo-rojo-3cm-5cm y se agregaron las imágenes correspondientes a este proyecto. Este proceso fue sencillo y eficiente, gracias a la integración entre CVAT y MinIO, que permitió una gestión fluida de las imágenes.
 
@@ -379,7 +370,6 @@ Es muy difícil obtener una métrica certera de cuantas etiquetas por imagen se 
     3                 & 3.0            & 90                & 720               \\
     4                 & 2.8            & 140               & 480               \\
     5                 & 1.7            & 65                & 410               \\
-    6                 & 2.2            & 100               & 420               \\
     \midrule
     \textbf{Promedio} & 2.3            & 95                & 524               \\
     \bottomrule
@@ -403,7 +393,7 @@ Un ejemplo de una imagen etiquetada en CVAT se puede observar en la figura \ref{
 \section{Preparación del dataset y estructura del entrenamiento}
 \label{sec:preparacionDataset}
 
-Debido a la conformación de la infraestructura realizada en etapas anteriores, se pudo contar con un dataset de imágenes aéreas etiquetadas para entrenar los modelos de detección. La estructura de entrenamiento se basó en la plantilla de \textit{cookiecutter data science}, que permite organizar los datos y scripts de manera eficiente y reproducible. En esta plantilla se define una estructura de directorios común a proyectos de ciencia de datos, la cual fue adaptada a este proyecto de la siguiente:
+La estructura de entrenamiento se basó en la plantilla de \textit{cookiecutter data science}, que permite organizar los datos y scripts de manera eficiente y reproducible. En esta plantilla se define una estructura de directorios común a proyectos de ciencia de datos, la cual fue adaptada a este proyecto de la siguiente:
 
 \begin{lstlisting}[label=cod:modulo-IA-estructura,caption=Estructura de directorios utilizada., literate={├}{{\textSFviii}}1 {─}{{\textSFx}}1 {└}{{\textSFii}}1 {│}{{\textSFxi}}1]  % Start your code-block
 

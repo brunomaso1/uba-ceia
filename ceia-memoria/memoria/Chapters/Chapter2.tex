@@ -1,7 +1,7 @@
 \chapter{Introducción específica}
 \label{Chapter2}
 
-En este capítulo se presentan en detalle las tecnologías y conceptos utilizados para el trabajo. Se parte de una introducción a las imágenes generadas por vehículos aéreos, especialmente aquellas generadas por UAV. Luego, se mencionan herramientas adicionales utilizadas en los procesos de soporte de proyectos orientados a IA, como lo son el proceso de etiquetado y la gestión de los datos. Finalmente, se puntualiza en modelos y métricas utilizados en VPC para este tipo de trabajos.
+En este capítulo se presentan en detalle las tecnologías y conceptos utilizados para el trabajo. Se parte de una introducción a las imágenes generadas por vehículos aéreos, especialmente aquellas generadas por UAV. Luego, se mencionan herramientas adicionales utilizadas en los procesos de soporte de proyectos orientados a AI (por su sigla en inglés de \textit{Artificial Intelligence}), como lo son el proceso de etiquetado y la gestión de los datos. Finalmente, se puntualiza en modelos y métricas utilizados en CV para este tipo de trabajos.
 
 \section{Imágenes generadas por vehículos aéreos}
 \label{sec:imgGenVehiculosAereos}
@@ -15,7 +15,7 @@ En contraste con los métodos tradicionales y los vuelos tripulados (que cubren 
 
 Las imágenes generadas por drones se destacan por su alta resolución y capacidad para capturar detalles finos del terreno. Estas imágenes suelen tener una mayor resolución (medida en \si{\centi\meter\per\pixel}) en comparación con las generadas por aviones. El DJI Phantom 4 PRO \citep{dji_support_nodate} es ampliamente utilizado en aplicaciones de mapeo y fotogrametría debido a su capacidad para generar ortomosaicos con una resolución de hasta \SI{5}{\centi\meter\per\pixel} (volando a 100 metros de altura). Otro dron ampliamente utilizado es el DJI MAVIC 3 Enterprise RTK \citep{dji_specs_nodate}. La integración de tecnología RTK \citep{wikipedia_rtk_2024} en este dron permite una mayor precisión en la georreferenciación de las imágenes capturadas, a diferencia del DJI Phantom 4 PRO, que necesita puntos de apoyo relevados en el campo tomados con un GPS RTK (en las ejecuciones de vuelos con el DJI Phantom de la IM, los puntos de apoyo fueron tomados con GNSS SinoGNSS T300 Plus \citep{comnav_technology_ltd_receptor_nodate}, utilizando corrección en tiempo real por NTRIP \citep{wikipedia_networked_2025} con la base UYMO del Instituto Geográfico Militar uruguayo).
 
-\section{Herramientas de soporte en proyectos de IA}
+\section{Herramientas de soporte en proyectos de AI}
 \label{sec:herramSopIA}
 
 La cara visible de los proyectos de inteligencia artificial se fundamenta, en general, en los resultados y aplicaciones derivados de modelos de aprendizaje automático. No obstante, al igual que en cualquier proyecto de software, resulta fundamental integrar buenas prácticas de ingeniería de software, lo que implica focalizarse en atributos específicos del sistema, tales como la escalabilidad, la seguridad y la recuperabilidad, entre otros \citep{sommerville_software_2015}. Para alcanzar estos objetivos, es crucial considerar disciplinas que faciliten su consecución, como la gestión de la configuración o la gestión de datos. A continuación, se exponen algunas herramientas de apoyo a varios de estos procesos.
@@ -34,18 +34,18 @@ La correcta administración de la infraestructura es esencial para el despliegue
 
 La seguridad y la privacidad son aspectos críticos en el desarrollo de aplicaciones de inteligencia artificial. La correcta gestión de usuarios y permisos es esencial para garantizar que solo las personas autorizadas tengan acceso a datos sensibles y funcionalidades específicas del sistema. Para ello, se pueden implementar herramientas compatibles con el protocolo \textit{Lightweight Directory Access Protocol} (LDAP) \citep{wikipedia_protocolo_2024}, como lo es \textit{Light} LDAP (LLDAP) \citep{lldap_authors_lldap_2023}. Esta herramienta permite la autenticación y autorización de usuarios, lo que simplifica la gestión centralizada de credenciales y permisos. Además, se pueden establecer políticas de acceso basadas en roles, y así contribuir a una mayor seguridad y control sobre el sistema.
 
-Actualmente, Keycloak \citep{cloud_native_computing_foundation_keycloak_nodate} es una de las herramientas más utilizadas para la gestión de identidad y acceso. Proporciona funcionalidades como inicio de sesión único (SSO), autenticación multifactor (MFA) y federación de identidades, lo que facilita la integración con diversas aplicaciones y servicios. Keycloak es compatible con protocolos estándar como OAuth2, OpenID Connect y SAML, lo que permite una gestión segura y eficiente de usuarios y permisos en entornos de IA. También se integra fácilmente con LDAP, lo que permite aprovechar infraestructuras de autenticación ya existentes.
+Actualmente, Keycloak \citep{cloud_native_computing_foundation_keycloak_nodate} es una de las herramientas más utilizadas para la gestión de identidad y acceso. Proporciona funcionalidades como inicio de sesión único (SSO), autenticación multifactor (MFA) y federación de identidades, lo que facilita la integración con diversas aplicaciones y servicios. Keycloak es compatible con protocolos estándar como OAuth2, OpenID Connect y SAML, lo que permite una gestión segura y eficiente de usuarios y permisos en entornos de AI. También se integra fácilmente con LDAP, lo que permite aprovechar infraestructuras de autenticación ya existentes.
 
 \subsection{Gestión de etiquetado de datos}
 
-La calidad de los modelos de VPC dependen en gran medida de la precisión y consistencia del etiquetado de datos. Para optimizar este proceso, existen herramientas especializadas como CVAT \citep{sekachev_opencvcvat_2020}, que facilitan la anotación de conjuntos de datos para el entrenamiento y validación de modelos. Su interfaz intuitiva y funcionalidades colaborativas permiten una asignación precisa de etiquetas en imágenes, lo que reduce errores y mejora la calidad de los datos. Entre las funcionalidades de CVAT se encuentra la integración con protocolos LDAP y la gestión de datos utilizando \textit{object storage}.
+La calidad de los modelos de CV dependen en gran medida de la precisión y consistencia del etiquetado de datos. Para optimizar este proceso, existen herramientas especializadas como CVAT \citep{sekachev_opencvcvat_2020}, que facilitan la anotación de conjuntos de datos para el entrenamiento y validación de modelos. Su interfaz intuitiva y funcionalidades colaborativas permiten una asignación precisa de etiquetas en imágenes, lo que reduce errores y mejora la calidad de los datos. Entre las funcionalidades de CVAT se encuentra la integración con protocolos LDAP y la gestión de datos utilizando \textit{object storage}.
 
-FiftyOne \citep{moore_fiftyone_2020}, otra herramienta ampliamente utilizada en la industria, permite visualizar, analizar y gestionar los conjuntos de datos etiquetados. Facilita la identificación de inconsistencias y errores en las anotaciones, lo que resulta crucial para la mejora continua de los modelos de aprendizaje. Esta herramienta se destaca por su capacidad para manejar grandes volúmenes de datos y su integración con frameworks de aprendizaje automático populares, lo que la convierte en una opción versátil para proyectos de VPC.
+FiftyOne \citep{moore_fiftyone_2020}, otra herramienta ampliamente utilizada en la industria, permite visualizar, analizar y gestionar los conjuntos de datos etiquetados. Facilita la identificación de inconsistencias y errores en las anotaciones, lo que resulta crucial para la mejora continua de los modelos de aprendizaje. Esta herramienta se destaca por su capacidad para manejar grandes volúmenes de datos y su integración con frameworks de aprendizaje automático populares, lo que la convierte en una opción versátil para proyectos de CV.
 
 \subsection{Gestión de repositorio de datos}
 \label{sec:gestionRepoDatos}
 
-El manejo eficiente de grandes volúmenes de datos es un aspecto indispensable en los proyectos de IA, especialmente las imágenes en proyectos de VPC. Entre las opciones \textit{open source} se encuentran:
+El manejo eficiente de grandes volúmenes de datos es un aspecto indispensable en los proyectos de AI, especialmente las imágenes en proyectos de CV. Entre las opciones \textit{open source} se encuentran:
 
 \begin{itemize}
 	\item MinIO \citep{minio_inc_minio_2023}: solución de almacenamiento de objetos compatible con S3 \citep{amazon_amazon_2024} (\textit{S3-compliant}). Permite gestionar grandes volúmenes de datos de manera escalable y segura. Su implementación posibilita la integración tanto en entornos de almacenamiento en la nube como en sistemas locales, lo que asegura la disponibilidad continua de la información. Se integra fácilmente con herramientas de anotaciones como CVAT.
@@ -60,13 +60,13 @@ La integración de estas herramientas de soporte establecen un flujo de trabajo 
 La visualización de datos es una herramienta fundamental para interpretar y comunicar los resultados obtenidos en proyectos de inteligencia artificial, así como también para el monitoreo e interacción con los usuarios finales. En este contexto, existen diversas herramientas que facilitan esta tarea, entre las que se destacan:
 \begin{itemize}
 	\item Angular \citep{google_angular_nodate}: framework de desarrollo web que permite crear interfaces de usuario interactivas y dinámicas. Su arquitectura basada en componentes facilita la construcción de aplicaciones modulares y escalables, lo que es ideal para proyectos que requieren una visualización compleja de datos, como mapas interactivos.
-	\item FastAPI \citep{tiangolo_fastapi_nodate}: framework web moderno y de alto rendimiento para construir APIs con Python. Su diseño asíncrono y su facilidad de uso permiten desarrollar servicios backend eficientes que pueden manejar grandes volúmenes de solicitudes, lo que es crucial para aplicaciones que requieren acceso rápido a datos y modelos de IA.
+	\item FastAPI \citep{tiangolo_fastapi_nodate}: framework web moderno y de alto rendimiento para construir APIs con Python. Su diseño asíncrono y su facilidad de uso permiten desarrollar servicios backend eficientes que pueden manejar grandes volúmenes de solicitudes, lo que es crucial para aplicaciones que requieren acceso rápido a datos y modelos de AI.
 \end{itemize}
 
 \section{Modelos de visión por computadora}
 \label{sec:modelosVisPC}
 
-El desarrollo de los modelos de VPC ha permitido avances notables en la automatización y análisis de imágenes. Entre las tareas de clasificación y detección de objetos, las CNN se destacan con altos niveles de precisión y eficiencia.
+El desarrollo de los modelos de CV ha permitido avances notables en la automatización y análisis de imágenes. Entre las tareas de clasificación y detección de objetos, las CNN se destacan con altos niveles de precisión y eficiencia.
 
 \subsection{Clasificación de objetos}
 
@@ -83,7 +83,7 @@ Los modelos de dos etapas, representados de manera destacada por Faster R-CNN, s
 \subsubsection{Modelos de una etapa}
 
 En contraste, los modelos de una etapa, como YOLO, abordan el problema de la detección en un único paso. Estos modelos dividen la imagen en una cuadrícula y, de forma simultánea, predicen la probabilidad de presencia de un objeto y la localización de su correspondiente caja delimitadora. Esta integración de procesos permite una mayor velocidad de inferencia, lo que hace de YOLO una opción idónea para aplicaciones en tiempo real, aunque hay antecedentes del uso de este tipo de modelos para la detección de objetos con una alta eficiencia en la sección \ref{sec:estadoArte}.
-YOLO v11 \citep{yolo11_ultralytics} es una de las últimas versiones de la familia de modelos YOLO, desarrollada por Ultralytics. Esta versión introduce mejoras significativas en términos de precisión y velocidad, optimizando tanto la arquitectura, que se puede observar en la figura \ref{fig:yolov11-arquitectura}, del modelo como los algoritmos de entrenamiento.
+YOLO v11 \citep{yolo11_ultralytics} es una de las últimas versiones de la familia de modelos YOLO, desarrollada por Ultralytics. Esta versión, que se puede observar en la figura \ref{fig:yolov11-arquitectura}, introduce mejoras significativas en términos de precisión y velocidad, lo que optimiza tanto la arquitectura del modelo como los algoritmos de entrenamiento.
 \begin{figure}[H]
 	\centering
 	\includegraphics[scale=0.3]{./Figures/yolov11_arquitectura.png}
@@ -91,15 +91,15 @@ YOLO v11 \citep{yolo11_ultralytics} es una de las últimas versiones de la famil
 	\label{fig:yolov11-arquitectura}
 \end{figure}
 
-\footnotetext{Imagen obtenida de \url{https://www.researchsquare.com/article/rs-5582314/v1}}
+\footnotetext{Imagen obtenida y adaptada de \url{https://www.researchsquare.com/article/rs-5582314/v1}}
 
 \section{Métricas en visión por computadora} \label{sec:metricasVisPC}
 
-La evaluación cuantitativa de los modelos de VPC es esencial para determinar su desempeño y compararlos de manera objetiva. En este contexto, se utilizan diversas métricas que permiten analizar tanto la precisión en la clasificación de imágenes como la efectividad en la detección y localización de objetos. A continuación, se describen las métricas más utilizadas en el campo.
+La evaluación cuantitativa de los modelos de CV es esencial para determinar su desempeño y compararlos de manera objetiva. En este contexto, se utilizan diversas métricas que permiten analizar tanto la precisión en la clasificación de imágenes como la efectividad en la detección y localización de objetos. A continuación, se describen las métricas más utilizadas en el campo.
 
 \subsection{Precisión, Recuperación y \textit{F1-Score}}
 
-Para evaluar el rendimiento de los modelos de visión por computadora, es fundamental comprender ciertos términos básicos que se utilizan en el cálculo de las métricas. En este contexto, los verdaderos positivos (TP, del inglés \textit{True Positives}) corresponden a los casos en los que el modelo identifica correctamente la presencia de un objeto de interés. Los falsos positivos (FP, del inglés \textit{False Positives}) se refiere a las instancias en las que el modelo indica la presencia de un objeto de interés cuando en realidad este no está presente. Los falsos negativos (FN, del inglés \textit{False Negatives}) y verdaderos negativos (TN, del inglés \textit{True Negatives}) son términos que describen situaciones opuestas: los FN representan los casos en los que el modelo no detecta un objeto de interés que sí existe en la imagen, mientras que los TN indican las ocasiones en las que el modelo reconoce correctamente la ausencia de un objeto de interés.
+Para evaluar el rendimiento de los modelos de visión por computadora, es fundamental comprender ciertos términos básicos que se utilizan en el cálculo de las métricas. En este contexto, los verdaderos positivos (TP, del inglés \textit{True Positives}) corresponden a los casos en los que el modelo identifica correctamente la presencia de un objeto de interés. Los falsos positivos (FP, del inglés \textit{False Positives}) se refiere a las instancias en las que el modelo indica la presencia de un objeto de interés cuando en realidad este no está presente. Los falsos negativos (FN, del inglés \textit{False Negatives}) y verdaderos negativos (TN, del inglés \textit{True Negatives}) son términos que describen situaciones opuestas: los FN representan los casos en los que el modelo no detecta un objeto de interés que sí existe en la imagen, mientras que los TN indican las ocasiones en las que el modelo reconoce correctamente la ausencia de un objeto de interés. A partir de estos conceptos, se definen las siguientes métricas clave:
 
 \begin{itemize}
 	\item Precisión (\textit{Precision}): mide la proporción de verdaderos positivos sobre el total de predicciones positivas realizadas por el modelo. Una alta precisión indica que, de todos los objetos identificados, la mayoría corresponde efectivamente a objetos de interés. Se define como:
@@ -126,14 +126,12 @@ Para evaluar el rendimiento de los modelos de visión por computadora, es fundam
 
 Un resumen intuitivo de estas métricas se puede visualizar en la imagen \ref{fig:presicion-recall-accuracy}.
 
-\begin{figure}[htpb]
+\begin{figure}[H]
 	\centering
 	\includegraphics[scale=0.5]{./Figures/precision-recall-accuracy.png}
 	\caption[Matriz de confusión clásica]{Cálculo de precisión, recuperación y exactitud a partir de la matriz de confusión \protect\footnotemark.}
 	\label{fig:presicion-recall-accuracy}
 \end{figure}
-
-\footnotetext{Imagen tomada de \url{https://www.researchgate.net/figure/Calculation-of-Precision-Recall-and-Accuracy-in-the-confusion-matrix_fig3_336402347}}
 
 \subsection{\textit{Average Precision} y \textit{Mean Average Precision}}
 
@@ -144,4 +142,4 @@ La evaluación del desempeño en tareas de detección de objetos requiere consid
 	\item mAP: es la media aritmética de la AP calculada para cada clase. El mAP es ampliamente utilizado en competencias y evaluaciones de modelos de detección de objetos, ya que proporciona una única medida que resume la efectividad global del modelo.
 \end{itemize}
 
-La correcta selección y combinación de estas métricas permite una evaluación integral de los modelos de VPC, lo que facilita la identificación de áreas de mejora así como la comparación objetiva entre diferentes enfoques o arquitecturas implementadas.
+La correcta selección y combinación de estas métricas permite una evaluación integral de los modelos de CV, lo que facilita la identificación de áreas de mejora así como la comparación objetiva entre diferentes enfoques o arquitecturas implementadas.

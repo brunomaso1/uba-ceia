@@ -32,7 +32,7 @@ El enfoque del entrenamiento se centró en el \textit{fine-tuning} de este model
 
 \begin{figure}[H]
     \centering
-    \includegraphics[scale=0.12]{./Figures/arquitectura-yolo-congelada.png}
+    \includegraphics[scale=0.09]{./Figures/arquitectura-yolo-congelada.png}
     \caption[Enfoque de \textit{transfer learning}]{Esquema del enfoque de entrenamiento basado en \textit{transfer learning}, en donde se especifica el congelamiento del backbone para el entrenamiento del modelo de detección del picudo rojo.}
     \label{fig:training-learning}
 \end{figure}
@@ -99,7 +99,7 @@ Un punto importante a destacar es que en este pipeline de entrenamiento es que s
 
 \begin{figure}[H]
     \centering
-    \includegraphics[scale=0.53]{./Figures/training-images.png}
+    \includegraphics[scale=0.4]{./Figures/training-images.png}
     \caption[Imágenes de entrenamiento]{Ejemplos de imágenes del dataset procesado para la detección de palmeras.}
     \label{fig:imagenes-entrenamiento-palmeras}
 \end{figure}
@@ -145,18 +145,47 @@ Se entrenaron dos versiones del modelo YoloV11: la versión nano (YoloV11n) y la
 
 La figura \ref{fig:curvas-entrenamiento-palmeras} muestra las curvas de entrenamiento del mejor experimento realizado con la versión extra grande del modelo YoloV11. Se puede observar que el modelo converge adecuadamente y no existe un gran sobreajuste a los datos. Concretamente, la pérdida en la caja comienza a sobreajuste sobre la época 210, pero se decidió continuar hasta la época 300 en donde sí comienza a divergir junto con la pérdida de clasificación. Este fue uno de los motivos de elección de la cantidad de épocas para el entrenamiento final. En todo caso, el mAP50-95 seguía mejorando hasta la época 300.
 
+
 \begin{figure}[H]
     \centering
-    \includegraphics[scale=0.52]{./Figures/grafica-perdidas-modelo-palmeras.png}
+    \centering
+    \begin{subfigure}[b]{0.9\textwidth}
+        \includegraphics[width=\textwidth]{./Figures/grafica-perdidas-modelo-palmeras-box_loss.png}
+        \caption{Curva de pérdida de caja (\textit{box loss}).}
+    \end{subfigure}
+\end{figure}
+
+\begin{figure}[H]
+    \ContinuedFloat
+    \begin{subfigure}[b]{0.9\textwidth}
+        \includegraphics[width=\textwidth]{./Figures/grafica-perdidas-modelo-palmeras-cls_loss.png}
+        \caption{Curva de pérdida de clasificación (\textit{cls loss}).}
+    \end{subfigure}
+
+    \vspace{0.5cm} % Espacio vertical entre las imágenes
+
+    \begin{subfigure}[b]{0.9\textwidth}
+        \includegraphics[width=\textwidth]{./Figures/grafica-perdidas-modelo-palmeras-dfl_loss.png}
+        \caption{Curva de pérdida de focal (\textit{dfl loss}).}
+    \end{subfigure}
+
     \caption[Gráficas de entrenamiento del modelo de palmeras]{Curvas de entrenamiento del mejor experimento realizado con YoloV11x para la detección de palmeras. Se divide en tres gráficas, mostrando la pérdida en la caja (\textit{box loss}), la pérdida de clasificación (\textit{cls loss}) y la pérdida focal (\textit{dfl loss}). En todas se sobrepone la precisión y recuperación para observar su evolución durante el entrenamiento.}
     \label{fig:curvas-entrenamiento-palmeras}
 \end{figure}
+
+
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[scale=0.52]{./Figures/grafica-perdidas-modelo-palmeras.png}
+%     \caption[Gráficas de entrenamiento del modelo de palmeras]{Curvas de entrenamiento del mejor experimento realizado con YoloV11x para la detección de palmeras. Se divide en tres gráficas, mostrando la pérdida en la caja (\textit{box loss}), la pérdida de clasificación (\textit{cls loss}) y la pérdida focal (\textit{dfl loss}). En todas se sobrepone la precisión y recuperación para observar su evolución durante el entrenamiento.}
+%     \label{fig:curvas-entrenamiento-palmeras}
+% \end{figure}
 
 El mejor experimento se entrenó en Google Colab (utilizando la versión Pro). Se puede observar que en la época 100 ya se lograba un excelente desempeño, con un mAP50-95 de 0.84, lo que se observa en la figura \ref{fig:curvas-validacion}. En este punto, el mAP50 ya había alcanzado un valor cercano al 0.97, la precisión un 0.94 y la recuperación un 0.95. Métricas muy altas, que indicaban que el modelo había aprendido a detectar las palmeras de manera efectiva. Sin embargo, dado que el objetivo era maximizar el desempeño del modelo para su uso en producción, se decidió continuar el entrenamiento hasta la época 300 (evitando un gran sobreajuste), para finalizar con un mAP50-95 de 0.926, una precisión de 0.970 y un recall de 0.966. En la figura \ref{fig:curvas-entrenamiento-palmeras} se puede observar lo que parecería ser un sobreajuste significativo a partir de la época 290, pero este efecto es porque Ultralitycs tiene la opción de cerrar el aumento de datos, para el caso del mosaico (combinación de cuatro imágenes en una) de imágenes, en las últimas 10 épocas. Esto permite que el modelo se entrene en las imágenes originales, sin estas transformaciones, para mejorar la capacidad de generalización. Si se hubiera dejado el entrenamiento por más épocas, esto no se habría aplicado. Ajustar las épocas también permitió afinar el aprendizaje, dado que con una tasa de aprendizaje con decaimiento lineal, se logra que al final del entrenamiento, la tasa de aprendizaje sea muy baja, permitiendo un ajuste fino de los pesos del modelo. Este ajuste de épocas se estimó mediante experimentos sobre el modelo YoloV11n, que al ser más liviano, permitió realizar pruebas más rápidas (usualmente 6 horas en la infraestructura local).
 
 \begin{figure}[H]
     \centering
-    \includegraphics[scale=0.5]{./Figures/grafica-map-modelo-palmeras.png}
+    \includegraphics[scale=0.4]{./Figures/grafica-map-modelo-palmeras.png}
     \caption[Gráficas de mAP del modelo de palmeras]{Curvas del mejor experimento realizado con YoloV11x para la detección de palmeras mostrando el mAP50-95 y mAP50 durante el entrenamiento sobre el conjunto de validación.}
     \label{fig:curvas-validacion}
 \end{figure}
@@ -166,7 +195,7 @@ En este caso, una de las métricas más importantes fue la precisión, dado que 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[scale=0.6]{./Figures/grafica-matriz-confusion-modelo-palmeras.png}
+    \includegraphics[scale=0.5]{./Figures/grafica-matriz-confusion-modelo-palmeras.png}
     \caption[Matriz de confusión del modelo de palmeras]{Matriz de confusión del mejor experimento realizado con YoloV11x para la detección de palmeras sobre el conjunto de test.}
     \label{fig:matriz-confusion-palmeras}
 \end{figure}
@@ -243,16 +272,43 @@ En la figura \ref{fig:curvas-entrenamiento-picudo} se pueden observar las curvas
 
 \begin{figure}[H]
     \centering
-    \includegraphics[scale=0.52]{./Figures/grafica-perdidas-modelo-picudo.png}
+    \centering
+    \begin{subfigure}[b]{0.9\textwidth}
+        \includegraphics[width=\textwidth]{./Figures/grafica-perdidas-modelo-picudo-box_loss.png}
+        \caption{Curva de pérdida de caja (\textit{box loss}).}
+    \end{subfigure}
+\end{figure}
+
+\begin{figure}[H]
+    \ContinuedFloat
+    \begin{subfigure}[b]{0.9\textwidth}
+        \includegraphics[width=\textwidth]{./Figures/grafica-perdidas-modelo-picudo-cls_loss.png}
+        \caption{Curva de pérdida de clasificación (\textit{cls loss}).}
+    \end{subfigure}
+
+    \vspace{0.5cm} % Espacio vertical entre las imágenes
+
+    \begin{subfigure}[b]{0.9\textwidth}
+        \includegraphics[width=\textwidth]{./Figures/grafica-perdidas-modelo-picudo-dfl_loss.png}
+        \caption{Curva de pérdida de focal (\textit{dfl loss}).}
+    \end{subfigure}
+
     \caption[Gráficas de entrenamiento del modelo del picudo rojo]{Curvas de entrenamiento del mejor experimento realizado con YoloV11x para la detección del picudo rojo. Se divide en tres gráficas, mostrando la pérdida en la caja (\textit{box loss}), la pérdida de clasificación (\textit{cls loss}) y la pérdida focal (\textit{dfl loss}). En todas se sobrepone la precisión y recuperación para observar su evolución durante el entrenamiento.}
     \label{fig:curvas-entrenamiento-picudo}
 \end{figure}
+
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[scale=0.52]{./Figures/grafica-perdidas-modelo-picudo.png}
+%     \caption[Gráficas de entrenamiento del modelo del picudo rojo]{Curvas de entrenamiento del mejor experimento realizado con YoloV11x para la detección del picudo rojo. Se divide en tres gráficas, mostrando la pérdida en la caja (\textit{box loss}), la pérdida de clasificación (\textit{cls loss}) y la pérdida focal (\textit{dfl loss}). En todas se sobrepone la precisión y recuperación para observar su evolución durante el entrenamiento.}
+%     \label{fig:curvas-entrenamiento-picudo}
+% \end{figure}
 
 Estos experimentos se realizaron totalmente en la infraestructura local, dado que el tamaño del dataset era manejable. Se puede observar que en la época 100 ya se lograba un desempeño aceptable, con un mAP50-95 de 0.89, lo que se observa en la figura \ref{fig:curvas-validacion-picudo}. En este punto, el mAP50 ya había alcanzado un valor cercano al 0.951, la precisión un 0.93 y la recuperación un 0.874. Métricas buenas, sin embargo, dada la gran variabilidad en el aprendizaje, se decidió continuar el entrenamiento hasta la última época nombrada anteriormente, para finalizar con un mAP50-95 de 0.926, una precisión de 0.919 y un recall de 0.91, en la época 197.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[scale=0.5]{./Figures/grafica-map-modelo-picudo.png}
+    \includegraphics[scale=0.4]{./Figures/grafica-map-modelo-picudo.png}
     \caption[Gráficas de mAP del modelo del picudo rojo]{Curvas del mejor experimento realizado con YoloV11x para la detección del picudo rojo mostrando el mAP50-95 y mAP50 durante el entrenamiento sobre el conjunto de validación.}
     \label{fig:curvas-validacion-picudo}
 \end{figure}
@@ -261,7 +317,7 @@ Finalmente, la matriz de confusión (sobre el conjunto de test) en la figura \re
 
 \begin{figure}[H]
     \centering
-    \includegraphics[scale=0.6]{./Figures/grafica-matriz-confusion-modelo-picudo.png}
+    \includegraphics[scale=0.5]{./Figures/grafica-matriz-confusion-modelo-picudo.png}
     \caption[Matriz de confusión del modelo del picudo rojo]{Matriz de confusión del mejor experimento realizado con YoloV11x para la detección del picudo rojo sobre el conjunto de test.}
     \label{fig:matriz-confusion-picudo}
 \end{figure}
