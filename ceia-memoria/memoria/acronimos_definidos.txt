@@ -11,3 +11,4 @@
 - \textit{Average Precision} (AP)
 - \textit{Mean Average Precision} (mAP)
 - control de calidad (QA)
+- Non-Maximum Suppression (NMS)

@@ -37,7 +37,7 @@
 \chapter{Diseño e implementación} % Main chapter title
 \label{Chapter3} % Change X to a consecutive number; for referencing this chapter elsewhere, use \ref{ChapterX}
 
-En este capítulo se describen los aspectos más relevantes del diseño e implementación de la plataforma, así como el procesamiento de los datos. Inicialmente se presenta la arquitectura en donde se describen los componentes e interacciones. Luego se describe el proceso de despliegue de la infraestructura de soporte, tanto en el ambiente de desarrollo como en el de producción. Posteriormente se enfatiza en tarea de etiquetado de datos, incluyendo los problemas y soluciones enfrentados; se detalla el proceso de preparación del dataset y la estructura para el entrenamiento. Finalmente se presentan los desafíos más importantes interactuados con respecto al desarrollo de la aplicación web y el despliegue de la misma junto con los modelos de detección.
+En este capítulo se describen los aspectos más relevantes del diseño e implementación de la plataforma, así como el procesamiento de los datos. Inicialmente se presenta la arquitectura y se describen los componentes e interacciones. Luego se describe el proceso de despliegue de la infraestructura de soporte, tanto en el ambiente de desarrollo como en el de producción. Posteriormente se enfatiza en tarea de etiquetado de datos, el proceso de preparación del dataset y la estructura para el entrenamiento. Finalmente se presenta el desarrollo y despliegue de la aplicación web junto con los modelos de detección.
 
 %----------------------------------------------------------------------------------------
 %	SECTION 1
@@ -45,7 +45,7 @@ En este capítulo se describen los aspectos más relevantes del diseño e implem
 \section{Arquitectura de la plataforma}
 \label{sec:arquitectura}
 
-El objetivo principal de este trabajo fue brindar un producto para el servicio de arbolado, en donde se les permita consultar el estado de la plaga en base a imágenes aéreas. Para ello, se diseñó y desarrolló la plataforma de la figura \ref{fig:plataforma}, la cual integra varios módulos con el fin de soportar todos los procesos relacionados con el desarrollo del software.
+El objetivo principal de este trabajo fue brindar un producto para el servicio de arbolado, en donde se les permita consultar el estado de la plaga en base a imágenes aéreas. Para ello, se diseñó y desarrolló la plataforma de la figura \ref{fig:plataforma}, que integra varios módulos con el fin de soportar todos los procesos relacionados con el desarrollo del software.
 
 \begin{figure}[H]
   \centering
@@ -56,31 +56,31 @@ El objetivo principal de este trabajo fue brindar un producto para el servicio d
 
 El enfoque se basó en un sistema modular, que favorece la encapsulación de funcionalidades específicas dentro de componentes con una única responsabilidad (SRP, sigla del inglés \textit{Single Responsibility Principle} \citep{soni_software_2024}). Esto facilita la mantenibilidad y escalabilidad del sistema, lo que permite que cada módulo pueda ser desarrollado, probado, intercambiado y desplegado de manera independiente. Cada módulo desempeña un papel específico en varios de los procesos transversales de la ingeniería de software, como lo es la gestión de datos, la seguridad, el respaldo de información y el despliegue de aplicaciones.
 
-La estructura modular de la plataforma permite que se puedan agregar otros módulos en el futuro, como por ejemplo, un módulo de información georreferenciada, que centralice las referencias de las palmeras y permita visualizaciones internamente utilizando herramientas como QGIS \citep{wikipedia_qgis_2025} o un módulo reportes, que gestione todos los resultados de los entrenamiento de los modelos, con herramientas como MlFlow \citep{zaharia_accelerating_2018}. Esto posibilita que la plataforma pueda evolucionar y adaptarse a nuevas necesidades y tecnologías, asegurando su relevancia a largo plazo.
+La estructura modular de la plataforma permite que se puedan agregar otros módulos en el futuro, como por ejemplo, un módulo de información georreferenciada, que centralice las referencias de las palmeras y permita visualizaciones internamente utilizando herramientas como QGIS \citep{wikipedia_qgis_2025} o un módulo reportes que gestione todos los resultados de los entrenamiento de los modelos, con herramientas como MlFlow \citep{zaharia_accelerating_2018}. Esto posibilita que la plataforma pueda evolucionar y adaptarse a nuevas necesidades y tecnologías, lo que asegura su relevancia a largo plazo.
 
-Uno de los principales objetivos al definir la arquitectura, fue que los módulos representen responsabilidades que ya están resueltas por software existente en la infraestructura de la IM. Esto permite que, en un futuro, estos módulos puedan ser reemplazados por el software ya utilizado en la IM, o incorporados como servicios adicionales aquellos que no existen, como el módulo de IA.
+Uno de los principales objetivos al definir la arquitectura fue que los módulos representen responsabilidades que ya están resueltas por software existente en la infraestructura de la IM. Esto permite que, en un futuro, estos módulos puedan ser reemplazados por el software ya utilizado en la IM o incorporados como servicios adicionales aquellos que no existen, como el módulo de AI.
 
-La comunicación se basa en protocolos ligeros como REST \citep{wikipedia_protocolo_2024}, que generan un bajo acoplamiento y una alta cohesión entre módulos, aunque también se utilizan otros protocolos como LDAP para la gestión de usuarios y permisos, asi como OIDC para la autenticación y autorización de la aplicación web (Mis palmeras).
+La comunicación se basa en protocolos ligeros como REST \citep{wikipedia_protocolo_2024}, que generan un bajo acoplamiento y una alta cohesión entre módulos, aunque también se utilizan otros protocolos como LDAP para la gestión de usuarios y permisos, así como OIDC para la autenticación y autorización de la aplicación web (Mis palmeras).
 
-El módulo de seguridad permite la administración de usuarios y permisos. Esto garantiza que solo los usuarios autorizados tengan acceso a la información sensible. Este módulo se basa en el protocolo LDAP, que favorece una gestión centralizada de autenticación y autorización. Adicionalmente, el módulo puede ser sustituido por el software utilizado en la IM (WSO2 \citep{wso2_deliver_nodate}) o directamente interactuar con este (WSO2 puede comunicarse mediante el protocolo LDAP).
+El módulo \texttt{Seguridad} permite la administración de usuarios y permisos. Esto garantiza que solo los usuarios autorizados tengan acceso a la información sensible. Se basa en el protocolo LDAP, que favorece una gestión centralizada de autenticación y autorización. Adicionalmente, puede ser sustituido por el software utilizado en la IM (WSO2 \citep{wso2_deliver_nodate}) o directamente interactuar con este (WSO2 puede comunicarse mediante el protocolo LDAP).
 
-El módulo de respaldo de datos cerciora que los datos estén siempre disponibles y que se puedan recuperar en caso de pérdida. En este caso es extremadamente importante este módulo, dado que el costo de obtener los datos etiquetados es muy alto, por lo que es información muy valiosa y esto aumenta el riesgo. El objetivo principal de este módulo pasa por gestionar procesos de respaldo y recuperación de datos. Al ser un módulo independiente, puede ser sustituido por otro software de respaldo, como por ejemplo: Restic \citep{restic_restic_nodate} o Bacula \citep{bacula_documentation_nodate}.
+El módulo \texttt{Respaldo de datos} cerciora que los datos estén siempre disponibles y que se puedan recuperar en caso de pérdida. En este caso es extremadamente importante este módulo, dado que el costo de obtener los datos etiquetados es muy alto, por lo que es información muy valiosa y esto aumenta el riesgo. El objetivo principal pasa por gestionar los procesos de respaldo y recuperación de datos. Al ser un módulo independiente, puede ser sustituido por otro software de respaldo, como Restic \citep{restic_restic_nodate} o Bacula \citep{bacula_documentation_nodate}.
 
-El módulo gestor de datos es el encargado de almacenar los metadatos de las imágenes. Está conformado por una base de datos orientada a documentos, que permite almacenar varios tipos de datos (explicado en la sección \ref{sec:gestionRepoDatos}). Esta forma de almacenamiento, que mejora la eficiencia, facilita la gestión de grandes volúmenes de información. Asimismo, esta estructura también soluciona el desafío guardar las etiquetas generadas por los usuarios en el proceso de etiquetado de datos.
+El módulo \texttt{Gestor de datos} es el encargado de almacenar los metadatos de las imágenes. Está conformado por una base de datos orientada a documentos, que permite almacenar varios tipos de datos (explicado en la sección \ref{sec:gestionRepoDatos}). Esta forma de almacenamiento facilita la gestión de grandes volúmenes de información. Asimismo, esta estructura soluciona el desafío guardar las etiquetas generadas por los usuarios en el proceso de etiquetado de datos.
 
-El módulo de etiquetado de datos permite ejecutar el proceso de etiquetado de imágenes y se comunica tanto con el módulo de seguridad para el manejo de diferentes niveles de información. Su acoplamiento es muy bajo, con el objetivo de que pueda ser sustituido por otro software de etiquetado, dado la gran variedad de herramientas disponibles en el mercado. Se comunica con el módulo de repositorio de objetos para obtener las imágenes a etiquetar y con el módulo de seguridad para gestionar los usuarios y permisos. Asimismo, este módulo también brinda una interfaz gráfica para que el usuario pueda realizar el etiquetado de manera sencilla.
+El módulo \texttt{Etiquetado de datos} permite ejecutar el proceso de etiquetado de imágenes y se comunica tanto con el módulo de seguridad para el manejo de diferentes niveles de información. Su acoplamiento es muy bajo, con el objetivo de que pueda ser sustituido por otro software de etiquetado, dado la gran variedad de herramientas disponibles en el mercado. Se comunica con el módulo de repositorio de objetos para obtener las imágenes a etiquetar y con el módulo de seguridad para gestionar los usuarios y permisos. Asimismo, brinda una interfaz gráfica para que el usuario pueda realizar el etiquetado de manera sencilla.
 
-El módulo de calidad de datos se ocupa de realizar un análisis cualitativo de los datos, lo que mejora la eficiencia de los modelos al utilizar datos de alta calidad. Este módulo permite que un equipo de control de calidad pueda analizar y generar informes específicos sobre los datos, lo que habilita una traza y evolución de lás imágenes, esencial en proyectos de CV donde la variable temporal afecta el resultado de las predicciones, como lo es este trabajo. Este módulo también se comunica con el usuario mediante una interfaz gráfica que permite una correcta gestión de la calidad de los datos.
+El módulo \texttt{Calidad de datos} se ocupa de realizar un análisis cualitativo de los datos, lo que mejora la eficiencia de los modelos al utilizar datos de alta calidad. También permite que un equipo de control de calidad pueda analizar y generar informes específicos sobre los datos, lo que habilita una traza y evolución de las imágenes, esencial en proyectos de CV donde la variable temporal afecta el resultado de las predicciones (como sucede en este trabajo). Por último, se comunica con el usuario mediante una interfaz gráfica que permite una correcta gestión de la calidad de los datos.
 
-El módulo de repositorio de objetos es el responsable del almacenamiento y gestión de las imágenes, en este caso las generadas por drones. Este módulo administra grandes volúmenes de datos y garantiza la disponibilidad continua de esta información mediante APIs. Para esta tarea, usualmente se utilizan sistemas de almacenamiento de objetos como Amazon S3 \citep{amazon_web_services_aws_nodate} o algún otro proveedor de nube. La comunicación con otros módulos se realiza mediante APIs REST, lo que permite una integración sencilla y eficiente.
+El módulo \texttt{Repositorio de objetos} es el responsable del almacenamiento y gestión de las imágenes, en este caso las generadas por drones. Administra grandes volúmenes de datos y garantiza la disponibilidad continua de esta información mediante APIs. Para esta tarea, usualmente se utilizan sistemas de almacenamiento de objetos como Amazon S3 \citep{amazon_web_services_aws_nodate} o algún otro proveedor de nube. La comunicación con otros módulos se realiza mediante APIs REST, lo que permite una integración sencilla y eficiente.
 
-El módulo de Mis Palmeras representa las aplicaciones webs principales del sistema. Es la cara visible de éste y permite a los usuarios interactuar con la información de manera sencilla. La aplicación web primordial tiene el objetivo de mostrar el estado de la plaga en base a las imágenes aéreas y los resultados de los modelos de detección. Se comunica con el módulo de seguridad para la autenticación y autorización de los usuarios, utiliza componentes del módulo de utilidades (como las transformaciones entre varios formatos) y solicita predicciones al módulo de IA. Está orientado a mostrar información georreferenciada y actualmente su acoplamiento con el módulo IA es fuerte, sin embargo, en un futuro se podría mejorar esta interacción mediante una API REST, lo que permitiría una mayor flexibilidad y escalabilidad del sistema.
+El módulo \texttt{Mis palmeras} representa las aplicaciones webs principales del sistema. Es la cara visible de éste y permite a los usuarios interactuar con la información de manera sencilla. La aplicación web primordial tiene el objetivo de mostrar el estado de la plaga en base a las imágenes aéreas y los resultados de los modelos de detección. Se comunica con el módulo de seguridad para la autenticación y autorización de los usuarios, utiliza componentes del módulo de utilidades (como las transformaciones entre varios formatos) y solicita predicciones al módulo de AI. Está orientado a mostrar información georreferenciada y actualmente depende fuertemente del módulo AI, sin embargo, en un futuro se podría mejorar esta interacción mediante una API REST, lo que permitiría una mayor flexibilidad y escalabilidad del sistema.
 
-El módulo utilidades centraliza aplicaciones utilizadas en varias tareas, como la actualización, migración y generación de datos que usualmente son insumos para los procesos de entrenamiento. Este módulo realiza tareas específicas que no están directamente relacionadas con el proceso de detección, pero que son necesarias para el correcto funcionamiento del sistema. Un ejemplo de esto es la aplicación que efectúa \textit{web scrapping} del sistema de información geográfica de la IM, para descargar las imágenes de los vuelos allí publicadas y guardarlas en el repositorio de imágenes.
+El módulo \texttt{Utilidades} centraliza aplicaciones utilizadas en varias tareas, como la actualización, migración y generación de datos que usualmente son insumos para los procesos de entrenamiento. Este módulo realiza tareas específicas que no están directamente relacionadas con el proceso de detección, pero que son necesarias para el correcto funcionamiento del sistema. Un ejemplo de esto es la aplicación que efectúa \textit{web scrapping} del sistema de información geográfica de la IM, para descargar las imágenes de los vuelos allí publicadas y guardarlas en el repositorio de imágenes.
 
-Finalmente, el módulo de IA se encarga de cumplir con los procesos asociados al entrenamiento y despliegue de los modelos. Tiene el objetivo de manejar sus el ciclos de vida, desde su desarrollo hasta su despliegue en producción. Incluye la ejecución de experimentos. Actualmente no expone una API para solicitar predicciones, lo que lo hace menos flexible (hay que estar gestionando los artefactos de un módulo a otro).
+Finalmente, el módulo \texttt{AI} se encarga de cumplir con los procesos asociados al entrenamiento y despliegue de los modelos. Tiene el objetivo de manejar sus ciclos de vida, desde el desarrollo hasta su despliegue en producción e incluye la ejecución de experimentos. Actualmente no expone una API para solicitar predicciones, lo que lo hace menos flexible (hay que estar gestionando los artefactos de un módulo a otro).
 
-Actualmente el sistema está alojado en una infraestructura auto-gestionada y un resumen de las interfaces de comunicación con el exterior de la plataforma se puede observer en la figura \ref{fig:interfaces-externas}, en donde se nota que existen cuatro interfaces de comunicación externa, tres interfaces webs y una API REST para realizar el \textit{web scrapping}.
+Actualmente el sistema está alojado en una infraestructura autogestionada y un resumen de las interfaces de comunicación con el exterior de la plataforma se puede observar en la figura \ref{fig:interfaces-externas}, en donde se puede notar que existen cuatro interfaces de comunicación externa: tres interfaces webs y una API REST para realizar el \textit{web scrapping}.
 
 \begin{figure}[H]
   \centering
@@ -89,7 +89,7 @@ Actualmente el sistema está alojado en una infraestructura auto-gestionada y un
   \label{fig:interfaces-externas}
 \end{figure}
 
-Si bien el objetivo del trabajo es la detección del picudo rojo, fue necesario el desarrollo de esta plataforma de soporte, principalmente para el etiquetado de datos, dado que se necesitaba poner a disposición las imágenes a los usuarios encargados de esta tarea, para recién luego poder entrenar los modelos de detección.
+Si bien el objetivo del trabajo es la detección del picudo rojo, fue necesario desarrollar de esta plataforma de soporte, principalmente para el etiquetado de datos, puesto que se necesitaba poner a disposición las imágenes a los usuarios encargados de esta tarea, para recién luego poder entrenar los modelos de detección.
 
 %	SECTION 2
 %----------------------------------------------------------------------------------------
@@ -114,7 +114,7 @@ Los ambientes de trabajo se dividieron en dos dominios: desarrollo y producción
 
 Una descripción de las tecnologías utilizadas en cada módulo se puede observar en la tabla \ref{tab:tecnologias}.
 
-\begin{table}[H]
+\begin{table}[ht!]
   \centering
   \caption[Tecnologías utilizadas]{Tecnologías utilizadas por módulo.}
   % Tres columnas X para que todas tengan ancho flexible, alineadas a la izquierda.
@@ -130,7 +130,7 @@ Una descripción de las tecnologías utilizadas en cada módulo se puede observa
     Repositorio de objetos & MinIO                                                                                      & Go                                                   \\
     Mis palmeras           & Aplicación web                                                                             & FastAPI, Angular                                     \\
     Utilidades             & Web scrapping, anotaciones                                                                 & Python, BeautifulSoup, CVAT SDK                      \\
-    IA                     & YoloV11, anotadores                                                                        & Python, PyTorch, Ultralytics                         \\
+    AI                     & YoloV11, anotadores                                                                        & Python, PyTorch, Ultralytics                         \\
     Infraestructura        & Docker Compose, Vagrant                                                                    & Docker, VirtualBox \citep{wikipedia_virtualbox_2025} \\
     \bottomrule
     \hline
@@ -141,14 +141,14 @@ Una descripción de las tecnologías utilizadas en cada módulo se puede observa
 El despliegue de la infraestructura de producción pasó por tres etapas de adaptación:
 
 \begin{itemize}
-  \item Despliegue inicial en la nube pública: se utilizó la nube pública de Scaleway para el despliegue inicial, aprovechando su capa gratuita para almacenamiento de objetos (\textit{object storage}), la cual permite almacenar hasta 80 GB de datos. Esto permitió validar la arquitectura y las interacciones entre los módulos en un entorno realista. Surgieron varios desafíos, como la correcta selección de las instancias de cómputo adecuadas para CVAT, la configuración de la red para permitir el acceso externo y la gestión de costos asociados al uso de recursos en la nube. Además, para el despliegue de CVAT se gestionó certificados SSL utilizando Let's Encrypt \citep{aas_lets_2019}, lo que agregó otra capa de complejidad al proceso de configuración inicial. Sin embargo, a medida que el proyecto avanzaba, los costos aumentaron significativamente, por lo que se decidió migrar a una infraestructura semi-gestionada.
-  \item Despliegue semi-gestionado: se optó por una infraestructura semi-gestionada, utilizando un servidor físico local. Esto permitió reducir costos y tener un mayor control sobre los recursos. Se utilizó Ngrok \citep{ngrok_inc_ngrok_nodate} (un servicio de \textit{tunneling}) para exponer los servicios a internet de manera segura, lo que facilitó el acceso remoto a la plataforma. Esta etapa implicó desafíos relacionados con la configuración de la red interna, la gestión de certificados SSL y la optimización del rendimiento de los servicios desplegados. Si bien se disminuyeron los costos en comparación con la nube pública, no se llegó a un costo aceptable, dado que Ngrok tiene un trafico de salida limitado y como se trabajó con imágenes de alta resolución, este límite se alcanzaba rápidamente. Por lo tanto, se decidió migrar a una infraestructura auto-gestionada como solución final.
-  \item Despliegue final (auto-gestionado): existieron muchos desafíos en esta etapa, desde la configuración de servicios \textit{no-ip} para gestionar un DNS dinámico, hasta la correcta configuración de los certificados SSL. Para esto, se contrató un dominio en Cloudflare  \citep{cloudflare_conecta_nodate} (picudo-rojo.org), se configuró Traefik \citep{traefik_labs_traefik_nodate} como proxy reverso y se realizaron diversas configuraciones para exponer de forma segura una máquina virtual por medio de Vagrant. Esta etapa finalizó con el despliegue exitoso de la plataforma en un entorno auto-gestionado, asegurando su disponibilidad y rendimiento óptimo.
+  \item Despliegue inicial en la nube pública: se utilizó la nube pública de Scaleway para el despliegue inicial, aprovechando su capa gratuita para almacenamiento de objetos (\textit{object storage}), que permite almacenar hasta 80 GB de datos. Esto permitió validar la arquitectura y las interacciones entre los módulos en un entorno realista. Surgieron varios desafíos, como la correcta selección de las instancias de cómputo adecuadas para CVAT, la configuración de la red para permitir el acceso externo y la gestión de costos asociados al uso de recursos en la nube. Además, para el despliegue de CVAT se gestionó certificados SSL utilizando Let's Encrypt \citep{aas_lets_2019}, lo que agregó otra capa de complejidad al proceso de configuración inicial. Sin embargo, a medida que el proyecto avanzaba, los costos aumentaron significativamente, por lo que se decidió migrar a una infraestructura semigestionada.
+  \item Despliegue semigestionada: se optó por una infraestructura semigestionada con un servidor físico local. Esto permitió reducir costos y tener un mayor control sobre los recursos. Se utilizó Ngrok \citep{ngrok_inc_ngrok_nodate} (un servicio de \textit{tunneling}) para exponer los servicios a Internet de manera segura, lo que facilitó el acceso remoto a la plataforma. Esta etapa implicó desafíos relacionados con la configuración de la red interna, la gestión de certificados SSL y la optimización del rendimiento de los servicios desplegados. Si bien se disminuyeron los costos en comparación con la nube pública, no se llegó a un costo aceptable, dado que Ngrok tiene un tráfico de salida limitado y como se trabajó con imágenes de alta resolución, este límite se alcanzaba rápidamente. Por lo tanto, se decidió migrar a una infraestructura autogestionada como solución final.
+  \item Despliegue final (autogestionado): existieron muchos desafíos en esta etapa, desde la configuración de servicios \textit{no-ip} para gestionar un DNS dinámico, hasta la correcta configuración de los certificados SSL. Para esto, se contrató un dominio en Cloudflare \citep{cloudflare_conecta_nodate} (picudo-rojo.org), se configuró Traefik \citep{traefik_labs_traefik_nodate} como proxy reverso y se realizaron diversas configuraciones para exponer de forma segura una máquina virtual por medio de Vagrant. Esta etapa finalizó con el despliegue exitoso de la plataforma en un entorno autogestionado, lo que aseguró su disponibilidad y rendimiento óptimo.
 \end{itemize}
 
-El ambiente de desarrollo se puede reproducir en cualquier máquina que tenga instalado Vagrant y VirtualBox. La máquina anfitriona puede ser cualquier sistema operativo, ya sea Windows, macOS o Linux. Esto permite que cualquier desarrollador pueda tener el mismo ambiente de desarrollo en su máquina local, lo que facilita la colaboración y el trabajo en equipo, simplemente clonando el repositorio \citep{bruno_masoller_brunomaso1uba-ceia_nodate} mediante Git y luego importar el proyecto utilizando un IDE \citep{wikipedia_entorno_2025}. En este caso, se utilizó Visual Studio Code.
+El ambiente de desarrollo se puede reproducir en cualquier máquina que tenga instalado Vagrant y VirtualBox. La máquina anfitriona puede ser cualquier sistema operativo, ya sea Windows, macOS o Linux. Esto permite que cualquier desarrollador pueda tener el mismo ambiente de desarrollo en su máquina local, lo que facilita la colaboración y el trabajo en equipo, simplemente clonando el repositorio \citep{bruno_masoller_brunomaso1uba-ceia_nodate} mediante Git e importando el proyecto con un IDE \citep{wikipedia_entorno_2025}. En este caso, se utilizó Visual Studio Code.
 
-Una vez importado el proyecto, la estructura de directorios emula cada módulo del proyecto de la siguiente manera:
+Una vez importado el proyecto, la estructura de directorios que emula cada módulo del proyecto se puede apreciar en el código \ref{cod:estructura-desarrollo}.
 
 \begin{lstlisting}[label=cod:estructura-desarrollo,caption=Estructura de directorios utilizada., literate={├}{{\textSFviii}}1 {─}{{\textSFx}}1 {└}{{\textSFii}}1 {│}{{\textSFxi}}1]  % Start your code-block
 
@@ -184,21 +184,21 @@ desarrollo/
 
 \end{lstlisting}
 
-Los módulos IA y utilidades, se estructuran utilizando \textit{Cookiecutter Data Science} \citep{drivendata_cookiecutter_nodate}, que es una plantilla para proyectos de ciencia de datos. Esta estructura facilita la organización del código, datos y documentación,  y promueve buenas prácticas en el desarrollo de proyectos de ciencia de datos. Estos módulos también cuentan con UV Python como gestor de dependencias y entornos virtuales, lo que permite aislar las dependencias de cada proyecto y evitar conflictos entre ellas. Finalmente, también posibilita empaquetar y distribuir las funcionalidades desarrolladas como librerías reutilizables.
+Los módulos AI y utilidades, se estructuran utilizando Cookiecutter Data Science \citep{drivendata_cookiecutter_nodate}, que es una plantilla para proyectos de ciencia de datos. Esta estructura facilita la organización del código, datos y documentación,  y promueve buenas prácticas en el desarrollo de proyectos de ciencia de datos. Estos módulos también cuentan con UV Python como gestor de dependencias y entornos virtuales, lo que permite aislar las dependencias de cada proyecto y evitar conflictos entre ellas. Finalmente, también posibilita empaquetar y distribuir las funcionalidades desarrolladas como librerías reutilizables.
 
-En ingeniería de software es importante asegurar la reproducibilidad de los ambientes de trabajo. Una de las herramientas utilizadas con este objetivo fue Docker, el cual habilita crear contenedores que encapsulan una aplicación y sus dependencias. Esto asegura un entorno de ejecución uniforme y reproducible en diferentes sistemas. Para la orquestación de múltiples contenedores se utilizó Docker Compose, que brinda una infraestructura en entornos complejos en donde interactúan varias aplicaciones.
+En ingeniería de software es importante asegurar la reproducibilidad de los ambientes de trabajo. Una de las herramientas utilizadas con este objetivo fue Docker, que permite crear contenedores que encapsulan una aplicación y sus dependencias. Esto asegura un entorno de ejecución uniforme y reproducible en diferentes sistemas. Para la orquestación de múltiples contenedores se utilizó Docker Compose, que brinda una infraestructura en entornos complejos en donde interactúan varias aplicaciones.
 
-Cada directorio tiene su propio archivo de Docker Compose (\lstinline[language=sh]|docker-compose.yml|) que habilita el despliegue de las herramientas del módulo. Esto, además de las ventajas mencionadas anteriormente en la sección \ref{sec:arquitectura}, también permite que cada componente pueda ser desarrollado y probado de manera independiente (con sus debidos \textit{stubs} \citep{wikipedia_talon_2025} o \textit{mocks} \citep{wikipedia_objeto_2024}), lo que reduce el \textit{Lead Time} \citep{wikipedia_lead_2025}. Estos archivos de configuración pueden ser adaptados a distintas situaciones. Por ejemplo, el archivo \lstinline[language=sh]|docker-compose.yml| de MinIO fue adaptado para que, si no existe el \textit{bucket} llamado picudo-rojo-bucket, se cree automáticamente.
+Cada directorio tiene su propio archivo de Docker Compose (\texttt{compose.yml}) que habilita el despliegue de las herramientas del módulo. Esto, además de las ventajas mencionadas anteriormente en la sección \ref{sec:arquitectura}, también permite que cada componente pueda ser desarrollado y probado de manera independiente (con sus debidos \textit{stubs} \citep{wikipedia_talon_2025} o \textit{mocks} \citep{wikipedia_objeto_2024}), lo que reduce el \textit{lead time} \citep{wikipedia_lead_2025}. Estos archivos de configuración pueden ser adaptados a distintas situaciones. Por ejemplo, el archivo \texttt{compose.yml} de MinIO fue adaptado para que, si no existe el \textit{bucket} llamado picudo-rojo-bucket, se cree automáticamente.
 
-Asimismo, cada módulo tiene sus variables de entorno definidos como archivos \lstinline[language=sh]|.env| su directorio raíz. Esto permite separar la configuración de los distintos ambientes para cada módulo. En este sentido, concede la fácil transición entre el ambiente de desarrollo y el ambiente de producción.
+Asimismo, cada módulo tiene sus variables de entorno definidos como archivos \texttt{.env} su directorio raíz. Esto permite separar la configuración de los distintos ambientes para cada módulo. En este sentido, facilita la transición entre el ambiente de desarrollo y el ambiente de producción.
 
 Aunque Docker permite crear contenedores que emulan el ambiente de producción, esto no es suficiente para asegurar la reproducibilidad de este dominio en el entorno de desarrollo. Esto se debe a que Docker se ejecuta sobre una plataforma, que puede ser diferente en cada máquina. Por lo tanto, es necesario utilizar una herramienta que permita crear y gestionar la infraestructura de soporte de manera uniforme y reproducible. Para esto se utilizó Vagrant.
 
 Vagrant concede la habilidad de crear una o varias máquinas virtuales (VM, del inglés \textit{virtual machine}) que emulan una plataforma objetivo, en este caso, el ambiente de producción (Ubuntu 24). Se maneja con un archivo de configuración llamado Vagrantfile que brinda la posibilidad de realizar la definición de la configuración de la máquina virtual como \textit{infrastructure as a code}. Esto implica definir parámetros como la cantidad de memoria, el sistema operativo o las aplicaciones a instalar. Se puede utilizar una imagen de un sistema operativo ya configurado o crear una desde cero. En este caso se utilizó una imagen de Ubuntu 24.04 LTS \citep{progress_chefs_bento_bentoubuntu-2404_nodate}, del repositorio oficial de Vagrant \citep{hashicorp_hashicorp_nodate}, que incluye la mayoría de las herramientas necesarias para el desarrollo y despliegue del sistema. Esta imagen se puede utilizar en cualquier máquina que tenga instalado Vagrant y VirtualBox \citep{wikipedia_virtualbox_2025} (también se puede utilizar otro software de virtualización, como lo es Hyper-V \citep{meaghanlewis_informacion_2025} o VMWare \citep{wikipedia_vmware_2025}).
 
-Asimismo, Vagrant también permite aprovisionar \textit{scripts} de configuración a las máquinas virtuales. Estos pueden ejecutarse al iniciar estas máquinas, lo que permite instalar y configurar las aplicaciones necesarias para poner el funcionamiento el sistema. En este caso, se utilizaron cuatro scripts de aprovisionamiento:
+Asimismo, Vagrant también permite aprovisionar \textit{scripts} de configuración a las máquinas virtuales. Estos pueden ejecutarse al iniciar estas máquinas, lo que permite instalar y configurar las aplicaciones necesarias para poner el funcionamiento el sistema. En este caso, se utilizaron cuatro scripts de aprovisionamiento que pueden apreciarse en el código \ref{cod:scripts-aprovisionamiento}.
 
-\begin{lstlisting}[label=cod:dd,caption=Scripts de vagrant utilizados., literate={├}{{\textSFviii}}1 {─}{{\textSFx}}1 {└}{{\textSFii}}1 {│}{{\textSFxi}}1]  % Start your code-block
+\begin{lstlisting}[label=cod:scripts-aprovisionamiento,caption=Scripts de vagrant utilizados., literate={├}{{\textSFviii}}1 {─}{{\textSFx}}1 {└}{{\textSFii}}1 {│}{{\textSFxi}}1]  % Start your code-block
 
 vagrant-scripts/
 ├── 01-setup-network.sh
@@ -208,9 +208,9 @@ vagrant-scripts/
 
 \end{lstlisting}
 
-En donde el último se encarga de iniciar los servicios dentro de cada módulo (usualmente se ejecuta mediante un script de shell el comando \lstinline[language=sh]|docker compose up|).
+En donde el último se encarga de iniciar los servicios dentro de cada módulo (usualmente se ejecuta mediante un script de shell el comando \texttt{docker compose up}).
 
-Una vez que se ejecuta el comando \lstinline[language=sh]|vagrant up|, se crea una máquina virtual (si ya no fue creada), se ejecutan los scripts de aprovisionamiento, lo que resulta en el ambiente de desarrollo listo para utilizarse. La ejecución del ambiente de producción es exactamente igual, pero con distintas configuraciones de archivos. Finalmente, se configuró el router para redirigir el tráfico de los puertos 80 y 443 de la máquina virtual, lo que permite acceder a la plataforma desde internet.
+Una vez que se ejecuta el comando \texttt{vagrant up}, se crea una máquina virtual (si ya no fue creada), y se ejecutan los scripts de aprovisionamiento, lo que resulta en el ambiente de desarrollo listo para utilizarse. La ejecución del ambiente de producción es exactamente igual, pero con distintas configuraciones de archivos. Finalmente, se configuró el router para redirigir el tráfico de los puertos 80 y 443 de la máquina virtual, lo que permite acceder a la plataforma desde Internet.
 
 Entre los servicios que se inician se encuentran:
 
@@ -221,18 +221,18 @@ Entre los servicios que se inician se encuentran:
   \item FiftyOne: herramienta de análisis, organización, visualización y generación de informes sobre los datos.
   \item LLDAP: herramienta de gestión de usuarios y permisos, utilizada para administrar la seguridad del sistema.
   \item LDAP \textit{Self Service Password}: autoservicio de contraseñas (permite que los usuarios gestionen sus credenciales)
-  \item \textit{Landing Page}: conjunto de herramientas basadas en tecnologías de desarrollo web (HTML, CSS, Javascript) que brindan información sobre el proyecto. Es la cara visible del sistema desde internet.
+  \item \textit{Landing Page}: conjunto de herramientas basadas en tecnologías de desarrollo web (HTML, CSS y Javascript) que brindan información sobre el trabajo. Es la cara visible del sistema desde Internet.
   \item Mis Palmeras: aplicación web principal del sistema, que permite a los usuarios interactuar con la información de manera sencilla.
   \item Keycloak: sistema de gestión de identidad y acceso, que permite la autenticación y autorización de los usuarios.
-  \item \textit{Entrypoint}: proxy reverso que expone el ambiente de desarrollo a internet o intranet para su fácil acceso.
+  \item \textit{Entrypoint}: proxy reverso que expone el ambiente de desarrollo a Internet o intranet para su fácil acceso.
 \end{itemize}
 
-Una vez iniciados los servicios, se puede acceder a la plataforma desde internet mediante el dominio \url{https://picudo-rojo.org}, lo que muestra la página de inicio (landing page) del sistema, como se observa en la figura \ref{fig:landing-page}.
+Una vez iniciados los servicios, se puede acceder a la plataforma desde Internet mediante el dominio \url{https://picudo-rojo.org}, lo que muestra la página de inicio (\textit{landing page}) del sistema, como se observa en la figura \ref{fig:landing-page}.
 
 \begin{figure}[H]
   \centering
   \includegraphics[scale=0.05]{./Figures/captura-landing.png}
-  \caption[Captura de la página de inicio]{Captura de pantalla de la página de inicio (landing page) del sistema, desde donde se puede acceder a la aplicación web principal.}
+  \caption[Captura de la página de inicio]{Captura de pantalla de la página de inicio (\textit{landing pag}e) del sistema, desde donde se puede acceder a la aplicación web principal.}
   \label{fig:landing-page}
 \end{figure}
 
@@ -245,33 +245,33 @@ Desde allí, se puede acceder a la aplicación web principal (Mis palmeras) medi
 \section{Obtención y gestión de las imágenes}
 \label{sec:obtención-datos}
 
-Posterior al despliegue de la infraestructura, se procedió a la obtención y gestión de las imágenes ortorectificadas. Para ello, se desarrolló un proceso de \textit{web scrapping} que automatiza la descarga de las imágenes desde el sistema de información geográfica (SIG) de la IM.
+Posterior al despliegue de la infraestructura, se procedió a la obtención y gestión de las imágenes ortorectificadas. Para ello, se desarrolló un proceso de \textit{web scrapping} que automatiza la descarga de las imágenes desde el SIG.
 
-El SIG de la IM es un visor web de mapas que está construido con un framework que utiliza \textit{MapServer} \citep{mckenna_mapserver_2025}, en donde se permite navegar por capas de información geográfica. En la figura \ref{fig:sig-im} se puede observar una captura de pantalla, con la grilla de las imágenes de drones ortorectificadas de Montevideo.
+El SIG de la IM es un visor web de mapas que está construido con un framework que utiliza MapServer \citep{mckenna_mapserver_2025}, en donde se permite navegar por capas de información geográfica. En la figura \ref{fig:sig-im} se puede observar una captura de pantalla, con la grilla de las imágenes de drones ortorectificadas de Montevideo.
 
 \begin{figure}[H]
   \centering
   \includegraphics[scale=0.2]{./Figures/portada-sig.png}
-  \caption[Captura del SIG de la IM]{Captura de pantalla del SIG de la IM, mostrando la grilla de las imágenes ortorectificadas de drones en Montevideo.}
+  \caption[Captura del SIG de la IM]{Captura de pantalla del SIG de la IM, que muestra la grilla de las imágenes ortorectificadas de drones en Montevideo.}
   \label{fig:sig-im}
 \end{figure}
 
-Los vuelos fueron realizados con los drones DJI Phantom 4 RTK y DJI Mavic 2 Pro, ambos equipados con cámaras de alta resolución. Las imágenes capturadas por los drones fueron procesadas utilizando software especializado de fotogrametría, que incluye algoritmos avanzados para la corrección geométrica y la ortorectificación. Este proceso asegura que las imágenes sean precisas y estén alineadas correctamente con las coordenadas geográficas, lo que es esencial para su uso en análisis geoespaciales y aplicaciones de monitoreo ambiental.
+Los vuelos fueron realizados con los drones DJI Phantom 4 RTK y DJI Mavic 2 Pro, ambos equipados con cámaras de alta resolución. Las imágenes capturadas por los drones fueron procesadas utilizando software especializado de fotogrametría, que incluyó algoritmos avanzados para la corrección geométrica y la ortorectificación. Este proceso aseguró que las imágenes fueran precisas y estuvieran alineadas correctamente con las coordenadas geográficas, lo que es esencial para su uso en análisis geoespaciales y aplicaciones de monitoreo ambiental.
 
-Las imágenes ortorectificadas tienen una resolución espacial que varía entre 3 y 5 cm por píxel, dependiendo de la altitud del vuelo y las condiciones de captura; y están publicadas en formato vectorial (\lstinline[language=sh]|.jpg|). En la obtención de las imágenes, se incluyeron ambas resoluciones.
+Las imágenes ortorectificadas tienen una resolución espacial que varía entre 3 y 5 cm por píxel, dependiendo de la altitud del vuelo y las condiciones de captura, y están publicadas en formato vectorial (\texttt{.jpg}). En la obtención de las imágenes, se incluyeron ambas resoluciones.
 
-El proceso de \textit{web scrapping} se desarrolló utilizando Python y la librería BeautifulSoup \citep{richardson_beautiful_2007}, que permite extraer información de páginas web de manera sencilla. El script automatiza la navegación por el SIG, identifica las imágenes ortorectificadas disponibles de los drones y las descarga en el repositorio de objetos (MinIO). Este proceso se ejecuta a demanda, lo que permite mantener el repositorio actualizado con las últimas imágenes disponibles en el SIG. Un desafío importante consistió en identificar la estructura HTML del SIG y extraer correctamente las URLs de las imágenes, lo que requirió un análisis detallado del código fuente de la página web, llegando a la conclusión de que las imágenes estaban almacenadas en un servidor externo, las cuales primero se generaban temporalmente y luego se permitía la descarga. Otro punto a destacar es que esta información estaba en un archivo Javascript que se generaba dinámicamente, lo que complicó la extracción de las URLs. Sin embargo, una vez superados estos desafíos, el proceso de \textit{web scrapping} se implementó con éxito, permitió la obtención eficiente de las imágenes ortorectificadas.
+El proceso de \textit{web scrapping} se desarrolló utilizando Python y la librería BeautifulSoup \citep{richardson_beautiful_2007}, que permite extraer información de páginas web de manera sencilla. El script automatiza la navegación por el SIG, identifica las imágenes ortorectificadas disponibles de los drones y las descarga en el repositorio de objetos (MinIO). Este proceso se ejecuta a demanda, lo que permite mantener el repositorio actualizado con las últimas imágenes disponibles en el SIG. Un desafío importante consistió en identificar la estructura HTML del SIG y extraer correctamente las URLs de las imágenes, lo que requirió un análisis detallado del código fuente de la página web, que derivó en la conclusión de que las imágenes estaban almacenadas en un servidor externo, que primero se generaban temporalmente y luego se permitía la descarga. Otro punto a destacar es que esta información estaba en un archivo Javascript que se generaba dinámicamente, lo que complicó la extracción de las URLs. Sin embargo, una vez superados estos desafíos, el proceso de \textit{web scrapping} se implementó con éxito, lo que permitió la obtención eficiente de las imágenes ortorectificadas.
 
-Un tema de gran importancia sobre las imágenes, fue que el tamaño de estas era muy grande, lo que impidió que se cargaran tal cual en CVAT, dado que la herramienta tiene un límite de 65.000 píxeles en el lado más largo de la imagen. Por lo tanto, se decidió recortar las imágenes en fragmentos más pequeños, de \SI{4096}{}\,\texttimes\,\SI{4096}{\pixel}, lo que permitió que se pudieran cargar en CVAT sin problemas. Este proceso de recorte se automatizó para la descarga de todas las imágenes y se organizó el repositorio de objetos de manera estructurada, utilizando un esquema de nombres que facilita la identificación y gestión de las imágenes. Un ejemplo de los recortes realizados se puede observar en la figura \ref{fig:recortes-imagenes}.
+Un tema de gran importancia sobre las imágenes fue que el tamaño de estas era muy grande, lo que impidió que se cargaran tal cual en CVAT, dado que la herramienta tiene un límite de 65 000 píxeles en el lado más largo de la imagen. Por lo tanto, se decidió recortar las imágenes en fragmentos más pequeños, de \SI{4096}{}\,\texttimes\,\SI{4096}{\pixel}, lo que permitió que se pudieran cargar sin problemas. Este proceso de recorte se automatizó con el objetivo de facilitar la descarga de todas las imágenes. También se organizó el repositorio de objetos de manera estructurada y se utilizó un esquema de nombres que facilitó la identificación y gestión de las imágenes. Un ejemplo de los recortes realizados se puede observar en la figura \ref{fig:recortes-imagenes}.
 
 \begin{figure}[H]
   \centering
   \includegraphics[scale=0.08]{./Figures/parches-ortomosaicos.png}
-  \caption[Ejemplos de parches]{Ejemplos de recortes de las imágenes ortorectificadas utilizadas, necesarios para su carga en CVAT.}
+  \caption[Ejemplos de parches]{Ejemplos de recortes de las imágenes ortorectificadas utilizadas.}
   \label{fig:recortes-imagenes}
 \end{figure}
 
-La organización de las imágenes en MinIO se realizó utilizando una nomenclatura altamente acoplada a CVAT, en donde cada carpeta representa un \textit{task} (o tarea de etiquetado) de CVAT. Esto permite que se puedan agregar \textit{tasks} al proyecto sin problemas. Dentro de cada task, las imágenes se nombraron utilizando el nombre común (obtenido desde la página del SIG) y su número de parche (el recorte anteriormente mencionado). La estructura fue la siguiente:
+La organización de las imágenes en MinIO se realizó utilizando una nomenclatura altamente acoplada a CVAT, en donde cada carpeta representa un \textit{task} (o tarea de etiquetado) de CVAT. Esto permite que se puedan agregar \textit{tasks} al proyecto sin problemas. Dentro de cada \textit{task}, las imágenes se nombraron utilizando el nombre común (obtenido desde la página del SIG) y su número de parche (el recorte anteriormente mencionado). La estructura puede observarse en el código \ref{cod:estructura-minio}.
 
 \begin{lstlisting}[label=cod:estructura-minio,caption=Estructura de las imágenes en MinIO., literate={├}{{\textSFviii}}1 {─}{{\textSFx}}1 {└}{{\textSFii}}1 {│}{{\textSFxi}}1]  % Start your code-block
 
@@ -291,11 +291,11 @@ picudo-rojo-bucket
 
 \end{lstlisting}
 
-La división en estos grupos también permite separar cuales imágenes son de entrenamiento y cuales son testing. Simplemente agregando un nuevo grupo llamado \lstinline[language=sh]|task-testing|, se pueden separar las imágenes de testing de las de entrenamiento. En este proyecto no se utilizó dicha separación, dado que la división se realizó después por la poca cantidad de datos de las clases minoritarias.
+La división en estos grupos también permite separar cuales imágenes son de entrenamiento y cuales son de \textit{testing}. Simplemente al agregar un nuevo grupo llamado \texttt{task-testing}, se puede separar las imágenes de \textit{testing} de las de entrenamiento. En este trabajo no se utilizó dicha separación, dado que la división se realizó después por la poca cantidad de datos de las clases minoritarias.
 
-A la vez que se guardaban las imágenes en MinIO, se almacenaban los metadatos en MongoDB. Estos metadatos incluyen información relevante sobre cada imagen, como su nombre, resolución, fecha de captura y coordenadas geográficas. Esta información es esencial para la gestión y análisis de las imágenes, ya que permite realizar búsquedas y filtrados basados en diferentes criterios. La estructura de los documentos en MongoDB se diseñó para facilitar la consulta y actualización de los metadatos, asegurando una gestión eficiente de la información. Un aspecto importante a destacar es el nodo \lstinline[language=sh]|jgw_data| dentro de la estructura. Este nodo contiene la información necesaria para georreferenciar la imagen, lo que permite que se pueda ubicar en un sistema de coordenadas geográficas. Esta información está adjunta con la imagen cuando se descarga desde el SIG.
+A la vez que se guardaban las imágenes en MinIO, se almacenaban los metadatos en MongoDB. Estos metadatos incluyen información relevante sobre cada imagen, como su nombre, resolución, fecha de captura y coordenadas geográficas. Esta información es esencial para la gestión y análisis de las imágenes, ya que permite realizar búsquedas y filtrados basados en diferentes criterios. La estructura de los documentos en MongoDB se diseñó para facilitar la consulta y actualización de los metadatos, asegurando una gestión eficiente de la información. Un aspecto importante a destacar es el nodo \texttt{jgw\_data} dentro de la estructura. Este nodo contiene la información necesaria para georreferenciar la imagen, lo que permite que se pueda ubicar en un sistema de coordenadas geográficas. Esta información está adjunta con la imagen cuando se descarga desde el SIG.
 
-Una vez que se completó la descarga de las imágenes, se procedió a la carga de las mismas en CVAT para su posterior etiquetado. Este proceso se realizó de manera manual, utilizando la interfaz gráfica de CVAT para seleccionar y cargar las imágenes desde MinIO. Se creó un proyecto en CVAT llamado picudo-rojo-3cm-5cm y se agregaron las imágenes correspondientes a este proyecto. Este proceso fue sencillo y eficiente, gracias a la integración entre CVAT y MinIO, que permitió una gestión fluida de las imágenes.
+Una vez que se completó la descarga de las imágenes, se procedió a cargarlas en CVAT para su posterior etiquetado. Este proceso se realizó de manera manual, se utilizó la interfaz gráfica de CVAT para seleccionar y cargar las imágenes desde MinIO. Se creó un proyecto en CVAT llamado picudo-rojo-3cm-5cm y se agregaron las imágenes correspondientes a este trabajo. Este proceso fue sencillo y eficiente, gracias a la integración entre CVAT y MinIO, lo que permitió una gestión fluida de las imágenes.
 
 %----------------------------------------------------------------------------------------
 %	SECTION 4
@@ -311,9 +311,9 @@ Una vez que se completó la descarga de las imágenes, se procedió a la carga d
 % Hablar de algunas funciones de CVAT.
 % Comunicaciones.
 
-El proceso de etiquetado de datos fue una etapa crucial. Inicialmente, se intentó utilizar la información georreferenciada de las palmeras proporcionada por la IM. Sin embargo, se descubrió que los recortes de las imágenes no eran exactos, lo que dificultaba la identificación precisa de las palmeras en las imágenes ortorectificadas, debido a la gran variedad de tamaños, formas y colores que presentan las palmeras en las imágenes aéreas. La principal tarea en este caso era la de ajustar y verificar las coordenadas de las palmeras en las imágenes, lo que resultó ser un proceso laborioso y propenso a errores. Por lo tanto, se decidió optar por un enfoque manual para el etiquetado de las imágenes. Para esto, se contaba con el apoyo de un equipo de ingenieros agrónomos del sector de arbolado de la IM. Específicamente, se contó con la colaboración de cuatro ingenieros agrónomos, quienes tenían experiencia en el manejo y cuidado de palmeras, lo que resultó fundamental para la correcta identificación y etiquetado de las mismas en las imágenes ortorectificadas.
+El proceso de etiquetado de datos fue una etapa crucial. Inicialmente, se intentó utilizar la información georreferenciada de las palmeras proporcionada por la IM. Sin embargo, se descubrió que los recortes de las imágenes no eran exactos, lo que dificultaba la identificación precisa de las palmeras en las imágenes ortorectificadas debido a la gran variedad de tamaños, formas y colores que presentan las palmeras en las imágenes aéreas. La principal tarea en este caso era la de ajustar y verificar las coordenadas de las palmeras en las imágenes, lo que resultó ser un proceso laborioso y propenso a errores. Por lo tanto, se optó por un enfoque manual para este etiquetado. Para esto, se contaba con el apoyo de un equipo de ingenieros del sector de arbolado de la IM. Específicamente, se contó con la colaboración de cuatro ingenieros agrónomos, quienes tenían experiencia en el manejo y cuidado de palmeras, lo que resultó fundamental para la correcta identificación y etiquetado de éstas.
 
-Se definieron los usuarios y roles, se cargaron los \textit{tasks} de CVAT y se dejó en libertad que cada usuario trabajara a su ritmo, asignándose un \textit{job} según sus necesidades. Se realizaron varias jornadas de etiquetado, en donde se evacuaron dudas y se definieron lineamientos para el etiquetado. Se establecieron cuatro clases de etiquetas: \lstinline[language=sh]|palmera-sana, palmera-infectada, palmera-muerta, palmera-exterminada|. Un ejemplo de cada clase puede observarse en la figura \ref{fig:clases-palmeras}.
+Se definieron los usuarios y roles, se cargaron los \textit{tasks} de CVAT y se dejó en libertad que cada usuario trabajara a su ritmo, asignándose un \textit{job} según sus necesidades. Se realizaron varias jornadas de etiquetado, en donde se evacuaron dudas y se definieron lineamientos para el etiquetado. Se establecieron cuatro clases de etiquetas: \texttt{palmera-sana}, \texttt{palmera-infectada}, \texttt{palmera-muerta} y \texttt{palmera-exterminada}. Un ejemplo de cada clase puede observarse en la figura \ref{fig:clases-palmeras}.
 
 \begin{figure}[H]
   \centering
@@ -322,13 +322,13 @@ Se definieron los usuarios y roles, se cargaron los \textit{tasks} de CVAT y se 
   \label{fig:clases-palmeras}
 \end{figure}
 
-CVAT tiene la ventaja de permitir definir atributos para cada etiqueta. Utilizando esta funcionalidad, se definieron los atributos \lstinline[language=sh]|especie| y \lstinline[language=sh]|dudoso|. El primero se definió como una lista de todas las especies de palmeras identificadas en Montevideo, el segundo simplemente para marcar si la palmera estaba borrosa o no, en casos donde hubiese alguna duda.
+CVAT tiene la ventaja de permitir definir atributos para cada etiqueta. Se utilizó esta funcionalidad para definir los atributos \texttt{especie} y \texttt{dudoso}. El primero se definió como una lista de todas las especies de palmeras identificadas en Montevideo, el segundo simplemente para marcar si la palmera estaba borrosa o no, en casos donde hubiese alguna duda.
 
-La comunicación fue un aspecto fundamental durante el proceso de etiquetado. Se utilizó una combinación de correos electrónicos, manuales, reuniones presenciales y un grupo de \textit{whatsapp} para mantener una comunicación fluida entre los miembros del equipo. Esto permitió generar un consenso sobre las mejores prácticas para el etiquetado y resolver dudas de manera rápida y eficiente, aumentando la calidad de los datos etiquetados.
+La comunicación fue un aspecto fundamental durante el proceso de etiquetado. Se utilizó una combinación de correos electrónicos, manuales, reuniones presenciales y un grupo de WhatsApp para mantener una comunicación fluida entre los miembros del equipo. Esto permitió generar un consenso sobre las mejores prácticas para el etiquetado y resolver dudas de manera rápida y eficiente, lo que aumentó la calidad de los datos etiquetados.
 
 Aún con todo el apoyo brindado, la tarea de etiquetado resultó ser más desafiante de lo esperado. La complejidad de las imágenes, la variabilidad en la apariencia de las palmeras y la necesidad de un etiquetado preciso hicieron que el proceso fuera laborioso y requiriera una atención meticulosa a los detalles. Esto llevó a que el progreso del etiquetado fuera más lento de lo anticipado, lo que impactó en los plazos del proyecto. A pesar de estos desafíos, se logró avanzar significativamente en el etiquetado de las imágenes, lo que sentó las bases para el desarrollo de los modelos de detección.
 
-Se etiquetaron un total de 2.204 imágenes, en donde se identificaron cerca de 9.000 palmeras. Un resumen detallado se puede observar en la tabla \ref{tab:resumen-imagenes-etiquetado}.
+Se etiquetaron un total de 2 204 imágenes, en donde se identificaron cerca de 9 000 palmeras. Un resumen detallado se puede observar en la tabla \ref{tab:resumen-imagenes-etiquetado}.
 
 \begin{table}[H]
   \centering
@@ -338,13 +338,13 @@ Se etiquetaron un total de 2.204 imágenes, en donde se identificaron cerca de 9
     \textbf{Concepto}                   & \textbf{Cantidad} \\
     \midrule
     Ortomosaicos totales                & 122               \\
-    Parches totales (incluidos blancos) & 4.174             \\
-    Parches totales (sin blancos)       & 2.204             \\
-    Parches etiquetados                 & 2.204             \\
-    Promedio de parches por ortomosaico & 18.07             \\
-    Parches con palmeras                & 1.288             \\
-    Total de palmeras etiquetadas       & 9.044             \\
-    Palmeras sanas                      & 8.403             \\
+    Parches totales (incluidos blancos) & 4 174             \\
+    Parches totales (sin blancos)       & 2 204             \\
+    Parches etiquetados                 & 2 204             \\
+    Promedio de parches por ortomosaico & 18,07             \\
+    Parches con palmeras                & 1 288             \\
+    Total de palmeras etiquetadas       & 9 044             \\
+    Palmeras sanas                      & 8 403             \\
     Palmeras infectadas                 & 170               \\
     Palmeras muertas                    & 280               \\
     Palmeras exterminadas               & 191               \\
@@ -354,9 +354,9 @@ Se etiquetaron un total de 2.204 imágenes, en donde se identificaron cerca de 9
   \label{tab:resumen-imagenes-etiquetado}
 \end{table}
 
-La cantidad de etiquetas de la clase palmera-sana con respecto a las demás, se debe a que la mayoría de las imágenes fueron tomadas antes de la llegada del picudo rojo. En este punto se identificó un grave problema, en donde no se iba a lograr obtener una cantidad suficiente de detecciones con palmeras infectadas, muertas o exterminadas, lo que implicó utilizar otros enfoques para el entrenamiento de los modelo que se explican en siguiente capítulo.
+La cantidad de etiquetas de la clase \texttt{palmera-sana} con respecto a las demás, se debe a que la mayoría de las imágenes fueron tomadas antes de la llegada del picudo rojo. En este punto se identificó un grave problema, en donde no se iba a lograr obtener una cantidad suficiente de detecciones con palmeras infectadas, muertas o exterminadas, lo que implicó utilizar otros enfoques para el entrenamiento de los modelo que se explican en siguiente capítulo.
 
-Es muy difícil obtener una métrica certera de cuantas etiquetas por imagen se realizaron, dado que no todas las imágenes tienen palmeras y algunas tienen muchas más que otras. Tampoco se pudo el tiempo exacto de etiquetado total (pero se estima que rondó cerca de 40 hs). Sin embargo, se pudo evidenciar que hay imágenes que llegaban a contener hasta 50 palmeras, lo que da una idea de la complejidad del trabajo realizado. Estos datos se pudieron obtener utilizando la herramienta FiftyOne, que permite analizar y visualizar los datos de manera sencilla. Un resumen de algunas jornadas del proceso de etiquetado se puede observar en la tabla \ref{tab:resumen-etiquetado}
+Es muy difícil obtener una métrica certera de cuantas etiquetas por imagen se realizaron, dado que no todas las imágenes tenían palmeras y algunas tenían muchas más que otras. Tampoco se pudo determinar el tiempo exacto de etiquetado total (pero se estima que rondó cerca de 40 hs). Se pudo evidenciar que hay imágenes que llegaban a contener hasta 50 palmeras, lo que da una idea de la complejidad del trabajo realizado. Estos datos se pudieron obtener gracias a la herramienta FiftyOne, que permite analizar y visualizar los datos de manera sencilla. Un resumen de algunas jornadas del proceso de etiquetado se puede observar en la tabla \ref{tab:resumen-etiquetado}.
 
 \begin{table}[H]
   \centering
@@ -365,25 +365,24 @@ Es muy difícil obtener una métrica certera de cuantas etiquetas por imagen se 
     \toprule
     \textbf{Jornada}  & \textbf{Horas} & \textbf{Imágenes} & \textbf{Palmeras} \\
     \midrule
-    1                 & 2.5            & 100               & 650               \\
-    2                 & 2.1            & 75                & 465               \\
-    3                 & 3.0            & 90                & 720               \\
-    4                 & 2.8            & 140               & 480               \\
-    5                 & 1.7            & 65                & 410               \\
+    1                 & 2,5            & 100               & 650               \\
+    2                 & 2,1            & 75                & 465               \\
+    3                 & 3,0            & 90                & 720               \\
+    4                 & 2,8            & 140               & 480               \\
     \midrule
-    \textbf{Promedio} & 2.3            & 95                & 524               \\
+    \textbf{Promedio} & 2,3            & 95                & 524               \\
     \bottomrule
     \hline
   \end{tabular}
   \label{tab:resumen-etiquetado}
 \end{table}
 
-Un ejemplo de una imagen etiquetada en CVAT se puede observar en la figura \ref{fig:imagen-etiquetada-cvat}.
+Un ejemplo de una imagen etiquetada en CVAT se puede observar en la figura \ref{fig:imagen-etiquetada-cvat}, en donde se puede ver una palmera sana (verde), una infectada (amarillo) y dos muertas (rojo).
 
 \begin{figure}[H]
   \centering
   \includegraphics[scale=0.2]{./Figures/captura-cvat.png}
-  \caption[Imagen etiquetada en CVAT.]{Ejemplo de una imagen etiquetada en CVAT, en este caso con una palmera sana (verde), una infectada (amarillo) y dos muertas (rojo).}
+  \caption[Imagen etiquetada en CVAT.]{Ejemplo de una imagen etiquetada en CVAT.}
   \label{fig:imagen-etiquetada-cvat}
 \end{figure}
 
@@ -393,11 +392,11 @@ Un ejemplo de una imagen etiquetada en CVAT se puede observar en la figura \ref{
 \section{Preparación del dataset y estructura del entrenamiento}
 \label{sec:preparacionDataset}
 
-La estructura de entrenamiento se basó en la plantilla de \textit{cookiecutter data science}, que permite organizar los datos y scripts de manera eficiente y reproducible. En esta plantilla se define una estructura de directorios común a proyectos de ciencia de datos, la cual fue adaptada a este proyecto de la siguiente:
+La estructura de entrenamiento se basó en la plantilla de Cookiecutter Data Science, que permitió organizar los datos y scripts de manera eficiente y reproducible. En el código \ref{cod:modulo-AI-estructura} se puede observar la plantilla adaptada a la estructura de directorios para el módulo AI.
 
-\begin{lstlisting}[label=cod:modulo-IA-estructura,caption=Estructura de directorios utilizada., literate={├}{{\textSFviii}}1 {─}{{\textSFx}}1 {└}{{\textSFii}}1 {│}{{\textSFxi}}1]  % Start your code-block
+\begin{lstlisting}[label=cod:modulo-AI-estructura,caption=Estructura de directorios utilizada., literate={├}{{\textSFviii}}1 {─}{{\textSFx}}1 {└}{{\textSFii}}1 {│}{{\textSFxi}}1]  % Start your code-block
 
-modulo-IA
+modulo-AI
 ├── data
 │   ├── iterim
 │   ├── processed
@@ -432,13 +431,15 @@ pyproject.toml
 
 El dataset se organizó en dos directorios:
 \begin{itemize}
-    \item \textit{Raw dataset}: contiene las imágenes originales sin procesar, junto con sus anotaciones en formato COCO. Estas imágenes fueron descargadas desde el almacenamiento en la nube (MinIO) y sus metadatos desde el gestor de datos (MongoDB). Representan el conjunto completo de datos disponibles para el entrenamiento. Se descargaron únicamente aquellos parches que contenían anotaciones (se puede obtener más detalles en la tabla \ref{tab:resumen-imagenes-etiquetado} del capítulo \ref{Chapter3}).
-    \item \textit{Processed dataset}: contiene las imágenes procesadas y preparadas para el entrenamiento del modelo. Son imágenes que son directamente consumidas por el modelo para el entrenamiento, validación y test.
+    \item \texttt{raw dataset}: contiene las imágenes originales sin procesar, junto con sus anotaciones en formato COCO. Estas imágenes fueron descargadas desde el almacenamiento en la nube (MinIO) y sus metadatos desde el gestor de datos (MongoDB). Representan el conjunto completo de datos disponibles para el entrenamiento. Se descargaron únicamente aquellos parches que contenían anotaciones (se puede obtener más detalles en la tabla \ref{tab:resumen-imagenes-etiquetado} de este capítulo).
+    \item \texttt{processed dataset}: contiene las imágenes procesadas y preparadas para el entrenamiento del modelo que son consumidas directamente por el modelo para el entrenamiento, validación y \textit{test}.
 \end{itemize}
 
-Esta organización recomendada por \textit{cookiecutter data science} permite mantener un flujo de trabajo claro y estructurado, en donde el \textit{raw dataset} permanece inalterado, mientras que el \textit{processed dataset} puede ser modificado y ajustado según las necesidades del entrenamiento. El directorio \textit{interim} se utiliza para almacenar datos intermedios generados durante el procesamiento del dataset final, y el directorio \textit{temp} se emplea para datos temporales que no necesitan ser versionados. En este caso, no se guardó los datos intermedios ni temporales, por lo que ambos directorios permanecen vacíos. La descarga del dataset se realizó utilizando scripts de Python que interactúan con la API de MinIO para obtener las imágenes, sus correspondientes anotaciones de la base de datos y finalmente la conversión al formato COCO. La clase \lstinline[language=sh]|dataset.py| centraliza todas estas funcionalidades.
+Esta organización recomendada por Cookiecutter Data Science permite mantener un flujo de trabajo claro y estructurado, en donde el \texttt{raw dataset} permanece inalterado, mientras que el \texttt{processed dataset} puede ser modificado y ajustado según las necesidades del entrenamiento. El directorio \texttt{interim} se utiliza para almacenar datos intermedios generados durante el procesamiento del dataset final, y el directorio \texttt{temp} se emplea para datos temporales que no necesitan ser versionados. En este caso, no se guardó los datos intermedios ni temporales, por lo que ambos directorios permanecen vacíos. La descarga del dataset se realizó utilizando scripts de Python que interactúan con la API de MinIO para obtener las imágenes, sus correspondientes anotaciones de la base de datos y finalmente la conversión al formato COCO. La clase \texttt{dataset.py} centraliza todas estas funcionalidades.
 
-El procesamiento del dataset final incluyó una versión del \textit{raw dataset} que pasó por varias etapas, como la conversión de las anotaciones al formato YOLO, el recorte de las imágenes en sub-imágenes más pequeñas para mejorar la detección utilizando SAHI\footnote{Método en donde se divide una imagen en varias imágenes más pequeñas.} \citep{akyon_slicing_2022}, el balanceo del dataset para abordar la desproporción entre las clases y la creación de los \textit{splits} de entrenamiento, validación y prueba. Se utilizó la herramienta FiftyOne para la visualización y validación del dataset, así como para obtener las métricas de calidad. Un resumen de las operaciones aplicadas al dataset y sus directorios de salida se presenta en la tabla \ref{tab:procesamiento-dataset}.
+El procesamiento del dataset final incluyó una versión del \texttt{raw dataset} que pasó por varias etapas, como la conversión de las anotaciones al formato YOLO, el recorte de las imágenes en subimágenes más pequeñas para mejorar la detección utilizando SAHI \citep{akyon_slicing_2022} (método en donde se divide una imagen en varias imágenes más pequeñas), el balanceo del dataset para abordar la desproporción entre las clases y la creación de los \textit{splits} de entrenamiento, validación y \textit{test}. Se utilizó la herramienta FiftyOne para la visualización y validación del dataset, así como para obtener las métricas de calidad.
+
+Dentro de estas etapas de procesamiento se destaca el recorte de las imágenes para la utilización de SAHI, que demoró usualmente cerca de 20 minutos en procesarse; el balanceo del dataset, en donde se decidió aplicar \textit{undersampling} \citep{noauthor_oversampling_2025}, que reduce la cantidad de detecciones de las clases mayoritarias (palmeras sanas) para igualar la cantidad de detecciones de las clases minoritarias (palmeras infectadas, exterminadas y muertas), que demoró también cerca de 20 minutos en procesarse. La aplicación de \textit{undersampling} se debió a la poca cantidad de datos disponibles para las clases minoritarias, lo que dificultaba la aplicación de técnicas de \textit{oversampling} sin incurrir en un sobreajuste significativo. Un resumen de las operaciones aplicadas al dataset y sus directorios de salida se presenta en la tabla \ref{tab:procesamiento-dataset}.
 
 \begin{table}[H]
     \centering
@@ -447,21 +448,20 @@ El procesamiento del dataset final incluyó una versión del \textit{raw dataset
         \toprule
         \textbf{Etapa}                                 & \textbf{Directorio de salida} \\
         \midrule
-        Dataset original (COCO)                        & \textit{Raw}                  \\
-        Conversión a formato YOLO                      & \textit{Interim}              \\
-        Recortes de \SI{640}{}\,\texttimes\,\SI{640}{} & \textit{Interim}              \\
-        Balanceo de clases                             & \textit{Interim}              \\
-        Splits finales (80\%/10\%/10\%)                & \textit{Processed}            \\
+        Dataset original (COCO)                        & \texttt{raw}                  \\
+        Conversión a formato YOLO                      & \texttt{interim}              \\
+        Recortes de \SI{640}{}\,\texttimes\,\SI{640}{} & \texttt{interim}              \\
+        Balanceo de clases                             & \texttt{interim}              \\
+        Splits finales (80\%/10\%/10\%)                & \texttt{processed}            \\
         \bottomrule
         \hline
     \end{tabular}
     \label{tab:procesamiento-dataset}
 \end{table}
 
-Dentro de las etapas, se destaca el recorte de las imágenes para la utilización de SAHI, que demoró usualmente cerca de 20 minutos en procesarse; el balanceo del dataset, en donde se decidió simplemente aplicar \textit{undersampling} \citep{noauthor_oversampling_2025}, en donde se reduce la cantidad de detecciones de las clases mayoritarias (palmeras sanas) para igualar la cantidad de detecciones de las clases minoritarias (palmeras infectadas, exterminadas y muertas). Esta decisión se tomó debido a la poca cantidad de datos disponibles para las clases minoritarias, lo que dificultaba la aplicación de técnicas de \textit{oversampling} sin incurrir en un sobreajuste significativo.
+El recorte en imágenes más pequeñas para el entrenamiento en este caso fue muy importante, dado que las palmeras ocupaban una pequeña porción de la imagen original. En CV las palmeras se clasificaban como en \textit{tiny objects} (con respecto a los ortomosaicos). Estos son objetos que ocupan menos del 0,1\% del área total de la imagen \citep{hua_survey_2025}. En este caso ocupaban aproximadamente el 0,005\% del área total de la imagen. Si bien era necesario el recorte de las imágenes por complejidades técnicas (de memoria de la GPU), también era necesario para mejorar la detección de las palmeras. Con este objetivo, se ideó un proceso de recorte de las imágenes en subimágenes de \SI{640}{}\,\texttimes\,\SI{640}{} píxeles, con un solapamiento de 250 pixeles entre cada recorte. Este tamaño se eligió dado que era el tamaño con el que el modelo YoloV11 había sido preentrenado (dataset de COCO \citep{lin_microsoft_2014}). En estos recortes las palmeras representaban cerca de un 30\% del área total de la subimagen, por lo que pasaban a ser simplemente objetos normales. 
 
-El recorte en imágenes más pequeñas para el entrenamiento en este caso fue muy importante, dado que las palmeras ocupaban una pequeña porción de la imagen original. Dentro de la literatura, los objetos a detectar, con respecto a los ortomosaicos, se clasificaban en \textit{tiny objects}, los cuales son objetos que ocupan menos del 0.1\% del área total de la imagen \citep{hua_survey_2025}. En este caso, las palmeras ocupaban aproximadamente el 0.005\% del área total de la imagen. Si bien era necesario el recorte de las imágenes por complejidades técnicas (de memoria de la GPU), también era necesario para mejorar la detección de las palmeras. Con este objetivo, se ideó un proceso de recorte de las imágenes en sub-imágenes de \SI{640}{}\,\texttimes\,\SI{640}{} píxeles, con un solapamiento de 250 pixeles entre cada recorte. Este tamaño se eligió dado que era el tamaño en donde el modelo YoloV11 había sido preentrenado (dataset de COCO \citep{lin_microsoft_2014}) y las palmeras eran claramente visibles, representando cerca de un 30\% del área total de la imagen recortada. Un ejemplo de este proceso de recorte se puede observar en la figura \ref{fig:ejemplo-recorte}.
-
+Un ejemplo de este proceso de recorte se puede observar en la figura \ref{fig:ejemplo-recorte}, en donde un parche podría ser recortado en 40 subimágenes de \SI{640}{}\,\texttimes\,\SI{640}{} píxeles cada una, muchas que no contienen palmeras.
 
 \begin{figure}[H]
     \centering
@@ -470,7 +470,7 @@ El recorte en imágenes más pequeñas para el entrenamiento en este caso fue mu
     \label{fig:ejemplo-recorte}
 \end{figure}
 
-Este proceso involucró desafíos como casos en donde las palmeras quedaban divididas entre dos recortes o donde el recorte en su mayoría era blanco. Para el primer caso, se adaptaron las anotaciones en base a un umbral (0.1\%). Si este umbral era superado, la palmera se incluía en el recorte correspondiente; de lo contrario, se descartaba. En el segundo caso, se utilizó la misma función del modulo utilidades que cuando se recortaron los parches por la limitación de la herramienta de etiquetado. Esta función permite identificar imágenes con un porcentaje alto de píxeles blancos y descartarlas automáticamente. Esto permitió optimizar el dataset final, eliminando imágenes que no aportaban valor al entrenamiento.
+Este proceso involucró desafíos como casos en donde las palmeras quedaban divididas entre dos recortes o donde el recorte en su mayoría era blanco. Para el primer caso, se adaptaron las anotaciones en base a un umbral (0,1\%). Si este umbral era superado, la palmera se incluía en el recorte correspondiente; de lo contrario, se descartaba. En el segundo caso, se utilizó una función del módulo utilidades (la misma utilizada para el recorte de parches para CVAT). Esta función permite identificar imágenes con un porcentaje alto de píxeles blancos y descartarlas automáticamente. Esto permitió optimizar el dataset final, eliminando imágenes que no aportaban valor al entrenamiento.
 
 
 % Hablar de la descarga de las imágenes de MinIO, en formato coco.
@@ -489,33 +489,37 @@ Este proceso involucró desafíos como casos en donde las palmeras quedaban divi
 \section{Desarrollo de la aplicación web}
 \label{sec:app_web}
 
-En paralelo al proceso de etiquetado, se desarrolló la aplicación web principal del sistema, llamada Mis Palmeras. Esta aplicación tiene como objetivo principal mostrar los resultados de la detección del picudo rojo en las palmeras, utilizando las imágenes aéreas y los modelos de detección desarrollados. El principal caso de uso en donde interactúa la Mis Palmeras se puede observar en la figura \ref{fig:caso-uso}.
+En paralelo al proceso de etiquetado, se desarrolló la aplicación web principal del sistema, llamada Mis Palmeras. Esta aplicación tiene como objetivo principal mostrar los resultados de la detección del picudo rojo en las palmeras, utilizando las imágenes aéreas y los modelos de detección desarrollados.
+
+El principal caso de uso comienza con la interacción por fuera de la plataforma de los usuarios del sector de arbolado y del servicio de geomática de la IM. Inicialmente, los primeros identifican zonas en donde se sospecha la presencia del picudo rojo, basándose en reportes ciudadanos o áreas en donde se expande la plaga. Esta información se comunica al servicio de geomática (mediante una petición formal), que se encarga de planificar vuelos con drones y preprocesar las imágenes aéreas de éstas áreas. Una vez que las imágenes son capturadas y procesadas, los usuarios de arbolado acceden a la aplicación para cargarlas y solicitar el análisis. La aplicación procesa las imágenes y brinda los resultados de la detección. Este proceso permite mejorar la toma de decisiones, ya que según la cantidad de palmeras en estados delicados, se puede decidir si es necesario un monitoreo más exhaustivo o la implementación de medidas de control específicas.
+
+La figura \ref{fig:caso-uso} ilustra este flujo de trabajo. Se puede observar que en el paso 5 los usuarios interactúan con la aplicación web para cargar las imágenes y recibir los resultados del análisis.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.12]{./Figures/caso-de-uso.png}
+  \includegraphics[scale=0.13]{./Figures/caso-de-uso.png}
   \caption[Diagrama de caso de uso]{Diagrama del caso de uso principal de la plataforma.}
   \label{fig:caso-uso}
 \end{figure}
 
-En esta linea, el valor final al usuario es un mapa con las palmeras detectadas y clasificadas por su estado de salud. Esta información se puede descargar en un KML para importar en otras herramientas utilizadas por varios equipos que gestionan la expansión de la plaga. También se puede descargar la imagen para verificar la visualización de las detecciones.
+El valor final al usuario es un mapa con las palmeras detectadas y clasificadas por su estado de salud. Esta información se puede descargar en un KML para importar en otras herramientas utilizadas por varios equipos que gestionan la expansión de la plaga. También se puede descargar la imagen para verificar la visualización de las detecciones.
 
-El desarrollo de la aplicación web se realizó con Angular para el frontend y FastAPI para el backend. Se utilizó Keycloak como capa de autenticación y autorización, lo que permite gestionar los usuarios y sus permisos de manera segura. La aplicación web se diseñó para ser intuitiva y fácil de usar, con una interfaz gráfica que permite a los usuarios navegar por el mapa, visualizar las palmeras detectadas y acceder a la información detallada sobre cada una de ellas. El diagrama de secuencia de la figura \ref{fig:diagrama-flujo-app} muestra el flujo de datos entre el backend y frontend. Actualmente la aplicación no cuenta con una base de datos, dado que las predicciones son \textit{on-the-fly}, es decir, se realizan en el momento en que el usuario solicita la información. Esto permite reducir la complejidad del sistema y evitar la necesidad de mantener una base de datos adicional. Sin embargo, en futuras versiones se podría considerar la incorporación de una base de datos para almacenar las predicciones y mejorar el rendimiento del sistema, que actualmente se manejan en memoria del backend.
+El desarrollo de la aplicación web se realizó con Angular para el frontend y FastAPI para el backend. Se utilizó Keycloak como capa de autenticación y autorización, lo que permite gestionar los usuarios y sus permisos de manera segura. La aplicación web se diseñó para ser intuitiva y fácil de usar, con una interfaz gráfica que permite a los usuarios navegar por el mapa, visualizar las palmeras detectadas y acceder a la información detallada sobre cada una de ellas. El diagrama de secuencia de la figura \ref{fig:diagrama-flujo-app} muestra el flujo de datos entre el backend y frontend. Actualmente la aplicación no cuenta con una base de datos, dado que las predicciones son \textit{on-the-fly}, es decir, se realizan en el momento en que el usuario solicita la información. Esto permite reducir la complejidad del sistema y evitar la necesidad de mantener una base de datos adicional. Sin embargo, en futuras versiones se podría considerar su incorporación para almacenar las predicciones y mejorar el rendimiento del sistema, que actualmente se manejan en memoria del backend.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.12]{./Figures/diagrama-de-secuencia.png}
-  \caption[Diagrama de secuencia]{Diagrama de secuencia de la aplicación web Mis palmeras, mostrando el flujo de datos entre el backend y frontend.}
+  \includegraphics[scale=0.132]{./Figures/diagrama-de-secuencia.png}
+  \caption[Diagrama de secuencia]{Diagrama de secuencia de la aplicación web Mis palmeras que muestra el flujo de datos entre el backend y frontend.}
   \label{fig:diagrama-flujo-app}
 \end{figure}
 
-Un desafío importante en el desarrollo de la aplicación web fue la integración con los modelos de detección del picudo rojo. Actualmente la integración está altamente acoplada (no se brinda como servicio separado, sino que se integra directamente en el backend de la aplicación web). Esto implica que cualquier cambio en los modelos requiere una actualización del backend, lo que puede complicar el mantenimiento y la escalabilidad del sistema. Sin embargo, esta decisión se tomó para simplificar el desarrollo inicial y permitir una integración más rápida de los modelos en la aplicación web. En futuras versiones, se podría considerar la implementación de una arquitectura basada en microservicios, en donde los modelos de detección se brinden como servicios independientes (por ejemplo, utilizando funciones \text{serverless}), lo que permitiría una mayor flexibilidad y escalabilidad del sistema.
+Un desafío importante en el desarrollo de la aplicación fue la integración con los modelos de detección del picudo rojo. Actualmente la integración está altamente acoplada (no se brinda como servicio separado, sino que se integra directamente en el backend). Esto implica que cualquier cambio en los modelos requiere una actualización del backend, lo que puede complicar el mantenimiento y la escalabilidad del sistema. Esta decisión respondió a criterios de agilidad en el desarrollo inicial del sistema al permitir una integración más rápida de los modelos. En futuras versiones, se podría considerar la implementación de una arquitectura basada en microservicios, en donde los modelos de detección se brinden como servicios independientes (por ejemplo, utilizando funciones \textit{serverless}), lo que permitiría una mayor flexibilidad y escalabilidad del sistema.
 
-Finalmente, en la figura \ref{fig:app-web} se puede observar una captura de pantalla de la página de inicio de la aplicación web Mis Palmeras.
+Finalmente, en la figura \ref{fig:app-web} se puede observar una captura de pantalla de la página de inicio de la aplicación.
 
 \begin{figure}[H]
   \centering
   \includegraphics[scale=0.42]{./Figures/captura-app-inicio.png}
-  \caption[Captura de inicio de Mis Palmeras]{Captura de pantalla de la aplicación web Mis Palmeras, luego de iniciar sesión.}
+  \caption[Captura de inicio de Mis Palmeras]{Captura de pantalla de la aplicación Mis Palmeras luego de iniciar sesión.}
   \label{fig:app-web}
 \end{figure}

@@ -1,7 +1,12 @@
 - No hay espacio entre el número de la nota de pie y la descripción de la imagen.
 - El uso de "el cual" | "la cual" | "los cuales" | "las cuales". Cambiar por "que".
 - No usar notas al pie a no ser en la descripción de las imágenes.
-- El uso de "han". Cambiar por "ha".
 - Gerundios.
 - Uso de "el mismo" | "los mismos" | "la misma" | "las mismas".
 - Nombres de tecnologías, arquitecturas, nombres propios, palabras en inglés de uso común (software, dataset, etc.) y modelos sin itálica.
+- Uso de la palabra "proyecto" para referirse a la tesis. Cambiar por "trabajo" en el caso de que se hable del pasado.
+- Las aclaraciones de frases o definiciones no van como notas al pie, sino entre paréntesis o comas.
+- El separador decimal es la coma (,) y no el punto (.).
+- El separador de miles es un espacio.
+- Prefijos: https://www.rae.es/duda-linguistica/los-prefijos-se-escriben-pegados-la-palabra
+- Usar "bibliotecas" en lugar de "librerías" para referirse a colecciones de código.
