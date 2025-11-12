@@ -82,7 +82,7 @@ El primer modelo entrenado fue el de detección de palmeras, se utilizó el data
     \caption[Transformaciones del dataset de palmeras]{Resumen de las transformaciones aplicadas al dataset.}
     \begin{tabularx}{\textwidth}{ >{\raggedright\arraybackslash}p{1cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X }
         \toprule
-        \textbf{Etapa} & \textbf{Descripción}                              & \textbf{Imágenes \newline (\textit{train}/val/\textit{test})}                                & \textbf{Detecciones \newline (\textit{train}/val/\textit{test})}                                \\
+        \textbf{Etapa} & \textbf{Descripción}                              & \textbf{Imágenes \newline (\textit{train}/\textit{val}/\textit{test})}                                & \textbf{Detecciones \newline (\textit{train}/\textit{val}/\textit{test})}                                \\
         \midrule
         1              & Dataset original                                  & Positivas: 1 288 \newline Fondo: 0                                                  & Sanas: 8 403 \newline Infectadas: 170 \newline Muertas: 280 \newline Exterminadas: 191 \\
         2              & Eliminar palmeras exterminadas                    & -                                                                                   & Sanas: 8 403 \newline Infectadas: 170 \newline Muertas: 280 \newline Exterminadas: 0   \\
@@ -248,14 +248,14 @@ Como resumen final, el modelo YoloV11x entrenado para la detección de palmeras 
 % Hablar de las validaciones realizadas (matriz de confusión, mAP, precision, recall, F1-score).
 % Hablar de la función de pérdida de YoloV11 (como se le dió más importancia a las clases).
 
-Una vez entrenado y validado el modelo de detección de palmeras, se procedió a entrenar el modelo de detección del picudo rojo. Para ello se utilizó el modelo de detección de palmeras como base y se aplicó \textit{transfer learning} para adaptar el modelo a la nueva tarea. A diferencia del caso anterior en el entrenamiento de este modelo se congelaron las capas iniciales. Específicamente se congeló el \textit{backbone} (los primeros 11 módulos) y se dejó libre el \textit{head} (resto de las capas). Esto permite preservar las características aprendidas en la detección de palmeras. Las transformaciones aplicadas fueron similares al de la sección anterior, con la diferencia que debido a la poca cantidad de clases para los casos de palmeras muertas e infectadas, se aplicó \textit{undersampling}, como se mencionó en la sección \ref{sec:preparacionDataset}. En la tabla \ref{tab:transformaciones-dataset-picudo} se resume la última transformación que dió función al dataset procesado.
+Una vez entrenado y validado el modelo de detección de palmeras, se procedió a entrenar el modelo de detección del picudo rojo. Para ello se utilizó el modelo de detección de palmeras como base y se aplicó \textit{transfer learning} para adaptar el modelo a la nueva tarea. A diferencia del caso anterior en el entrenamiento de este modelo se congelaron las capas iniciales. Específicamente se congeló el \textit{backbone} (los primeros 11 módulos) y se dejó libre el \textit{head} (resto de las capas). Esto permite preservar las características aprendidas en la detección de palmeras. Las transformaciones aplicadas fueron similares al de la sección anterior, con la diferencia que debido a la poca cantidad de clases para los casos de palmeras muertas e infectadas, se aplicó \textit{undersampling}, como se mencionó en la sección \ref{sec:preparacionDataset}. En la tabla \ref{tab:transformaciones-dataset-picudo} se resume la última transformación que dio función al dataset procesado.
 
 \begin{table}[H]
     \centering
     \caption[Transformaciones del dataset del picudo rojo]{Resumen de las transformaciones aplicadas al dataset de picudo rojo durante el procesamiento.}
     \begin{tabularx}{\textwidth}{ >{\raggedright\arraybackslash}p{1cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X }
         \toprule
-        \textbf{Etapa} & \textbf{Descripción}                     & \textbf{Imágenes \newline (\textit{train}/val/\textit{test})} & \textbf{Detecciones \newline (\textit{train}/val/\textit{test})}                                                \\
+        \textbf{Etapa} & \textbf{Descripción}                     & \textbf{Imágenes \newline (\textit{train}/\textit{val}/\textit{test})} & \textbf{Detecciones \newline (\textit{train}/\textit{val}/\textit{test})}                                                \\
         \midrule
         7              & \textit{Splits} finales (80\%/10\%/10\%) & Positivas: 700/86/85 \newline Fondo: 66/10/11        & Palmeras sanas: 672/67/76 \newline Palmeras infectadas: 422/53/46 \newline Palmeras muertas: 389/43/55 \\
         \bottomrule

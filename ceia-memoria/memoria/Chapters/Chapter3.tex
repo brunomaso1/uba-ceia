@@ -68,7 +68,7 @@ El módulo \texttt{Respaldo de datos} cerciora que los datos estén siempre disp
 
 El módulo \texttt{Gestor de datos} es el encargado de almacenar los metadatos de las imágenes. Está conformado por una base de datos orientada a documentos, que permite almacenar varios tipos de datos (explicado en la sección \ref{sec:gestionRepoDatos}). Esta forma de almacenamiento facilita la gestión de grandes volúmenes de información. Asimismo, esta estructura soluciona el desafío guardar las etiquetas generadas por los usuarios en el proceso de etiquetado de datos.
 
-El módulo \texttt{Etiquetado de datos} permite ejecutar el proceso de etiquetado de imágenes y se comunica con el módulo de \texttt{Seguridad} para el manejo de diferentes niveles de información y gestión de usuarios y permisos. Su acoplamiento es muy bajo, con el objetivo de que pueda ser sustituido por otro software de etiquetado, dado la gran variedad de herramientas disponibles en el mercado. Se comunica con el módulo de \texttt{Repositorio de objetos} para obtener las imágenes a etiquetar. Asimismo, brinda una interfaz gráfica para que el usuario pueda realizar el etiquetado de manera sencilla.
+El módulo \texttt{Etiquetado de datos} permite ejecutar el proceso de etiquetado de imágenes y se comunica con el módulo de \texttt{Seguridad} para el manejo de diferentes niveles de información y gestión de usuarios y permisos. Su acoplamiento es muy bajo, con el objetivo de que pueda ser sustituido por otro software de etiquetado, dado la gran variedad de herramientas disponibles en el mercado. También, se comunica con el módulo de \texttt{Repositorio de objetos} para obtener las imágenes a etiquetar. Por último, brinda una interfaz gráfica para que el usuario pueda realizar el etiquetado de manera sencilla.
 
 El módulo \texttt{Calidad de datos} se ocupa de realizar un análisis cualitativo de los datos, lo que mejora la eficiencia de los modelos al utilizar datos de alta calidad. También permite que un equipo de control de calidad pueda analizar y generar informes específicos sobre los datos, lo que habilita una traza y evolución de las imágenes, esencial en proyectos de CV donde la variable temporal afecta el resultado de las predicciones (como sucede en este trabajo). Por último, se comunica con el usuario mediante una interfaz gráfica que permite una correcta gestión de la calidad de los datos.
 
@@ -148,7 +148,9 @@ El despliegue de la infraestructura de producción pasó por tres etapas de adap
 
 El ambiente de desarrollo se puede reproducir en cualquier máquina que tenga instalado Vagrant y VirtualBox. La máquina anfitriona puede ser cualquier sistema operativo, ya sea Windows, macOS o Linux. Esto permite que cualquier desarrollador pueda tener el mismo ambiente de desarrollo en su máquina local, lo que facilita la colaboración y el trabajo en equipo, simplemente clonando el repositorio \citep{bruno_masoller_brunomaso1uba-ceia_nodate} mediante Git e importando el proyecto con un IDE \citep{wikipedia_entorno_2025}. En este caso, se utilizó Visual Studio Code.
 
-Una vez importado el proyecto, la estructura de directorios que emula cada módulo del este se puede apreciar en el código \ref{cod:estructura-desarrollo}.
+Una vez importado el proyecto, la estructura de directorios que emula cada módulo de este se puede apreciar en el código \ref{cod:estructura-desarrollo}.
+
+\clearpage
 
 \begin{lstlisting}[label=cod:estructura-desarrollo,caption=Estructura de directorios utilizada., literate={├}{{\textSFviii}}1 {─}{{\textSFx}}1 {└}{{\textSFii}}1 {│}{{\textSFxi}}1]  % Start your code-block
 
@@ -184,7 +186,7 @@ desarrollo/
 
 \end{lstlisting}
 
-Los módulos AI y utilidades, se estructuran utilizando Cookiecutter Data Science \citep{drivendata_cookiecutter_nodate}, que es una plantilla para proyectos de ciencia de datos. Esta estructura facilita la organización del código, datos y documentación,  y promueve buenas prácticas en el desarrollo de proyectos de ciencia de datos. Estos módulos también cuentan con UV Python como gestor de dependencias y entornos virtuales, lo que permite aislar las dependencias de cada proyecto y evitar conflictos entre ellas. Finalmente, también posibilita empaquetar y distribuir las funcionalidades desarrolladas como bibliotecas reutilizables.
+Los módulos \texttt{AI} y \texttt{Utilidades}, se estructuran utilizando Cookiecutter Data Science \citep{drivendata_cookiecutter_nodate}, que es una plantilla para proyectos de ciencia de datos. Esta estructura facilita la organización del código, datos y documentación,  y promueve buenas prácticas en el desarrollo de proyectos de ciencia de datos. Estos módulos también cuentan con UV Python como gestor de dependencias y entornos virtuales, lo que permite aislar las dependencias de cada proyecto y evitar conflictos entre ellas. Finalmente, también posibilita empaquetar y distribuir las funcionalidades desarrolladas como bibliotecas reutilizables.
 
 En ingeniería de software es importante asegurar la reproducibilidad de los ambientes de trabajo. Una de las herramientas utilizadas con este objetivo fue Docker, que permite crear contenedores que encapsulan una aplicación y sus dependencias. Esto asegura un entorno de ejecución uniforme y reproducible en diferentes sistemas. Para la orquestación de múltiples contenedores se utilizó Docker Compose, que brinda una infraestructura en entornos complejos en donde interactúan varias aplicaciones.
 
