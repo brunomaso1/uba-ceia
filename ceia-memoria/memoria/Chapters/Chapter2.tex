@@ -13,7 +13,7 @@ En contraste con los métodos tradicionales y los vuelos tripulados (que cubren 
 \subsection{Imágenes de drones}
 \label{sec:imgUavDrones}
 
-Las imágenes generadas por drones se destacan por su alta resolución y capacidad para capturar detalles finos del terreno. Estas imágenes suelen tener una mayor resolución (medida en \si{\centi\meter\per\pixel}) en comparación con las generadas por aviones. El DJI Phantom 4 PRO \citep{dji_support_nodate} es ampliamente utilizado en aplicaciones de mapeo y fotogrametría debido a su capacidad para generar ortomosaicos con una resolución de hasta \SI{5}{\centi\meter\per\pixel} (volando a 100 metros de altura). Otro dron ampliamente utilizado es el DJI MAVIC 3 Enterprise RTK \citep{dji_specs_nodate}. La integración de tecnología RTK \citep{wikipedia_rtk_2024} en este dron permite una mayor precisión en la georreferenciación de las imágenes capturadas, a diferencia del DJI Phantom 4 PRO, que necesita puntos de apoyo relevados en el campo tomados con un GPS RTK (en las ejecuciones de vuelos con el DJI Phantom de la IM, los puntos de apoyo fueron tomados con GNSS SinoGNSS T300 Plus \citep{comnav_technology_ltd_receptor_nodate}, utilizando corrección en tiempo real por NTRIP \citep{wikipedia_networked_2025} con la base UYMO del Instituto Geográfico Militar uruguayo).
+Las imágenes generadas por drones se destacan por su alta resolución y capacidad para capturar detalles finos del terreno. Estas imágenes suelen tener una mayor resolución (medida en \si{\centi\meter\per\pixel}) en comparación con las generadas por aviones. El DJI Phantom 4 PRO \citep{dji_support_nodate} es ampliamente utilizado en aplicaciones de mapeo y fotogrametría debido a su capacidad para generar ortomosaicos con una resolución de hasta \SI{5}{\centi\meter\per\pixel} (volando a 100 metros de altura). Otro dron ampliamente utilizado es el DJI MAVIC 3 Enterprise RTK \citep{dji_specs_nodate}. La integración de tecnología RTK \citep{wikipedia_rtk_2024} en este dron permite una mayor precisión en la georreferenciación de las imágenes capturadas, a diferencia del DJI Phantom 4 PRO, que necesita puntos de apoyo relevados en el campo tomados con un GPS RTK. En las ejecuciones de vuelos con el DJI Phantom de la IM, los puntos de apoyo fueron tomados con GNSS SinoGNSS T300 Plus \citep{comnav_technology_ltd_receptor_nodate}, utilizando corrección en tiempo real por NTRIP \citep{wikipedia_networked_2025} con la base UYMO del Instituto Geográfico Militar uruguayo.
 
 \section{Herramientas de soporte en proyectos de AI}
 \label{sec:herramSopIA}
@@ -102,29 +102,29 @@ La evaluación cuantitativa de los modelos de CV es esencial para determinar su 
 Para evaluar el rendimiento de los modelos de visión por computadora, es fundamental comprender ciertos términos básicos que se utilizan en el cálculo de las métricas. En este contexto, los verdaderos positivos (TP, del inglés \textit{True Positives}) corresponden a los casos en los que el modelo identifica correctamente la presencia de un objeto de interés. Los falsos positivos (FP, del inglés \textit{False Positives}) se refiere a las instancias en las que el modelo indica la presencia de un objeto de interés cuando en realidad este no está presente. Los falsos negativos (FN, del inglés \textit{False Negatives}) y verdaderos negativos (TN, del inglés \textit{True Negatives}) son términos que describen situaciones opuestas: los FN representan los casos en los que el modelo no detecta un objeto de interés que sí existe en la imagen, mientras que los TN indican las ocasiones en las que el modelo reconoce correctamente la ausencia de un objeto de interés. A partir de estos conceptos, se definen las siguientes métricas clave:
 
 \begin{itemize}
-	\item Precisión (\textit{Precision}): mide la proporción de verdaderos positivos sobre el total de predicciones positivas realizadas por el modelo. Una alta precisión indica que, de todos los objetos identificados, la mayoría corresponde efectivamente a objetos de interés. Se define como:
+	\item Precisión (\textit{Precision}): mide la proporción de verdaderos positivos sobre el total de predicciones positivas realizadas por el modelo. Una alta precisión indica que, de todos los objetos identificados, la mayoría corresponde efectivamente a objetos de interés. Se define según la ecuación \ref{eq:precision}:
 	      \begin{equation}
 		      \text{Precisión} = \frac{\text{TP}}{\text{TP} + \text{FP}}
 		      \label{eq:precision}
 	      \end{equation}
-	\item Recuperación (\textit{Recall}): representa la proporción de verdaderos positivos detectados sobre el total de objetos de interés presentes en el conjunto de datos. Un valor elevado de \textit{recall} sugiere que el modelo es capaz de capturar la mayoría de los objetos existentes. Se define como:
+	\item Recuperación (\textit{Recall}): representa la proporción de verdaderos positivos detectados sobre el total de objetos de interés presentes en el conjunto de datos. Un valor elevado de \textit{recall} sugiere que el modelo es capaz de capturar la mayoría de los objetos existentes. Se define según la ecuación \ref{eq:recuperacion}:
 	      \begin{equation}
 		      \text{Recuperación} = \frac{\text{TP}}{\text{TP} + \text{FN}}
 		      \label{eq:recuperacion}
 	      \end{equation}
-	\item Exactitud (\textit{Accuracy}): mide la proporción de predicciones correctas (tanto verdaderos positivos como verdaderos negativos) sobre el total de predicciones realizadas. Esta métrica es útil en contextos donde las clases están equilibradas, pero puede ser engañosa en conjuntos de datos desbalanceados. Se define como:
+	\item Exactitud (\textit{Accuracy}): mide la proporción de predicciones correctas (tanto verdaderos positivos como verdaderos negativos) sobre el total de predicciones realizadas. Esta métrica es útil en contextos donde las clases están equilibradas, pero puede ser engañosa en conjuntos de datos desbalanceados. Se define según la ecuación \ref{eq:exactitud}:
 	      \begin{equation}
 		      \text{Exactitud} = \frac{\text{TP} + \text{TN}}{\text{Total de predicciones}}
 		      \label{eq:exactitud}
 	      \end{equation}
-	\item \textit{F1-Score}: es la media armónica entre \textit{precision} y \textit{recall}, y proporciona una medida equilibrada cuando se requiere considerar ambas métricas simultáneamente. Se define como:
+	\item \textit{F1-Score}: es la media armónica entre \textit{precision} y \textit{recall}, y proporciona una medida equilibrada cuando se requiere considerar ambas métricas simultáneamente. Se define según la ecuación \ref{eq:f1}:
 	      \begin{equation}
 		      F1 = 2 \cdot \frac{\text{Precisión} \cdot \text{Recuperación}}{\text{Precisión} + \text{Recuperación}}
 		      \label{eq:f1}
 	      \end{equation}
 \end{itemize}
 
-Un resumen intuitivo de estas métricas se puede visualizar en la imagen \ref{fig:presicion-recall-accuracy}.
+Un resumen intuitivo de estas métricas se puede visualizar en la figura \ref{fig:presicion-recall-accuracy}.
 
 \begin{figure}[H]
 	\centering

@@ -10,3 +10,5 @@
 - El separador de miles es un espacio.
 - Prefijos: https://www.rae.es/duda-linguistica/los-prefijos-se-escriben-pegados-la-palabra
 - Usar "bibliotecas" en lugar de "librerías" para referirse a colecciones de código.
+- Presentar el código y las ecuaciones como "según la ecuación 1.1" o "como se muestra en el código 2.3".
+- Cambiar el término "imagen" por "figura" o "gráfico" según corresponda.

@@ -67,10 +67,16 @@ html {
 Para reducir el tamaño del PDF generado, se puede utilizar la herramienta `ghostscript`. A continuación se muestra un comando de ejemplo para comprimir el archivo PDF:
 
 ```powershell
-gswin64c -sDEVICE=pdfwrite -o converted.pdf -dCompatibilityLevel='1.4' -dPDFSETTINGS=/printer -dNOPAUSE -dQUIET -dBATCH memorianueva.pdf
+gswin64c -sDEVICE=pdfwrite -o converted.pdf -dPDFSETTINGS=/prepress -dPreserveAnnots=true -dPreserveBookmarks=true -dPreserveCopyFlags=true -dPreserveNamedDestinations=true -dNOPAUSE -dQUIET -dBATCH memorianueva.pdf
+gswin64c -sDEVICE=pdfwrite -o converted.pdf -dCompatibilityLevel='1.5' -dPreserveAnnots=true -dPreserveNamedDestinations=true -dNOPAUSE -dQUIET -dBATCH memorianueva.pdf
+gswin64c -sDEVICE=pdfwrite -o converted.pdf -dCompatibilityLevel='1.6' -dPreserveAnnots=true -dPreserveBookmarkIds=true -dPreserveNamedDestinations=true -dNOPAUSE -dQUIET -dBATCH memorianueva.pdf
+gswin64c -sDEVICE=pdfwrite -o converted.pdf -dCompatibilityLevel=1.6 -dPreserveAnnots=true -dPreserveBookmarks=true -dPreserveCopyFlags=true -dPreserveNamedDestinations=true -dDetectDuplicateImages=true -dCompressFonts=true  -dNOPAUSE -dQUIET -dBATCH memorianueva.pdf
 ```
+
 Los valores posibles son:
 - /screen → máxima compresión (menor calidad)
 - /ebook → buena calidad (recomendado)
 - /printer → alta calidad
 - /prepress → casi sin compresión
+
+https://www.adobe.com/acrobat/online/compress-pdf.html

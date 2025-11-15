@@ -49,7 +49,7 @@ El objetivo principal de este trabajo fue brindar un producto para el servicio d
 
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.1]{./Figures/diagrama_de_bloques_modulos_e_interacción.png}
+  \includegraphics[scale=0.13]{./Figures/diagrama_de_bloques_modulos_e_interacción.png}
   \caption[Diagrama de arquitectura]{Diagrama de arquitectura de la plataforma y su ubicación en el ecosistema de la IM.}
   \label{fig:plataforma}
 \end{figure}
@@ -118,7 +118,7 @@ El despliegue de la infraestructura de producción pasó por tres etapas de adap
 
 \begin{itemize}
   \item Despliegue inicial en la nube pública: se utilizó la nube pública de Scaleway para el despliegue inicial, aprovechando su capa gratuita para almacenamiento de objetos (\textit{object storage}), que permite almacenar hasta 80 GB de datos. Esto permitió validar la arquitectura y las interacciones entre los módulos en un entorno realista. Surgieron varios desafíos, como la correcta selección de las instancias de cómputo adecuadas para CVAT, la configuración de la red para permitir el acceso externo y la gestión de costos asociados al uso de recursos en la nube. Además, para el despliegue de CVAT se gestionó certificados SSL utilizando Let's Encrypt \citep{aas_lets_2019}, lo que agregó otra capa de complejidad al proceso de configuración inicial. Sin embargo, a medida que el proyecto avanzaba, los costos aumentaron significativamente, por lo que se decidió migrar a una infraestructura semigestionada.
-  \item Despliegue semigestionada: se optó por una infraestructura semigestionada con un servidor físico local. Esto permitió reducir costos y tener un mayor control sobre los recursos. Se utilizó Ngrok \citep{ngrok_inc_ngrok_nodate} (un servicio de \textit{tunneling}) para exponer los servicios a Internet de manera segura, lo que facilitó el acceso remoto a la plataforma. Esta etapa implicó desafíos relacionados con la configuración de la red interna, la gestión de certificados SSL y la optimización del rendimiento de los servicios desplegados. Si bien se disminuyeron los costos en comparación con la nube pública, no se llegó a un costo aceptable, dado que Ngrok tiene un tráfico de salida limitado y como se trabajó con imágenes de alta resolución, este límite se alcanzaba rápidamente. Por lo tanto, se decidió migrar a una infraestructura autogestionada como solución final.
+  \item Despliegue semigestionada: se optó por una infraestructura semigestionada con un servidor físico local. Esto permitió reducir costos y tener un mayor control sobre los recursos. Se utilizó Ngrok \citep{ngrok_inc_ngrok_nodate}, como servicio de \textit{tunneling}, para exponer los servicios a Internet de manera segura, lo que facilitó el acceso remoto a la plataforma. Esta etapa implicó desafíos relacionados con la configuración de la red interna, la gestión de certificados SSL y la optimización del rendimiento de los servicios desplegados. Si bien se disminuyeron los costos en comparación con la nube pública, no se llegó a un costo aceptable, dado que Ngrok tiene un tráfico de salida limitado y como se trabajó con imágenes de alta resolución, este límite se alcanzaba rápidamente. Por lo tanto, se decidió migrar a una infraestructura autogestionada como solución final.
   \item Despliegue final (autogestionado): existieron muchos desafíos en esta etapa, desde la configuración de servicios \textit{no-ip} para gestionar un DNS dinámico, hasta la correcta configuración de los certificados SSL. Para esto, se contrató un dominio en Cloudflare \citep{cloudflare_conecta_nodate} (picudo-rojo.org), se configuró Traefik \citep{traefik_labs_traefik_nodate} como proxy reverso y se realizaron diversas configuraciones para exponer de forma segura una máquina virtual por medio de Vagrant. Esta etapa finalizó con el despliegue exitoso de la plataforma en un entorno autogestionado, lo que aseguró su disponibilidad y rendimiento óptimo.
 \end{itemize}
 
@@ -297,7 +297,7 @@ La división en estos grupos también permite separar cuales imágenes son de en
 
 A la vez que se guardaban las imágenes en MinIO, se almacenaban los metadatos en MongoDB. Estos metadatos incluyen información relevante sobre cada imagen, como su nombre, resolución, fecha de captura y coordenadas geográficas. Esta información es esencial para la gestión y análisis de las imágenes, ya que permite realizar búsquedas y filtrados basados en diferentes criterios. La estructura de los documentos en MongoDB se diseñó para facilitar la consulta y actualización de los metadatos, asegurando una gestión eficiente de la información. Un aspecto importante a destacar es el nodo \texttt{jgw\_data} dentro de la estructura. Este nodo contiene la información necesaria para georreferenciar la imagen, lo que permite que se pueda ubicar en un sistema de coordenadas geográficas. Esta información está adjunta con la imagen cuando se descarga desde el SIG.
 
-Una vez que se completó la descarga de las imágenes, se procedió a cargarlas en CVAT para su posterior etiquetado. Este proceso se realizó de manera manual, se utilizó la interfaz gráfica de CVAT para seleccionar y cargar las imágenes desde MinIO. Se creó un proyecto en CVAT llamado picudo-rojo-3cm-5cm y se agregaron las imágenes correspondientes a este trabajo. Este proceso fue sencillo y eficiente, gracias a la integración entre CVAT y MinIO, lo que permitió una gestión fluida de las imágenes.
+Una vez que se completó la descarga de las imágenes, se procedió a cargarlas en CVAT para su posterior etiquetado. Este proceso se realizó de manera manual, se utilizó la interfaz gráfica de CVAT para seleccionar y cargar las imágenes desde MinIO. Se creó un proyecto en CVAT llamado \texttt{picudo-rojo-3cm-5cm} y se agregaron las imágenes correspondientes a este trabajo. Este proceso fue sencillo y eficiente, gracias a la integración entre CVAT y MinIO, lo que permitió una gestión fluida de las imágenes.
 
 %----------------------------------------------------------------------------------------
 %	SECTION 4
@@ -358,7 +358,7 @@ Se etiquetaron un total de 2 204 imágenes, en donde se identificaron cerca de 9
 
 La cantidad de etiquetas de la clase \texttt{palmera-sana} con respecto a las demás, se debe a que la mayoría de las imágenes fueron tomadas antes de la llegada del picudo rojo. En este punto se identificó un grave problema, en donde no se iba a lograr obtener una cantidad suficiente de detecciones con palmeras infectadas, muertas o exterminadas, lo que implicó utilizar otros enfoques para el entrenamiento de los modelo que se explican en siguiente capítulo.
 
-Es muy difícil obtener una métrica certera de cuantas etiquetas por imagen se realizaron, dado que no todas las imágenes tenían palmeras y algunas tenían muchas más que otras. Tampoco se pudo determinar el tiempo exacto de etiquetado total (pero se estima que rondó cerca de 40 hs). Se pudo evidenciar que hay imágenes que llegaban a contener hasta 50 palmeras, lo que da una idea de la complejidad del trabajo realizado. Estos datos se pudieron obtener gracias a la herramienta FiftyOne, que permite analizar y visualizar los datos de manera sencilla. Un resumen de algunas jornadas del proceso de etiquetado se puede observar en la tabla \ref{tab:resumen-etiquetado}.
+Es muy difícil obtener una métrica certera de cuantas etiquetas por imagen se realizaron, dado que no todas las imágenes tenían palmeras y algunas tenían muchas más que otras. Tampoco se pudo determinar el tiempo exacto de etiquetado total (pero se estima que rondó cerca de 40 horas). Se pudo evidenciar que hay imágenes que llegaban a contener hasta 50 palmeras, lo que da una idea de la complejidad del trabajo realizado. Estos datos se pudieron obtener gracias a la herramienta FiftyOne, que permite analizar y visualizar los datos de manera sencilla. Un resumen de algunas jornadas del proceso de etiquetado se puede observar en la tabla \ref{tab:resumen-etiquetado}.
 
 \begin{table}[H]
   \centering
@@ -463,6 +463,10 @@ Entre las etapas de procesamiento del dataset se destacan dos procesos principal
 
 El recorte en imágenes más pequeñas para el entrenamiento en este caso fue muy importante, dado que las palmeras ocupaban una pequeña porción de la imagen original. En CV las palmeras se clasificaban como en \textit{tiny objects} (con respecto a los ortomosaicos). Estos son objetos que ocupan menos del 0,1\% del área total de la imagen \citep{hua_survey_2025}. En este caso ocupaban aproximadamente el 0,005\% del área total de la imagen. Si bien era necesario el recorte de las imágenes por complejidades técnicas (de memoria de la GPU), también era necesario para mejorar la detección de las palmeras. Con este objetivo, se ideó un proceso de recorte de las imágenes en subimágenes de \SI{640}{}\,\texttimes\,\SI{640}{} píxeles, con un solapamiento de 250 pixeles entre cada recorte. Este tamaño se eligió dado que era el tamaño con el que el modelo YoloV11 había sido pre-entrenado (dataset de COCO \citep{lin_microsoft_2014}). En estos recortes las palmeras representaban cerca de un 30\% del área total de la subimagen, por lo que pasaban a ser simplemente objetos normales. 
 
+Este proceso involucró desafíos como casos en donde las palmeras quedaban divididas entre dos recortes o donde el recorte en su mayoría era blanco. Para el primer caso, se adaptaron las anotaciones en base a un umbral (0,1\%). Si este umbral era superado, la palmera se incluía en el recorte correspondiente; de lo contrario, se descartaba. En el segundo caso, se utilizó una función del módulo utilidades (la misma utilizada para el recorte de parches para CVAT). Esta función permite identificar imágenes con un porcentaje alto de píxeles blancos y descartarlas automáticamente. Esto permitió optimizar el dataset final, eliminando imágenes que no aportaban valor al entrenamiento.
+
+\clearpage
+
 Un ejemplo de este proceso de recorte se puede observar en la figura \ref{fig:ejemplo-recorte}, en donde un parche podría ser recortado en 40 subimágenes de \SI{640}{}\,\texttimes\,\SI{640}{} píxeles cada una, muchas que no contienen palmeras.
 
 \begin{figure}[H]
@@ -471,8 +475,6 @@ Un ejemplo de este proceso de recorte se puede observar en la figura \ref{fig:ej
     \caption[Recortes de imágenes]{Ejemplo del proceso de recorte de imágenes.}
     \label{fig:ejemplo-recorte}
 \end{figure}
-
-Este proceso involucró desafíos como casos en donde las palmeras quedaban divididas entre dos recortes o donde el recorte en su mayoría era blanco. Para el primer caso, se adaptaron las anotaciones en base a un umbral (0,1\%). Si este umbral era superado, la palmera se incluía en el recorte correspondiente; de lo contrario, se descartaba. En el segundo caso, se utilizó una función del módulo utilidades (la misma utilizada para el recorte de parches para CVAT). Esta función permite identificar imágenes con un porcentaje alto de píxeles blancos y descartarlas automáticamente. Esto permitió optimizar el dataset final, eliminando imágenes que no aportaban valor al entrenamiento.
 
 
 % Hablar de la descarga de las imágenes de MinIO, en formato coco.
@@ -495,6 +497,10 @@ En paralelo al proceso de etiquetado, se desarrolló la aplicación web principa
 
 El principal caso de uso comienza con la interacción por fuera de la plataforma de los usuarios del sector de arbolado y del servicio de geomática de la IM. Inicialmente, los primeros identifican zonas en donde se sospecha la presencia del picudo rojo, basándose en reportes ciudadanos o áreas en donde se expande la plaga. Esta información se comunica al servicio de geomática (mediante una petición formal), que se encarga de planificar vuelos con drones y preprocesar las imágenes aéreas de éstas áreas. Una vez que las imágenes son capturadas y procesadas, los usuarios de arbolado acceden a la aplicación para cargarlas y solicitar el análisis. La aplicación procesa las imágenes y brinda los resultados de la detección. Este proceso permite mejorar la toma de decisiones, ya que según la cantidad de palmeras en estados delicados, se puede decidir si es necesario un monitoreo más exhaustivo o la implementación de medidas de control específicas.
 
+El valor final al usuario es un mapa con las palmeras detectadas y clasificadas por su estado de salud. Esta información se puede descargar en un KML para importar en otras herramientas utilizadas por varios equipos que gestionan la expansión de la plaga. También se puede descargar la imagen para verificar la visualización de las detecciones.
+
+\clearpage
+
 La figura \ref{fig:caso-uso} ilustra este flujo de trabajo. Se puede observar que en el paso 5 los usuarios interactúan con la aplicación web para cargar las imágenes y recibir los resultados del análisis.
 
 \begin{figure}[H]
@@ -504,9 +510,9 @@ La figura \ref{fig:caso-uso} ilustra este flujo de trabajo. Se puede observar qu
   \label{fig:caso-uso}
 \end{figure}
 
-El valor final al usuario es un mapa con las palmeras detectadas y clasificadas por su estado de salud. Esta información se puede descargar en un KML para importar en otras herramientas utilizadas por varios equipos que gestionan la expansión de la plaga. También se puede descargar la imagen para verificar la visualización de las detecciones.
+El desarrollo de la aplicación web se realizó con Angular para el frontend y FastAPI para el backend. Se utilizó Keycloak como capa de autenticación y autorización, lo que permite gestionar los usuarios y sus permisos de manera segura. La aplicación web se diseñó para ser intuitiva y fácil de usar, con una interfaz gráfica que permite a los usuarios navegar por el mapa, visualizar las palmeras detectadas y acceder a la información detallada sobre cada una de ellas. 
 
-El desarrollo de la aplicación web se realizó con Angular para el frontend y FastAPI para el backend. Se utilizó Keycloak como capa de autenticación y autorización, lo que permite gestionar los usuarios y sus permisos de manera segura. La aplicación web se diseñó para ser intuitiva y fácil de usar, con una interfaz gráfica que permite a los usuarios navegar por el mapa, visualizar las palmeras detectadas y acceder a la información detallada sobre cada una de ellas. El diagrama de secuencia de la figura \ref{fig:diagrama-flujo-app} muestra el flujo de datos entre el backend y frontend. Actualmente la aplicación no cuenta con una base de datos, dado que las predicciones son \textit{on-the-fly}, es decir, se realizan en el momento en que el usuario solicita la información. Esto permite reducir la complejidad del sistema y evitar la necesidad de mantener una base de datos adicional. Sin embargo, en futuras versiones se podría considerar su incorporación para almacenar las predicciones y mejorar el rendimiento del sistema, que actualmente se manejan en memoria del backend.
+El diagrama de secuencia de la figura \ref{fig:diagrama-flujo-app} muestra el flujo de datos entre el backend y frontend. Actualmente la aplicación no cuenta con una base de datos, dado que las predicciones son \textit{on-the-fly}, es decir, se realizan en el momento en que el usuario solicita la información. Esto permite reducir la complejidad del sistema y evitar la necesidad de mantener una base de datos adicional. Sin embargo, en futuras versiones se podría considerar su incorporación para almacenar las predicciones y mejorar el rendimiento del sistema, que actualmente se manejan en memoria del backend.
 
 \begin{figure}[H]
   \centering
@@ -517,11 +523,4 @@ El desarrollo de la aplicación web se realizó con Angular para el frontend y F
 
 Un desafío importante en el desarrollo de la aplicación fue la integración con los modelos de detección del picudo rojo. Actualmente la integración está altamente acoplada (no se brinda como servicio separado, sino que se integra directamente en el backend). Esto implica que cualquier cambio en los modelos requiere una actualización del backend, lo que puede complicar el mantenimiento y la escalabilidad del sistema. Esta decisión respondió a criterios de agilidad en el desarrollo inicial del sistema al permitir una integración más rápida de los modelos. En futuras versiones, se podría considerar la implementación de una arquitectura basada en microservicios, en donde los modelos de detección se brinden como servicios independientes (por ejemplo, utilizando funciones \textit{serverless}), lo que permitiría una mayor flexibilidad y escalabilidad del sistema.
 
-Finalmente, en la figura \ref{fig:app-web} se puede observar una captura de pantalla de la página de inicio de la aplicación.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[scale=0.42]{./Figures/captura-app-inicio.png}
-  \caption[Captura de inicio de Mis palmeras]{Captura de pantalla de la aplicación Mis palmeras luego de iniciar sesión.}
-  \label{fig:app-web}
-\end{figure}
+Finalmente, se realizaron pruebas y configuraciones para la adaptación de todos los elementos de la aplicación en el ambiente de desarrollo. Entre estos elementos, se configuró el proxy reverso (Traefik) para redirigir las solicitudes a los dominios correspondientes, se ajustó el \textit{SSL Termination} \citep{noauthor_encryption_2025} y se adaptaron las políticas de seguridad en Keycloak, con el objetivo de que la puesta en producción sea el despliegue de la misma infraestructura pero con una configuración adaptada.

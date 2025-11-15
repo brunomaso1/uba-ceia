@@ -40,18 +40,18 @@ La plaga del picudo rojo llegó a Uruguay en 2022 \citep{mgap_informacion_nodate
   \centering
   \begin{subfigure}[b]{0.49\textwidth}
     \centering
-    \includegraphics[width=0.84\textwidth]{./Figures/palmera-infectada.png}
+    \includegraphics[width=0.80\textwidth]{./Figures/palmera-infectada.png}
     \caption{Palmera infectada por el picudo rojo.}
     \label{fig:palmera-infectada}
   \end{subfigure}
   \hfill
   \begin{subfigure}[b]{0.49\textwidth}
     \centering
-    \includegraphics[width=.99\textwidth]{./Figures/palmeras-ruta-5.png}
+    \includegraphics[width=.95\textwidth]{./Figures/palmeras-ruta-5.png}
     \caption{Palmeras muertas en la ruta 5 de Uruguay.}
     \label{fig:palmeras-ruta5}
   \end{subfigure}
-  \caption[Infección y muerte de palmeras por el picudo rojo.]{Ejemplos de infección y muerte de palmeras por el picudo rojo detectados en Uruguay.}
+  \caption[Infección y muerte de palmeras por el picudo rojo.]{Efectos del picudo rojo en Uruguay.}
   \label{fig:infeccion-y-muerte-palmeras}
 \end{figure}
 
@@ -61,8 +61,8 @@ Uno de los recursos aún no explotados por la IM para el monitoreo de la plaga e
 
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.4]{./Figures/ortomosaico.png}
-  \caption[Ortomosaico]{Ejemplo de ortomosaico tomado del parque José Enrique Rodó de Montevideo \protect\footnotemark.}
+  \includegraphics[scale=0.39]{./Figures/ortomosaico.png}
+  \caption[Ortomosaico]{Ortomosaico tomado del parque José E. Rodó \protect\footnotemark.}
   \label{fig:ejemplo-ortomosaico}
 \end{figure}
 
@@ -99,9 +99,11 @@ Entre los estudios analizados, la implementación de la detección mediante imá
 
 Por otro lado, la detección de palmeras sí es ampliamente estudiada en la literatura, siendo un tema recurrente en la investigación de CV. Se han desarrollado diversos estudios. En \textit{Implementation of slicing aided hyper inference (SAHI) in YOLOv8 to counting oil palm trees using high-resolution aereal imagery data} \citep{zhorif_implementation_2024} se presenta un enfoque que utiliza la arquitectura YOLOv8 para detectar palmeras en imágenes aéreas de alta resolución. Además, utiliza \textit{Slicing Aided Hyper Inference} para mejorar la precisión de la detección. Este enfoque se basa en la idea de dividir las imágenes en regiones más pequeñas y realizar inferencias en cada una de ellas, lo que permite una detección más precisa de los objetos de interés, algo esencial en el caso de objetos pequeños como las palmeras. Para el estudio, se utilizaron imágenes RGB capturadas con un dron Trinity F90+ a 200 metros de altura y una implementación de segmentación (SAHI) de \SI{3000}{}\,\texttimes\,\SI{3000}{\pixel}. Si bien el estudio se centra en la detección de palmeras de aceite, su metodología puede ser adaptada para la detección del picudo rojo. La tabla \ref{tab:papers-deteccion-palmeras} resume los métodos utilizados en la detección de palmeras en diferentes estudios anteriores.
 
+También, se han realizado estudios controlados como en \textit{Red Palm Weevil Detection in Date Palm Using Temporal UAV Imagery} \citep{delalieux_red_2023}, en donde se concluye que la detección del picudo rojo es posible mediante imágenes aéreas en el rango infrarrojo.
+
 \begin{table}[H]
   \centering
-  \caption[Comparativa de estudios]{Comparación entre diferentes estudios de detección de palmeras \protect\footnotemark.}
+  \caption[Comparativa de estudios]{Comparación entre diferentes estudios de detección de palmeras \citep{zhorif_implementation_2024}.}
 
   % Definimos el ancho total y las columnas: X para Autor, p{2cm} para Método, X para Evaluación. El X permite que la columna se ajuste automáticamente al ancho disponible.
   % Usamos >{\raggedright\arraybackslash} para que las columnas justifiquen el texto y se alineen a la izquierda.
@@ -121,10 +123,6 @@ Por otro lado, la detección de palmeras sí es ampliamente estudiada en la lite
   \end{tabularx}
   \label{tab:papers-deteccion-palmeras}
 \end{table}
-
-\footnotetext{Tabla obtenida de \textit{Implementation of slicing aided hyper inference (SAHI) in YOLOv8 to counting oil palm trees using high-resolution aereal imagery data} \citep{zhorif_implementation_2024}}
-
-También, se han realizado estudios controlados como en \textit{Red Palm Weevil Detection in Date Palm Using Temporal UAV Imagery} \citep{delalieux_red_2023}, en donde se concluye que la detección del picudo rojo es posible mediante imágenes aéreas en el rango infrarrojo.
 
 %--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
