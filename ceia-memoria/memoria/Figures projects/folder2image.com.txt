@@ -1,0 +1,30 @@
+^ modulo-AI
+-^ data
+--o iterim
+--^ processed
+---o yolo_palm_detection_dataset_v1.0
+---o yolo_rpw_detection_dataset_v1.0
+--^ raw
+---o coco_palm_dataset_v1.0
+--o temp
+-^ models
+--+ coco_palm_detection_yolo11x_640.pt
+-- ...
+-^ modulo_ia
+--o modeling
+--o utils
+--+ config.py
+--+ dataset.py
+--+ features.py
+--+ main.py
+
+^ notebooks
+-^ deteccion_palmeras
+--^ yolov11
+---+ 3.01-bm-deteccion-palmeras-yolov11.ipynb
+-^ deteccion_picudo_rojo
+--^ yolov11
+---+ 3.02-bm-deteccion-rpw-yolov11.ipynb
+
++ uv.lock
++ pyproject.toml

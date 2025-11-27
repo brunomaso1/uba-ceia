@@ -433,8 +433,8 @@ pyproject.toml
 
 El dataset se organizó en dos directorios:
 \begin{itemize}
-    \item \texttt{raw dataset}: contiene las imágenes originales sin procesar, junto con sus anotaciones en formato COCO. Estas imágenes fueron descargadas desde el almacenamiento en la nube (MinIO) y sus metadatos desde el gestor de datos (MongoDB). Representan el conjunto completo de datos disponibles para el entrenamiento. Se descargaron únicamente aquellos parches que contenían anotaciones (se puede obtener más detalles en la tabla \ref{tab:resumen-imagenes-etiquetado} de este capítulo).
-    \item \texttt{processed dataset}: contiene las imágenes procesadas y preparadas para el entrenamiento del modelo que son consumidas directamente por el modelo para el entrenamiento, validación y \textit{test}.
+  \item \texttt{raw dataset}: contiene las imágenes originales sin procesar, junto con sus anotaciones en formato COCO. Estas imágenes fueron descargadas desde el almacenamiento en la nube (MinIO) y sus metadatos desde el gestor de datos (MongoDB). Representan el conjunto completo de datos disponibles para el entrenamiento. Se descargaron únicamente aquellos parches que contenían anotaciones (se puede obtener más detalles en la tabla \ref{tab:resumen-imagenes-etiquetado} de este capítulo).
+  \item \texttt{processed dataset}: contiene las imágenes procesadas y preparadas para el entrenamiento del modelo que son consumidas directamente por el modelo para el entrenamiento, validación y \textit{test}.
 \end{itemize}
 
 Esta organización recomendada por Cookiecutter Data Science permite mantener un flujo de trabajo claro y estructurado, en donde el \texttt{raw dataset} permanece inalterado, mientras que el \texttt{processed dataset} puede ser modificado y ajustado según las necesidades del entrenamiento. El directorio \texttt{interim} se utiliza para almacenar datos intermedios generados durante el procesamiento del dataset final, y el directorio \texttt{temp} se emplea para datos temporales que no necesitan ser versionados. En este caso, no se guardó los datos intermedios ni temporales, por lo que ambos directorios permanecen vacíos. La descarga del dataset se realizó utilizando scripts de Python que interactúan con la API de MinIO para obtener las imágenes, sus correspondientes anotaciones de la base de datos y finalmente la conversión al formato COCO. La clase \texttt{dataset.py} centraliza todas estas funcionalidades.
@@ -444,24 +444,24 @@ El procesamiento del dataset final incluyó una versión del \texttt{raw dataset
 Entre las etapas de procesamiento del dataset se destacan dos procesos principales: el recorte de imágenes para la aplicación de SAHI \citep{akyon_slicing_2022} y el balanceo del conjunto de datos mediante la técnica de \textit{undersampling} \citep{noauthor_oversampling_2025}. Ambos procesos demandaron un tiempo de ejecución aproximado de 20 minutos. El recorte se aplicó para mejorar la detección de objetos pequeños, mientras que el \textit{undersampling} se utilizó para reducir la cantidad de muestras correspondientes a la clase mayoritaria (\texttt{palmeras-sanas}) y equilibrar así las clases minoritarias (\texttt{palmeras-infectadas}, \texttt{palmeras-exterminadas} y \texttt{palmeras-muertas}). Esta estrategia se adoptó debido a la escasez de ejemplos en las clases minoritarias, que dificultaba la aplicación de técnicas de \textit{oversampling} sin incurrir en sobreajuste. Un resumen de las operaciones aplicadas al dataset y sus directorios de salida se presenta en la tabla \ref{tab:procesamiento-dataset}.
 
 \begin{table}[H]
-    \centering
-    \caption[Operaciones de procesamiento]{Resumen de las operaciones aplicadas al dataset durante el procesamiento.}
-    \begin{tabular}{ l l l}
-        \toprule
-        \textbf{Etapa}                                 & \textbf{Directorio de salida} \\
-        \midrule
-        Dataset original (COCO)                        & \texttt{raw}                  \\
-        Conversión a formato YOLO                      & \texttt{interim}              \\
-        Recortes de \SI{640}{}\,\texttimes\,\SI{640}{} & \texttt{interim}              \\
-        Balanceo de clases                             & \texttt{interim}              \\
-        Splits finales (80\%/10\%/10\%)                & \texttt{processed}            \\
-        \bottomrule
-        \hline
-    \end{tabular}
-    \label{tab:procesamiento-dataset}
+  \centering
+  \caption[Operaciones de procesamiento]{Resumen de las operaciones aplicadas al dataset durante el procesamiento.}
+  \begin{tabular}{ l l l}
+    \toprule
+    \textbf{Etapa}                                 & \textbf{Directorio de salida} \\
+    \midrule
+    Dataset original (COCO)                        & \texttt{raw}                  \\
+    Conversión a formato YOLO                      & \texttt{interim}              \\
+    Recortes de \SI{640}{}\,\texttimes\,\SI{640}{} & \texttt{interim}              \\
+    Balanceo de clases                             & \texttt{interim}              \\
+    Splits finales (80\%/10\%/10\%)                & \texttt{processed}            \\
+    \bottomrule
+    \hline
+  \end{tabular}
+  \label{tab:procesamiento-dataset}
 \end{table}
 
-El recorte en imágenes más pequeñas para el entrenamiento en este caso fue muy importante, dado que las palmeras ocupaban una pequeña porción de la imagen original. En CV las palmeras se clasificaban como en \textit{tiny objects} (con respecto a los ortomosaicos). Estos son objetos que ocupan menos del 0,1\% del área total de la imagen \citep{hua_survey_2025}. En este caso ocupaban aproximadamente el 0,005\% del área total de la imagen. Si bien era necesario el recorte de las imágenes por complejidades técnicas (de memoria de la GPU), también era necesario para mejorar la detección de las palmeras. Con este objetivo, se ideó un proceso de recorte de las imágenes en subimágenes de \SI{640}{}\,\texttimes\,\SI{640}{} píxeles, con un solapamiento de 250 pixeles entre cada recorte. Este tamaño se eligió dado que era el tamaño con el que el modelo YoloV11 había sido pre-entrenado (dataset de COCO \citep{lin_microsoft_2014}). En estos recortes las palmeras representaban cerca de un 30\% del área total de la subimagen, por lo que pasaban a ser simplemente objetos normales. 
+El recorte en imágenes más pequeñas para el entrenamiento en este caso fue muy importante, dado que las palmeras ocupaban una pequeña porción de la imagen original. En CV las palmeras se clasificaban como en \textit{tiny objects} (con respecto a los ortomosaicos). Estos son objetos que ocupan menos del 0,1\% del área total de la imagen \citep{hua_survey_2025}. En este caso ocupaban aproximadamente el 0,005\% del área total de la imagen. Si bien era necesario el recorte de las imágenes por complejidades técnicas (de memoria de la GPU), también era necesario para mejorar la detección de las palmeras. Con este objetivo, se ideó un proceso de recorte de las imágenes en subimágenes de \SI{640}{}\,\texttimes\,\SI{640}{} píxeles, con un solapamiento de 250 pixeles entre cada recorte. Este tamaño se eligió dado que era el tamaño con el que el modelo YoloV11 había sido pre-entrenado (dataset de COCO \citep{lin_microsoft_2014}). En estos recortes las palmeras representaban cerca de un 30\% del área total de la subimagen, por lo que pasaban a ser simplemente objetos normales.
 
 Este proceso involucró desafíos como casos en donde las palmeras quedaban divididas entre dos recortes o donde el recorte en su mayoría era blanco. Para el primer caso, se adaptaron las anotaciones en base a un umbral (0,1\%). Si este umbral era superado, la palmera se incluía en el recorte correspondiente; de lo contrario, se descartaba. En el segundo caso, se utilizó una función del módulo utilidades (la misma utilizada para el recorte de parches para CVAT). Esta función permite identificar imágenes con un porcentaje alto de píxeles blancos y descartarlas automáticamente. Esto permitió optimizar el dataset final, eliminando imágenes que no aportaban valor al entrenamiento.
 
@@ -470,10 +470,10 @@ Este proceso involucró desafíos como casos en donde las palmeras quedaban divi
 Un ejemplo de este proceso de recorte se puede observar en la figura \ref{fig:ejemplo-recorte}, en donde un parche podría ser recortado en 40 subimágenes de \SI{640}{}\,\texttimes\,\SI{640}{} píxeles cada una, muchas que no contienen palmeras.
 
 \begin{figure}[H]
-    \centering
-    \includegraphics[scale=0.125]{./Figures/mosiaco.png}
-    \caption[Recortes de imágenes]{Ejemplo del proceso de recorte de imágenes.}
-    \label{fig:ejemplo-recorte}
+  \centering
+  \includegraphics[scale=0.125]{./Figures/mosiaco.png}
+  \caption[Recortes de imágenes]{Ejemplo del proceso de recorte de imágenes.}
+  \label{fig:ejemplo-recorte}
 \end{figure}
 
 
@@ -510,7 +510,7 @@ La figura \ref{fig:caso-uso} ilustra este flujo de trabajo. Se puede observar qu
   \label{fig:caso-uso}
 \end{figure}
 
-El desarrollo de la aplicación web se realizó con Angular para el frontend y FastAPI para el backend. Se utilizó Keycloak como capa de autenticación y autorización, lo que permite gestionar los usuarios y sus permisos de manera segura. La aplicación web se diseñó para ser intuitiva y fácil de usar, con una interfaz gráfica que permite a los usuarios navegar por el mapa, visualizar las palmeras detectadas y acceder a la información detallada sobre cada una de ellas. 
+El desarrollo de la aplicación web se realizó con Angular para el frontend y FastAPI para el backend. Se utilizó Keycloak como capa de autenticación y autorización, lo que permite gestionar los usuarios y sus permisos de manera segura. La aplicación web se diseñó para ser intuitiva y fácil de usar, con una interfaz gráfica que permite a los usuarios navegar por el mapa, visualizar las palmeras detectadas y acceder a la información detallada sobre cada una de ellas.
 
 El diagrama de secuencia de la figura \ref{fig:diagrama-flujo-app} muestra el flujo de datos entre el backend y frontend. Actualmente la aplicación no cuenta con una base de datos, dado que las predicciones son \textit{on-the-fly}, es decir, se realizan en el momento en que el usuario solicita la información. Esto permite reducir la complejidad del sistema y evitar la necesidad de mantener una base de datos adicional. Sin embargo, en futuras versiones se podría considerar su incorporación para almacenar las predicciones y mejorar el rendimiento del sistema, que actualmente se manejan en memoria del backend.
 
@@ -524,3 +524,10 @@ El diagrama de secuencia de la figura \ref{fig:diagrama-flujo-app} muestra el fl
 Un desafío importante en el desarrollo de la aplicación fue la integración con los modelos de detección del picudo rojo. Actualmente la integración está altamente acoplada (no se brinda como servicio separado, sino que se integra directamente en el backend). Esto implica que cualquier cambio en los modelos requiere una actualización del backend, lo que puede complicar el mantenimiento y la escalabilidad del sistema. Esta decisión respondió a criterios de agilidad en el desarrollo inicial del sistema al permitir una integración más rápida de los modelos. En futuras versiones, se podría considerar la implementación de una arquitectura basada en microservicios, en donde los modelos de detección se brinden como servicios independientes (por ejemplo, utilizando funciones \textit{serverless}), lo que permitiría una mayor flexibilidad y escalabilidad del sistema.
 
 Finalmente, se realizaron pruebas y configuraciones para la adaptación de todos los elementos de la aplicación en el ambiente de desarrollo. Entre estos elementos, se configuró el proxy reverso (Traefik) para redirigir las solicitudes a los dominios correspondientes, se ajustó el \textit{SSL Termination} \citep{noauthor_encryption_2025} y se adaptaron las políticas de seguridad en Keycloak, con el objetivo de que la puesta en producción sea el despliegue de la misma infraestructura pero con una configuración adaptada.
+
+% \cleardoublepage
+% \clearpage
+
+% \newpage
+% \thispagestyle{empty}
+% \mbox{}
