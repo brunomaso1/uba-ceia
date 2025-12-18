@@ -46,13 +46,13 @@ El banco de entrenamiento se dividió en dos infraestructuras principales: una u
     \caption[Hardware de entrenamiento]{Resumen del hardware utilizado para el entrenamiento de los modelos.}
     \begin{tabularx}{\textwidth}{ >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X }
         \toprule
-        \textbf{Componente} & \textbf{Especificación local}                & \textbf{Especificación en la nube}          \\
+        \textbf{Componente} & \textbf{Especificación local}                & \textbf{Especificación en la nube}           \\
         \midrule
-        GPU                 & NVIDIA GeForce RTX 4080 SUPER (16 GB GDDR6X) & NVIDIA A100 (80 GB HBM2e)                   \\
+        GPU                 & NVIDIA GeForce RTX 4080 SUPER (16 GB GDDR6X) & NVIDIA A100 (80 GB HBM2e)                    \\
         CPU                 & Intel Core i7-12700KF (12 núcleos)           & Intel(R) Xeon(R) CPU @ 2,20 GHz (12 núcleos) \\
-        RAM                 & 128 GB DDR5 (5600 MHz)                       & 167 GB                                      \\
-        Almacenamiento      & 1 TB NVMe                                    & 1 TB NVMe                                   \\
-        Sistema operativo   & Windows 11                                   & Ubuntu 24.04                                \\
+        RAM                 & 128 GB DDR5 (5600 MHz)                       & 167 GB                                       \\
+        Almacenamiento      & 1 TB NVMe                                    & 1 TB NVMe                                    \\
+        Sistema operativo   & Windows 11                                   & Ubuntu 24.04                                 \\
         \bottomrule
         \hline
     \end{tabularx}
@@ -82,7 +82,7 @@ El primer modelo entrenado fue el de detección de palmeras, se utilizó el data
     \caption[Transformaciones del dataset de palmeras]{Resumen de las transformaciones aplicadas al dataset.}
     \begin{tabularx}{\textwidth}{ >{\raggedright\arraybackslash}p{1cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X }
         \toprule
-        \textbf{Etapa} & \textbf{Descripción}                              & \textbf{Imágenes \newline (\textit{train}/\textit{val}/\textit{test})}                                & \textbf{Detecciones \newline (\textit{train}/\textit{val}/\textit{test})}                                \\
+        \textbf{Etapa} & \textbf{Descripción}                              & \textbf{Imágenes \newline (\textit{train}/\textit{val}/\textit{test})}              & \textbf{Detecciones \newline (\textit{train}/\textit{val}/\textit{test})}              \\
         \midrule
         1              & Dataset original                                  & Positivas: 1 288 \newline Fondo: 0                                                  & Sanas: 8 403 \newline Infectadas: 170 \newline Muertas: 280 \newline Exterminadas: 191 \\
         2              & Eliminar palmeras exterminadas                    & -                                                                                   & Sanas: 8 403 \newline Infectadas: 170 \newline Muertas: 280 \newline Exterminadas: 0   \\
@@ -145,7 +145,14 @@ Se entrenaron dos versiones del modelo YoloV11: la versión \textit{nano} (YoloV
     \label{tab:experimentos-palmeras}
 \end{table}
 
-La figura \ref{fig:curvas-entrenamiento-palmeras} muestra las curvas de entrenamiento del mejor experimento realizado con la versión extra grande del modelo YoloV11. Se puede observar que el modelo converge adecuadamente y no existe un gran sobreajuste a los datos. Concretamente, la pérdida focal comienza a sobreajuste sobre la época 250, pero se decidió continuar hasta la época 350 en donde sí comienza a divergir junto con la pérdida de clasificación. También se puede observar lo que parecería ser un sobreajuste significativo a partir de la época 340, pero este efecto es porque \texttt{Ultralitycs} tiene la opción de cerrar el aumento de datos (para el caso del mosaico, que realiza una combinación de cuatro imágenes en una) en las últimas 10 épocas. Esto permite que el modelo se entrene en las imágenes originales sin estas transformaciones con el objetivo de mejorar la capacidad de generalización. Ajustar la cantidad de épocas en vez de dejar el entrenamiento hasta que ejecute un \textit{early stopping} permite afinar el aprendizaje mediante una correcta especificación de la tasa de aprendizaje. En este caso se utilizó una tasa de aprendizaje con decaimiento lineal. Esto implica que al final del entrenamiento ésta sea muy baja, lo que permite un ajuste fino de los pesos del modelo. Este ajuste de épocas se estimó mediante experimentos sobre el modelo YoloV11n que al ser más liviano, permitió realizar pruebas más rápidas (usualmente 6 horas en la infraestructura local). En todo caso, el mAP50-95 seguía mejorando hasta la época 350.
+% La figura \ref{fig:curvas-entrenamiento-palmeras} muestra las curvas de entrenamiento del mejor experimento realizado con la versión extra grande del modelo YoloV11. Se puede observar que el modelo converge adecuadamente y no existe un gran sobreajuste a los datos. Concretamente, la pérdida focal comienza a sobreajuste sobre la época 250, pero se decidió continuar hasta la época 350 en donde sí comienza a divergir junto con la pérdida de clasificación. También se puede observar lo que parecería ser un sobreajuste significativo a partir de la época 340, pero este efecto es porque \texttt{Ultralitycs} tiene la opción de cerrar el aumento de datos (para el caso del mosaico, que realiza una combinación de cuatro imágenes en una) en las últimas 10 épocas. Esto permite que el modelo se entrene en las imágenes originales sin estas transformaciones con el objetivo de mejorar la capacidad de generalización. Ajustar la cantidad de épocas en vez de dejar el entrenamiento hasta que ejecute un \textit{early stopping} permite afinar el aprendizaje mediante una correcta especificación de la tasa de aprendizaje. En este caso se utilizó una tasa de aprendizaje con decaimiento lineal. Esto implica que al final del entrenamiento ésta sea muy baja, lo que permite un ajuste fino de los pesos del modelo. Este ajuste de épocas se estimó mediante experimentos sobre el modelo YoloV11n que al ser más liviano, permitió realizar pruebas más rápidas (usualmente 6 horas en la infraestructura local). En todo caso, el mAP50-95 seguía mejorando hasta la época 350.
+
+% Refactor del párrafo anterior
+La figura \ref{fig:curvas-entrenamiento-palmeras} muestra las curvas de entrenamiento correspondientes al mejor experimento realizado con la versión extra grande del modelo YoloV11. Se observa que el modelo presenta una convergencia adecuada y no evidencia un sobreajuste pronunciado durante la mayor parte del entrenamiento. En particular, a partir de la época 250 se aprecia una separación progresiva entre las curvas de pérdida de entrenamiento y validación asociadas a la pérdida focal, lo que sugiere el inicio de un proceso de sobreajuste. No obstante, se decidió continuar el entrenamiento hasta la época 350, punto en el cual también comienza a incrementarse la divergencia en la pérdida de clasificación.
+
+Asimismo, puede observarse un aparente sobreajuste más marcado a partir de la época 340. Este comportamiento se explica por el hecho de que la implementación de \texttt{Ultralytics} desactiva automáticamente ciertas técnicas de aumento de datos (como el mosaico) durante las últimas épocas de entrenamiento. Como consecuencia, el modelo pasa a entrenarse únicamente con las imágenes originales, sin transformaciones adicionales, lo que modifica la distribución de los datos de entrada y genera cambios visibles en las curvas de pérdida. Este procedimiento busca favorecer un ajuste más fino de los parámetros del modelo sobre datos no aumentados.
+
+La elección explícita del número de épocas, en lugar de emplear un criterio de \textit{early stopping}, permitió afinar el proceso de aprendizaje mediante una configuración adecuada de la tasa de aprendizaje. En este trabajo se utilizó una tasa de aprendizaje con decaimiento lineal, de modo que hacia el final del entrenamiento su valor es reducido, lo que facilita un ajuste fino de los pesos del modelo. La selección del número de épocas se estimó a partir de experimentos preliminares realizados con el modelo YOLOv11n, que por su menor complejidad computacional permitió realizar pruebas más rápidas, con tiempos de entrenamiento del orden de seis horas en la infraestructura local. En todos los casos, el valor de mAP50–95 continuó mejorando hasta la época 350.
 
 \begin{figure}[H]
     \centering
@@ -154,7 +161,7 @@ La figura \ref{fig:curvas-entrenamiento-palmeras} muestra las curvas de entrenam
         \caption{Curva de pérdida de caja (\textit{box loss}).}
     \end{subfigure}
 
-    \vspace{0.5cm} % Espacio vertical entre las imágenes
+    \vspace{0.2cm} % Espacio vertical entre las imágenes
 
     \centering
     \begin{subfigure}[b]{0.9\textwidth}
@@ -162,7 +169,7 @@ La figura \ref{fig:curvas-entrenamiento-palmeras} muestra las curvas de entrenam
         \caption{Curva de pérdida de clasificación (\textit{cls loss}).}
     \end{subfigure}
 
-    \vspace{0.5cm} % Espacio vertical entre las imágenes
+    \vspace{0.2cm} % Espacio vertical entre las imágenes
 
     \centering
     \begin{subfigure}[b]{0.9\textwidth}
@@ -219,13 +226,16 @@ El mejor experimento se entrenó en Google Colab (utilizando la versión Pro). E
     \label{fig:curvas-validacion}
 \end{figure}
 
-La matriz de confusión sobre el conjunto de \textit{test}, que se puede observar en la figura \ref{fig:matriz-confusion-palmeras}, indica que el modelo tiene un buen desempeño en la detección de palmeras, con pocos falsos positivos y falsos negativos.
-En este caso una de las métricas más importantes fue la precisión, dado que se esperaba que se detectara la mayor cantidad de palmeras posibles mientras que los falsos positivos (detecciones erróneas) no eran tan críticos.
+% La matriz de confusión sobre el conjunto de \textit{test}, que se puede observar en la figura \ref{fig:matriz-confusion-palmeras}, indica que el modelo tiene un buen desempeño en la detección de palmeras, con pocos falsos positivos y falsos negativos.
+% En este caso una de las métricas más importantes fue la precisión, dado que se esperaba que se detectara la mayor cantidad de palmeras posibles mientras que los falsos positivos (detecciones erróneas) no eran tan críticos.
+
+La matriz de confusión sobre el conjunto de \textit{test}, presentada en la figura \ref{fig:matriz-confusion-palmeras}, indica que el modelo exhibe un buen desempeño en la detección de palmeras, con una baja cantidad tanto de falsos positivos como de falsos negativos. En este contexto, una de las métricas más relevantes fue el \textit{recall}, dado que se priorizó la detección de la mayor cantidad posible de palmeras, aun a costa de admitir algunas detecciones erróneas.
 
 \begin{figure}[H]
     \centering
     \includegraphics[scale=0.45]{./Figures/grafica-matriz-confusion-modelo-palmeras.png}
-    \caption[Matriz de confusión del modelo de palmeras]{Matriz de confusión del mejor experimento realizado con YoloV11x para la detección de palmeras sobre el conjunto de \textit{test}.}
+    \caption[Matriz de confusión del modelo de palmeras]{Matriz de confusión YoloV11X (detección de palmeras en el conjunto de \textit{test}).}
+    % \caption[Matriz de confusión del modelo de palmeras]{Matriz de confusión del mejor experimento realizado con YoloV11x para la detección de palmeras sobre el conjunto de \textit{test}.}
     \label{fig:matriz-confusion-palmeras}
 \end{figure}
 
@@ -255,9 +265,9 @@ Una vez entrenado y validado el modelo de detección de palmeras, se procedió a
     \caption[Transformaciones del dataset del picudo rojo]{Resumen de las transformaciones aplicadas al dataset de picudo rojo durante el procesamiento.}
     \begin{tabularx}{\textwidth}{ >{\raggedright\arraybackslash}p{1cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X }
         \toprule
-        \textbf{Etapa} & \textbf{Descripción}                     & \textbf{Imágenes \newline (\textit{train}/\textit{val}/\textit{test})} & \textbf{Detecciones \newline (\textit{train}/\textit{val}/\textit{test})}                                                \\
+        \textbf{Etapa} & \textbf{Descripción}                     & \textbf{Imágenes \newline (\textit{train}/\textit{val}/\textit{test})} & \textbf{Detecciones \newline (\textit{train}/\textit{val}/\textit{test})}                              \\
         \midrule
-        7              & \textit{Splits} finales (80\%/10\%/10\%) & Positivas: 700/86/85 \newline Fondo: 66/10/11        & Palmeras sanas: 672/67/76 \newline Palmeras infectadas: 422/53/46 \newline Palmeras muertas: 389/43/55 \\
+        7              & \textit{Splits} finales (80\%/10\%/10\%) & Positivas: 700/86/85 \newline Fondo: 66/10/11                          & Palmeras sanas: 672/67/76 \newline Palmeras infectadas: 422/53/46 \newline Palmeras muertas: 389/43/55 \\
         \bottomrule
         \hline
     \end{tabularx}
@@ -299,23 +309,52 @@ A diferencia de la sección anterior, en este caso, dada la poca cantidad de dat
 
 En la figura \ref{fig:curvas-entrenamiento-picudo} se pueden observar las curvas de entrenamiento y validación del mejor experimento realizado con la versión extra grande del modelo YoloV11. En este caso se observa una mayor varianza dado que la cantidad de datos es mucho menor. Para la estimación de las épocas finales, dado que el costo en tiempo no era tan elevado, se decidió entrenar inicialmente por 300 épocas e identificar si el modelo comenzaba a sobreajustar o se detenía de forma anticipada mediante un \textit{early stopping} de 50 épocas. El entrenamiento se detuvo en la época 235 y el mejor modelo fue en la época 198. Finalmente, se entrenó nuevamente hasta la época 200 (con el objetivo de cerrar el aumento de datos 10 épocas antes del final) para obtener el modelo final.
 
+Estos experimentos se realizaron totalmente en la infraestructura local, dado que el tamaño del dataset era manejable. El hecho de congelar las primeras capas permitió reducir el tiempo de entrenamiento significativamente dado que este congelamiento reduce la cantidad de parámetros optimizables. Concretamente, se redujo la cantidad de parámetros entrenables de aproximadamente 56 millones a 28 millones, o sea, un 50\% del total de parámetros del modelo. Esto permitió entrenar el modelo en aproximadamente 1 hora, en comparación con las 12 horas que hubiera tomado entrenar todas las capas.
+
+% \begin{figure}[H]
+%     \centering
+%     \begin{subfigure}[b]{0.9\textwidth}
+%         \includegraphics[width=\textwidth]{./Figures/grafica-perdidas-modelo-picudo-box_loss.png}
+%         \caption{Curva de pérdida de caja (\textit{box loss}).}
+%     \end{subfigure}
+% \end{figure}
+
+% \begin{figure}[H]
+%     \ContinuedFloat
+%     \centering
+%     \begin{subfigure}[b]{0.9\textwidth}
+%         \includegraphics[width=\textwidth]{./Figures/grafica-perdidas-modelo-picudo-cls_loss.png}
+%         \caption{Curva de pérdida de clasificación (\textit{cls loss}).}
+%     \end{subfigure}
+
+%     \vspace{0.2cm} % Espacio vertical entre las imágenes
+
+%     \centering
+%     \begin{subfigure}[b]{0.9\textwidth}
+%         \includegraphics[width=\textwidth]{./Figures/grafica-perdidas-modelo-picudo-dfl_loss.png}
+%         \caption{Curva de pérdida de focal (\textit{dfl loss}).}
+%     \end{subfigure}
+
+%     \caption[Gráficas de entrenamiento del modelo del picudo rojo]{Curvas de entrenamiento del mejor experimento realizado con YoloV11x para la detección del picudo rojo.}
+%     \label{fig:curvas-entrenamiento-picudo}
+% \end{figure}
+
 \begin{figure}[H]
     \centering
     \begin{subfigure}[b]{0.9\textwidth}
         \includegraphics[width=\textwidth]{./Figures/grafica-perdidas-modelo-picudo-box_loss.png}
         \caption{Curva de pérdida de caja (\textit{box loss}).}
     \end{subfigure}
-\end{figure}
 
-\begin{figure}[H]
-    \ContinuedFloat
+    \vspace{0.2cm} % Espacio vertical entre las imágenes
+
     \centering
     \begin{subfigure}[b]{0.9\textwidth}
         \includegraphics[width=\textwidth]{./Figures/grafica-perdidas-modelo-picudo-cls_loss.png}
         \caption{Curva de pérdida de clasificación (\textit{cls loss}).}
     \end{subfigure}
 
-    \vspace{0.5cm} % Espacio vertical entre las imágenes
+    \vspace{0.2cm} % Espacio vertical entre las imágenes
 
     \centering
     \begin{subfigure}[b]{0.9\textwidth}
@@ -327,7 +366,6 @@ En la figura \ref{fig:curvas-entrenamiento-picudo} se pueden observar las curvas
     \label{fig:curvas-entrenamiento-picudo}
 \end{figure}
 
-Estos experimentos se realizaron totalmente en la infraestructura local, dado que el tamaño del dataset era manejable. El hecho de congelar las primeras capas permitió reducir el tiempo de entrenamiento significativamente dado que este congelamiento reduce la cantidad de parámetros optimizables. Concretamente, se redujo la cantidad de parámetros entrenables de aproximadamente 56 millones a 28 millones, o sea, un 50\% del total de parámetros del modelo. Esto permitió entrenar el modelo en aproximadamente 1 hora, en comparación con las 12 horas que hubiera tomado entrenar todas las capas.
 
 Con respecto a las métricas de validación, en la época 100 ya se lograba un desempeño aceptable, con un mAP50-95 de 0,89, lo que se observa en la figura \ref{fig:curvas-validacion-picudo}. En este punto, el mAP50 ya había alcanzado un valor cercano al 0,951, la precisión un 0,93 y la recuperación un 0,874. Si bien las métricas eran buenas, dada la gran variabilidad en el aprendizaje, se decidió continuar el entrenamiento hasta la última época nombrada anteriormente, para finalizar con un mAP50-95 de 0,926, una precisión de 0,919 y una recuperación de 0,91, en la época 197.
 
@@ -344,7 +382,7 @@ Finalmente, la matriz de confusión (sobre el conjunto de \textit{test}) de la f
 \begin{figure}[H]
     \centering
     \includegraphics[scale=0.55]{./Figures/grafica-matriz-confusion-modelo-picudo.png}
-    \caption[Matriz de confusión del modelo del picudo rojo]{Matriz de confusión del mejor experimento realizado con YoloV11x para la detección del picudo rojo sobre el conjunto de \textit{test}.}
+    \caption[Matriz de confusión del modelo de palmeras]{Matriz de confusión YoloV11X (detección del picudo rojo en el conjunto de \textit{test}).}
     \label{fig:matriz-confusion-picudo}
 \end{figure}
 
@@ -374,25 +412,70 @@ Desde el punto de vista del usuario, inicialmente se sube la imagen y sus coorde
     \label{fig:carga-imagen-web}
 \end{figure}
 
-Luego para realizar el análisis el usuario selecciona el botón realizar predicción. En este punto, el frontend realiza varios pasos de forma sincrónica. Inicialmente, realiza un \texttt{POST} al \textit{endpoint} \texttt{/apiv1/image\allowbreak/upload} para subir la imagen y otro \texttt{POST} al \textit{endpoint} \texttt{/apiv1/jgw\allowbreak/upload\allowbreak/\{image\_id\}} para subir la información de las coordenadas, con el identificador de la imagen devuelto en la petición anterior. Luego de que está subida la imagen (se guarda en memoria con FastAPI) y su georreferenciación, se ejecuta un \texttt{POST} al \textit{endpoint} \texttt{/apiv1/predictions\allowbreak/generate\_sync\_prediction\allowbreak/\{image\_id\}} que inicia el proceso de predicción sobre dicha imagen de forma sincrónica. En este punto, el backend realiza la predicción sobre la imagen, convierte los resultados a GeoJSON y se los envía al frontend. El frontend renderiza los puntos en el mapa y les adjunta información de referencia (como si está infectada la palmera o no). Finalmente, el usuario tiene la posibilidad de descargar la imagen anotada. Para esto, el frontend realiza una solicitud \texttt{GET} al siguiente \textit{endpoint} \texttt{/apiv1/image\allowbreak/downloadAnnotated\allowbreak/\{image\_id\}} para obtener la imagen anotada (generada en el momento por el backend). 
+Luego para realizar el análisis el usuario selecciona el botón realizar predicción. En este punto, el frontend realiza varios pasos de forma sincrónica. Inicialmente, realiza un \texttt{POST} al \textit{endpoint} \texttt{/apiv1/image\allowbreak/upload} para subir la imagen y otro \texttt{POST} al \textit{endpoint} \texttt{/apiv1/jgw\allowbreak/upload\allowbreak/\{image\_id\}} para subir la información de las coordenadas, con el identificador de la imagen devuelto en la petición anterior. Luego de que está subida la imagen (se guarda en memoria con FastAPI) y su georreferenciación, se ejecuta un \texttt{POST} al \textit{endpoint} \texttt{/apiv1/predictions\allowbreak/generate\_sync\_prediction\allowbreak/\{image\_id\}} que inicia el proceso de predicción sobre dicha imagen de forma sincrónica. En este punto, el backend realiza la predicción sobre la imagen, convierte los resultados a GeoJSON y se los envía al frontend. El frontend renderiza los puntos en el mapa y les adjunta información de referencia (como si está infectada la palmera o no). Finalmente, el usuario tiene la posibilidad de descargar la imagen anotada. Para esto, el frontend realiza una solicitud \texttt{GET} al siguiente \textit{endpoint} \texttt{/apiv1/image\allowbreak/downloadAnnotated\allowbreak/\{image\_id\}} para obtener la imagen anotada (generada en el momento por el backend).
 
-En la figura \ref{fig:capturas-mapa-y-prediccion} se puede apreciar el mapa con las predicciones sobre la zona del mirador de Santiago Vazquez (con el identificador K-29-A-6-N-3 en el SIG). En la figura de la izquierda, el mapa georreferenciado y en la figura de la derecha la imagen devuelta con las cajas (\textit{bounding boxes}) sobre las palmeras detectadas en donde el color violeta indica palmeras sanas, el color naranja palmeras infectadas y el color rojo palmeras muertas.
+En la figura \ref{fig:capturas-mapa-y-prediccion} se puede apreciar el mapa con las predicciones sobre la zona del mirador de Santiago Vazquez (con el identificador K-29-A-6-N-3 en el SIG). En la subfigura \ref{fig:captura-prediccion} se observa la imagen devuelta con las cajas (\textit{bounding boxes}) sobre las palmeras detectadas en donde el color violeta indica palmeras sanas, el color naranja palmeras infectadas y el color rojo palmeras muertas. En la subfigura \ref{fig:capturas-mapa-y-prediccion} se observa el mapa georreferenciado con las mismas detecciones, con la diferencia de que las palmeras sanas están en verde, las infectadas en amarillo y las muertas en rojo. 
+
+% En la figura de la izquierda, el mapa georreferenciado y en la figura de la derecha la imagen devuelta con las cajas (\textit{bounding boxes}) sobre las palmeras detectadas en donde el color violeta indica palmeras sanas, el color naranja palmeras infectadas y el color rojo palmeras muertas.
+
+% \begin{figure}[H]
+%     \centering
+%     \begin{subfigure}[b]{0.49\textwidth}
+%         \centering
+%         \includegraphics[width=0.99\textwidth]{./Figures/captura-app-pred.png}
+%         \caption{Captura de pantalla del mapa con las predicciones.}
+%         \label{fig:captura-mapa}
+%     \end{subfigure}
+%     \hfill
+%     \begin{subfigure}[b]{0.49\textwidth}
+%         \centering
+%         \includegraphics[width=.99\textwidth]{./Figures/captura-app-pred-imagen.png}
+%         \caption{Captura de pantalla de la imagen (ortomosaico recortado) anotada con las predicciones.}
+%         \label{fig:captura-prediccion}
+%     \end{subfigure}
+%     \caption[Ejemplo de predicción]{Ejemplo de análisis una imagen en la aplicación web.}
+%     \label{fig:capturas-mapa-y-prediccion}
+% \end{figure}
+
+% \begin{figure}[H]
+%     \centering
+%     \begin{subfigure}[b]{0.9\textwidth}
+%         \includegraphics[width=\textwidth]{./Figures/captura-app-pred.png}
+%         \caption{Captura de pantalla del mapa con las predicciones.}
+%         \label{fig:captura-mapa}
+%     \end{subfigure}
+
+%     \vspace{0.2cm} % Espacio vertical entre las imágenes
+
+%     \centering
+%     \begin{subfigure}[b]{0.9\textwidth}
+%         \includegraphics[width=\textwidth]{./Figures/captura-app-pred-imagen.png}
+%         \caption{Captura de pantalla de la imagen (ortomosaico recortado) anotada con las predicciones.}
+%         \label{fig:captura-prediccion}
+%     \end{subfigure}
+
+%     \caption[Ejemplo de predicción]{Ejemplo de análisis una imagen en la aplicación web.}
+%     \label{fig:capturas-mapa-y-prediccion}
+% \end{figure}
 
 \begin{figure}[H]
     \centering
-    \begin{subfigure}[b]{0.49\textwidth}
-        \centering
-        \includegraphics[width=0.99\textwidth]{./Figures/captura-app-pred.png}
-        \caption{Captura de pantalla del mapa con las predicciones.}
-        \label{fig:captura-mapa}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.49\textwidth}
-        \centering
-        \includegraphics[width=.99\textwidth]{./Figures/captura-app-pred-imagen.png}
+    \begin{subfigure}[b]{0.95\textwidth}
+        \includegraphics[width=\textwidth]{./Figures/captura-app-pred-imagen.png}
         \caption{Captura de pantalla de la imagen (ortomosaico recortado) anotada con las predicciones.}
         \label{fig:captura-prediccion}
     \end{subfigure}
+\end{figure}
+
+\begin{figure}[H]
+    \ContinuedFloat
+    \centering
+    \begin{subfigure}[b]{0.95\textwidth}
+        \includegraphics[width=\textwidth]{./Figures/captura-app-pred.png}
+        \caption{Captura de pantalla del mapa con las predicciones.}
+        \label{fig:captura-mapa}
+    \end{subfigure}
+
     \caption[Ejemplo de predicción]{Ejemplo de análisis una imagen en la aplicación web.}
     \label{fig:capturas-mapa-y-prediccion}
 \end{figure}
@@ -416,6 +499,8 @@ Para la inferencia, se utilizó SAHI para manejar las imágenes grandes y ortomo
     \end{tabularx}
     \label{tab:posprocesamiento-predicciones}
 \end{table}
+
+Estas técnicas de posprocesamiento se aplican de forma secuencial con el objetivo de reducir duplicaciones y descartar detecciones espurias generadas por la inferencia sobre recortes superpuestos. En primer lugar, se emplea NMS para eliminar predicciones altamente solapadas. A continuación, se filtran detecciones con relaciones de aspecto poco plausibles y se aplica un NMS agnóstico a las clases para unificar predicciones provenientes de diferentes recortes. Posteriormente, se descartan predicciones contenidas casi por completo dentro de otras de mayor confianza. Finalmente, se aplica un umbral de confianza para retener únicamente las detecciones más confiables.
 
 Al ser las imágenes de grandes ortomosaicos y el procesamiento mediante SAHI el tiempo de inferencia es alto, pero esto no es un problema dado que el objetivo no es la utilización en tiempo real de la aplicación. Se ha validado con imágenes de hasta 350 MB en donde el tiempo de inferencia fue de aproximadamente 5 minutos. Como métrica final, se obtuvo un ratio de 1 minuto por kilómetro cuadrado de tiempo de predicción (para imágenes de 5 cm de resolución espacial). Esto implica que se necesitaría aproximadamente 15 horas para predecir sobre todo Montevideo (utilizando, por ejemplo, el vuelo del año 2024, que cuenta con aproximadamente 871 ortomosaicos de \SI{0,75}{km^2} cada uno) en la infraestructura local.
 
