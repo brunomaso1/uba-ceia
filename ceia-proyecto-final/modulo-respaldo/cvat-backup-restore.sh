@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Configuración
 DATE_FORMAT="%Y%m%d%H%M%S"
-SERVICE_BASE_DIR="/vagrant/modulo-etiquetado-datos/cvat"
+SERVICE_BASE_DIR="../modulo-etiquetado-datos/cvat"
 
 log() {
     echo "[$(date +"$DATE_FORMAT")] $*"

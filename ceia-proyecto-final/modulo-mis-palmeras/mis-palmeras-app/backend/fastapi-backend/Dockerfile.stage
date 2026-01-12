@@ -1,0 +1,91 @@
+###########################################
+# STAGE 1 — BUILD
+###########################################
+FROM ubuntu:24.04 AS build
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    python3 python3-pip python3-dev \
+    build-essential \
+    gdal-bin libgdal-dev \
+    curl ca-certificates \
+    libgl1 libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install UV inside builder
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LINK_MODE=copy
+ENV UV_TOOL_BIN_DIR=/usr/local/bin
+# Dejar que uv gestione su propia instalacion de python (después hay que exportarla)
+# También se puede usar system, e instalar python directamente en el sistema.
+# RUN apt-get update && apt-get install -y python3 python3-venv python3-dev
+ENV UV_PYTHON_INSTALL_DIR=/python
+ENV UV_PYTHON_PREFERENCE=managed
+
+WORKDIR /build
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    --mount=type=bind,source=wheels,target=wheels \
+    uv sync --locked --no-install-project --no-dev
+
+# Copiar el código de la app
+COPY . /build
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --no-dev --no-editable
+
+# Exportamos:
+# - Site-packages
+# - Binarios del venv
+# - Libs GDAL / PROJ necesarias en tiempo de ejecución
+RUN mkdir /output && \
+    cp -r /build/.venv /output/venv && \
+    cp -r /python /output/python && \
+    cp -r /usr/lib/x86_64-linux-gnu/libgdal*.so* /output/ && \
+    cp -r /usr/share/gdal /output/gdal-data
+
+
+###########################################
+# STAGE 2 — FINAL RUNTIME
+###########################################
+FROM nvidia/cuda:13.0.2-cudnn-runtime-ubuntu24.04
+
+ENV PORT=8000
+ENV DEBIAN_FRONTEND=noninteractive
+
+# libgl1, libglib2.0-0 needed for opencv-python
+# RUN apt-get update && apt-get install -y libgl1 libglib2.0-0 && rm -rf /var/lib/apt/lists/*
+
+# UV setup
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LINK_MODE=copy
+ENV UV_TOOL_BIN_DIR=/usr/local/bin
+ENV UV_PYTHON_INSTALL_DIR=/python
+ENV UV_PYTHON_PREFERENCE=managed
+
+WORKDIR /app
+
+# Copiar el entorno ya compilado desde el build
+COPY --from=build /output/venv /app/.venv
+COPY --from=build /output/libgdal*.so* /usr/lib/
+COPY --from=build /output/gdal-data /usr/share/gdal
+COPY --from=build /output/python /python
+
+ENV GDAL_DATA=/usr/share/gdal
+
+# Copiar el código de la aplicación (con cache)
+COPY . /app
+
+ENV PATH="/app/.venv/bin:$PATH"
+ENV PYTHONPATH=/app
+
+ENTRYPOINT []
+
+EXPOSE ${PORT}
+
+CMD ["uv", "run", "fastapi", "run", "app/main.py", "--port", "8000"]

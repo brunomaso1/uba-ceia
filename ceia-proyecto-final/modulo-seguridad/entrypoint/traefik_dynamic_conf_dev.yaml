@@ -1,35 +1,137 @@
-http:
-  routers:
-    ldap-ssp-router:
-      rule: "Host(`password.picudo-rojo-desarrollo.org`)"
-      service: ldap-ssp-service
-    
-    cvat-router:
-      rule: "Host(`cvat.picudo-rojo-desarrollo.org`)"
-      service: cvat-service
+tls:
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /certs/dev.pem
+        keyFile: /certs/dev.key
 
+http:
+  middlewares:
+    redirect-to-https:
+      redirectScheme:
+        scheme: https
+
+  routers:
+    # REDIRIGIR TODAS LAS PETICIONES HTTP A HTTPS
+    # redirect-all-http-to-https:
+    #   rule: "HostRegexp(`{host:.+}`)"  # Captura cualquier host
+    #   entryPoints:
+    #     - web
+    #   middlewares:
+    #     - redirect-to-https
+    #   service: noop-service
+
+    # ROUTERS DE APLICACIONES
+    # FIFTYONE ROUTER
     # fiftyone-router:
     #   rule: "Host(`fiftyone.picudo-rojo-desarrollo.org`)"
     #   service: fiftyone-service
 
-    landing-page-router:
-      rule: "Host(`picudo-rojo-desarrollo.org`)"
-      service: landing-page-service
-
-    # Testing router:
-    # landing-page-router:
+    # TESTING ROUTER
+    # testing-router:
     #   rule: "PathPrefix(`/`)"
     #   service: landing-page-service
+
+    # CERTIFICATES TEST FRONTEND ROUTERS
+    certificates-test-frontend-router-http:
+      rule: "Host(`certificates-test-frontend.picudo-rojo-desarrollo.org`)"
+      entryPoints:
+        - web
+      service: noop-service
+      middlewares:
+        - redirect-to-https
+    certificates-test-frontend-router-https:
+      rule: "Host(`certificates-test-frontend.picudo-rojo-desarrollo.org`)"
+      entryPoints:
+        - websecure # Use the HTTPS entry point
+      tls: {} # Enable TLS for this router (this option tells Traefik to do TLS termination here)
+      service: certificates-test-frontend-service
+
+    # CVAT ROUTERS
+    # HTTP to HTTPS redirection router for CVAT
+    cvat-router-http:
+      rule: "Host(`cvat.picudo-rojo-desarrollo.org`)"
+      entryPoints:
+        - web
+      service: noop-service
+      middlewares:
+        - redirect-to-https
+    # HTTPS router for CVAT
+    cvat-router-https:
+      rule: "Host(`cvat.picudo-rojo-desarrollo.org`)"
+      entryPoints:
+        - websecure
+      tls: {} # Habilita TLS
+      service: cvat-service
+
+    # KEYCLOAK ROUTERS
+    keycloak-router-http:
+      rule: "Host(`auth.picudo-rojo-desarrollo.org`)"
+      entryPoints:
+        - web
+      service: noop-service
+      middlewares:
+        - redirect-to-https
+    keycloak-router-https:
+      rule: "Host(`auth.picudo-rojo-desarrollo.org`)"
+      entryPoints:
+        - websecure
+      tls: {}
+      service: keycloak-service
+
+    # LDAP SSP ROUTER
+    ldap-ssp-router:
+      rule: "Host(`password.picudo-rojo-desarrollo.org`)"
+      service: ldap-ssp-service
+
+    # MIS PALMERAS ROUTERS
+    app-mis-palmeras-router-http:
+      rule: "Host(`app.picudo-rojo-desarrollo.org`)"
+      entryPoints:
+        - web
+      service: noop-service
+      middlewares:
+        - redirect-to-https
+    app-mis-palmeras-router-https:
+      rule: "Host(`app.picudo-rojo-desarrollo.org`)"
+      entryPoints:
+        - websecure
+      tls: {}
+      service: mis-palmeras-frontend-service
+    api-mis-palmeras-router-http:
+      rule: "Host(`api.picudo-rojo-desarrollo.org`)"
+      entryPoints:
+        - web
+      service: noop-service
+      middlewares:
+        - redirect-to-https
+    api-mis-palmeras-router-https:
+      rule: "Host(`api.picudo-rojo-desarrollo.org`)"
+      entryPoints:
+        - websecure
+      tls: {}
+      service: mis-palmeras-backend-service
+    
+    # LANDING PAGE ROUTER
+    landing-page-router-http:
+      rule: "Host(`picudo-rojo-desarrollo.org`)"
+      entryPoints:
+        - web
+      service: noop-service
+      middlewares:
+        - redirect-to-https
+    landing-page-router-https:
+      rule: "Host(`picudo-rojo-desarrollo.org`)"
+      entryPoints:
+        - websecure
+      tls: {}
+      service: mis-palmeras-maintenance-service
 
   services:
     cvat-service:
       loadBalancer:
         servers:
-          # - url: "http://host.docker.internal:8080" # Windows
           - url: "http://traefik:8080"
-          # - url: "http://traefik:80"
-          # - url: "http://cvat_server:8080"
-          # - url: "http://172.18.0.2:8080"
 
     # fiftyone-service:
     #   loadBalancer:
@@ -39,7 +141,6 @@ http:
     landing-page-service:
       loadBalancer:
         servers:
-          # - url: "http://host.docker.internal:9100" # Windows
           - url: "http://landing-page:80" # Linux
 
     ldap-ssp-service:
@@ -47,3 +148,37 @@ http:
         servers:
           # - url: "http://host.docker.internal:17171" # Windows
           - url: "http://ldap-ssp:80" # Linux
+
+    keycloak-service:
+      loadBalancer:
+        servers:
+          # - url: "http://host.docker.internal:7000" # Windows
+          - url: "http://keycloak_web:8080" # Linux
+
+    mis-palmeras-frontend-service:
+      loadBalancer:
+        servers:
+          - url: "http://mis-palmeras-frontend:8080" # Linux
+
+    mis-palmeras-backend-service:
+      loadBalancer:
+        servers:
+          - url: "http://mis-palmeras-backend:8000" # Linux
+
+    mis-palmeras-maintenance-service:
+      loadBalancer:
+        servers:
+          # - url: "http://host.docker.internal:9200" # Windows
+          - url: "http://maintenance-page:80" # Linux
+
+    certificates-test-frontend-service:
+      loadBalancer:
+        servers:
+          # - url: "http://host.docker.internal:9300" # Windows
+          - url: "http://certificates-test-frontend:8080" # Linux
+
+    # Servicio ficticio que no hace nada.
+    noop-service:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1"

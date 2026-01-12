@@ -1,0 +1,324 @@
+# Dependencias del sistema
+from pathlib import Path
+import json, os
+from typing import Any
+
+# Dependencias de terceros
+from loguru import logger as LOGGER
+from pydantic import BaseModel, Field, computed_field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+LOGGER.debug("Loading modulo-utilidades config...")
+
+# Configuration.
+PROJECT_DIR = Path(__file__).parent.parent.resolve()
+ROOT_DIR = PROJECT_DIR / "modulo_utilidades"
+OPENCV_IO_MAX_IMAGE_PIXELS = 50000 * 50000  # Para imágenes grandes, ej: barrio3Ombues_20180801_dji_pc_3cm.jpg
+os.environ["OPENCV_IO_MAX_IMAGE_PIXELS"] = str(OPENCV_IO_MAX_IMAGE_PIXELS)
+
+# Env resolution.
+env_file_path = PROJECT_DIR / ".env"
+env_file = str(env_file_path)
+if env_file_path.exists():
+    LOGGER.warning(f"Using .env file at {env_file_path.resolve()} for configuration.")
+
+class FoldersConfig(BaseModel):
+    root_dir: Path = ROOT_DIR
+    download_folder: Path = PROJECT_DIR / "downloads"
+
+    @computed_field()
+    def download_images_folder(self) -> Path:
+        return self.download_folder / "images"
+
+    @computed_field
+    def download_patches_folder(self) -> Path:
+        return self.download_folder / "patches"
+
+    @computed_field
+    def download_temp_folder(self) -> Path:
+        return self.download_folder / "temp"
+
+    @computed_field
+    def download_jobs_folder(self) -> Path:
+        return self.download_folder / "jobs"
+
+    @computed_field
+    def download_tasks_folder(self) -> Path:
+        return self.download_folder / "tasks"
+
+    @computed_field
+    def download_coco_annotations_folder(self) -> Path:
+        return self.download_folder / "coco_annotations"
+
+    @computed_field
+    def download_google_maps_folder(self) -> Path:
+        return self.download_folder / "google_maps"
+
+    @computed_field
+    def download_kmls_folder(self) -> Path:
+        return self.download_folder / "kmls"
+
+    @computed_field
+    def download_cutouts_folder(self) -> Path:
+        return self.download_folder / "cutouts"
+
+    @computed_field
+    def download_cutouts_metadata_folder(self) -> Path:
+        return self.download_folder / "cutouts_metadata"
+
+    @computed_field
+    def download_geojson_folder(self) -> Path:
+        return self.download_folder / "geojson"
+
+    @computed_field
+    def download_jgw_folder(self) -> Path:
+        return self.download_folder / "jgw"
+
+    @computed_field
+    def download_zip_folder(self) -> Path:
+        return self.download_folder / "zips"
+
+    @computed_field
+    def download_extract_folder(self) -> Path:
+        return self.download_folder / "extract"
+
+
+class MongoDBConfig(BaseModel):
+    database: str = "picudo-rojo"
+    host: str = "localhost"
+    port: int = 27017
+    user: str
+    password: str
+
+    @computed_field
+    def connection_string(self) -> str:
+        return f"mongodb://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
+
+
+class CVATConfig(BaseModel):
+    host: str = "localhost"
+    port: int = 8080
+    scheme: str = "http"
+    user: str
+    password: str
+    export_format: str = "COCO 1.0"
+    task_export_path: str = "annotations\\instances_default.json"
+    job_export_path: str = "annotations\\instances_default.json"
+
+    @computed_field
+    def url(self) -> str:
+        return f"{self.scheme}://{self.host}:{self.port}"
+
+
+class MinioPaths(BaseModel):
+    images: str = "imagenes"
+    metadata: str = "imagenes_metadatos"
+    patches: str = "patches"
+    cutouts: str = "recortes"
+    cutouts_metadata: str = "recortes_metadatos"
+
+
+class MinioConfig(BaseModel):
+    bucket: str = "picudo-rojo-bucket"
+    host: str = "localhost"
+    port: int = 9000
+    scheme: str = "http"
+    access_key: str
+    secret_key: str
+    region: str = "nl-ams"
+    paths: MinioPaths = Field(default_factory=MinioPaths)
+
+    @computed_field
+    def endpoint_url(self) -> str:
+        return f"{self.scheme}://{self.host}:{self.port}"
+
+
+class URLsConfig(BaseModel):
+    main_page: str = "https://gis.montevideo.gub.uy/pmapper/map.phtml?&config=default&me=548000,6130000,596000,6162000"
+    toc: str = "https://intgis.montevideo.gub.uy/pmapper/incphp/xajax/x_toc.php?"
+    generate_zip: str = (
+        "https://intgis.montevideo.gub.uy/sit/php/common/datos/generar_zip2.php?nom_jpg=/inetpub/wwwroot/sit/mapserv/data/fotos_dron/{id}&tipo=jpg"
+    )
+    download_zip: str = "https://intgis.montevideo.gub.uy/sit/tmp/{id}.zip"
+    js: str = "https://intgis.montevideo.gub.uy/pmapper/config/default/custom.js"
+
+
+class CommonHeaders(BaseModel):
+    user_agent: str = "Mozilla/5.0"
+
+
+class TOCHeaders(BaseModel):
+    user_agent: str = "Mozilla/5.0"
+    referer: str = "https://gis.montevideo.gub.uy/pmapper/map.phtml?&config=default&me=548000,6130000,596000,6162000"
+    x_requested_with: str = "XMLHttpRequest"
+    content_type: str = "application/x-www-form-urlencoded"
+
+
+class HeadersConfig(BaseModel):
+    common: CommonHeaders = Field(default_factory=CommonHeaders)
+    toc: TOCHeaders = Field(default_factory=TOCHeaders)
+
+
+class TOCRequestBody(BaseModel):
+    dummy: str = "dummy"
+
+
+class RequestBodyConfig(BaseModel):
+    toc: TOCRequestBody = Field(default_factory=TOCRequestBody)
+
+
+class PatchesConfig(BaseModel):
+    tile_size: tuple[int, int] = (4096, 4096)
+    over_lap: int = 400
+    purge_white_images: bool = True
+
+
+class COCOInfo(BaseModel):
+    description: str = "Conjunto de imágenes para la detección del picudo rojo"
+    url: str = "https://picudo-rojo.org"
+    version: str = "1.0"
+    year: int = 2025
+    contributor: str = "Intendencia de Montevideo"
+    date_created: str = "2025/01/01"
+
+
+class COCOLicense(BaseModel):
+    id: int
+    name: str
+    url: str
+
+
+class COCOCategory(BaseModel):
+    id: int
+    name: str
+    supercategory: str = ""
+
+
+class COCODatasetConfig(BaseModel):
+    info: COCOInfo = Field(default_factory=COCOInfo)
+    licenses: list[COCOLicense] = Field(
+        default_factory=lambda: [
+            COCOLicense(id=1, name="CC BY-NC-SA 4.0", url="https://creativecommons.org/licenses/by-nc-sa/4.0/")
+        ]
+    )
+    categories: list[COCOCategory] = Field(
+        default_factory=lambda: [
+            COCOCategory(id=0, name="palmera-sana"),
+            COCOCategory(id=1, name="palmera-infectada"),
+            COCOCategory(id=2, name="palmera-muerta"),
+            COCOCategory(id=3, name="palmera-exterminada"),
+        ]
+    )
+
+    def model_dump(self, **kwargs) -> dict[str, Any]:
+        return {
+            "info": self.info.model_dump(),
+            "licenses": [lic.model_dump() for lic in self.licenses],
+            "categories": [cat.model_dump() for cat in self.categories],
+        }
+
+
+class LayoutParserDrawBox(BaseModel):
+    box_width: int = 10
+    box_alpha: int = 0
+    color_map: dict[str, str] = Field(
+        default_factory=lambda: {
+            "palmera-sana": "green",
+            "palmera-inf-leve": "yellow",
+            "palmera-inf-grave": "orange",
+            "palmera-muerta": "red",
+            "palmera": "blue",
+        }
+    )
+    show_element_id: bool = True
+
+
+class LayoutParserConfig(BaseModel):
+    draw_box: LayoutParserDrawBox = Field(default_factory=LayoutParserDrawBox)
+
+    def model_dump(self, **kwargs) -> dict[str, Any]:
+        return {
+            "draw_box": self.draw_box.model_dump(),
+        }
+
+
+class OpenCVDrawBox(BaseModel):
+    box_width: int = 5
+    box_alpha: float = 0.5
+    color_map: dict[int, list[int]] = Field(
+        default_factory=lambda: {
+            1: [0, 255, 0],
+            2: [255, 255, 0],
+            3: [255, 165, 0],
+            4: [255, 0, 0],
+            5: [0, 0, 255],
+        }
+    )
+    font_scale: float = 0.5
+    font_thickness: int = 2
+
+
+class OpenCVDrawConfig(BaseModel):
+    draw_box: OpenCVDrawBox = Field(default_factory=OpenCVDrawBox)
+
+    def model_dump(self, **kwargs) -> dict[str, Any]:
+        return {
+            "draw_box": self.draw_box.model_dump(),
+        }
+
+
+class GoogleMapsCategory(BaseModel):
+    id: int
+    name: str
+    supercategory: str = ""
+
+
+class GoogleMapsConfig(BaseModel):
+    mid: str = "1yCQ986yfEy6SmUXEREmedCEptZEA_h0"
+    base_url: str = "https://www.google.com/maps/d/u/0/kml"
+    categories: list[GoogleMapsCategory] = Field(
+        default_factory=lambda: [GoogleMapsCategory(id=1, name="palmera-google-maps")]
+    )
+
+
+class GeoreferencingConfig(BaseModel):
+    sistema_referencia: str = "WGS84"
+    proyeccion: str = "UTM 21S"
+    codigo_epsg: str = "EPSG:32721"
+
+
+class BBoxSizeConfig(BaseModel):
+    width: int = 10
+    height: int = 10
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=env_file,
+        env_nested_delimiter="_",
+        env_nested_max_split=1,
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+    environment: str = "dev"  # Opciones: dev, prod
+    seed: int = 42
+
+    mongodb: MongoDBConfig = Field(default_factory=MongoDBConfig)
+    cvat: CVATConfig = Field(default_factory=CVATConfig)
+    minio: MinioConfig = Field(default_factory=MinioConfig)
+    folders: FoldersConfig = Field(default_factory=FoldersConfig)
+    urls: URLsConfig = Field(default_factory=URLsConfig)
+    headers: HeadersConfig = Field(default_factory=HeadersConfig)
+    request_body: RequestBodyConfig = Field(default_factory=RequestBodyConfig)
+    patches: PatchesConfig = Field(default_factory=PatchesConfig)
+    coco_dataset: COCODatasetConfig = Field(default_factory=COCODatasetConfig)
+    layoutparser: LayoutParserConfig = Field(default_factory=LayoutParserConfig)
+    opencv_draw: OpenCVDrawConfig = Field(default_factory=OpenCVDrawConfig)
+    google_maps: GoogleMapsConfig = Field(default_factory=GoogleMapsConfig)
+    georeferenciacion: GeoreferencingConfig = Field(default_factory=GeoreferencingConfig)
+    bbox_size: BBoxSizeConfig = Field(default_factory=BBoxSizeConfig)
+
+
+settings = Settings()
+LOGGER.debug(f"Settings (modulo-utilidades) loaded: {json.dumps(settings.model_dump(), indent=2, default=str)}")

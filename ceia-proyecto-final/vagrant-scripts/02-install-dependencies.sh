@@ -1,16 +1,19 @@
 #!/bin/bash
 
+# ==============================
+# Solución para evitar prompts durante la instalación de paquetes
 # sudo apt-mark hold grub-pc  # Para evitar que grub-pc se actualice automáticamente
-apt-mark hold openssh-server
-
-# Para evitar interacciones durante instalación (por ejemplo, grub-pc)
-export DEBIAN_FRONTEND=noninteractive
+# apt-mark hold openssh-server
 
 # Aceptar la configuración de grub-pc sin interacción
-echo "grub-pc grub-pc/install_devices multiselect /dev/sda" | sudo debconf-set-selections
-echo "grub-pc grub-pc/install_devices_disks_changed boolean true" | sudo debconf-set-selections
-echo "grub-pc grub-pc/install_devices_empty boolean false" | sudo debconf-set-selections
-echo "grub-pc grub-pc/overwrite_other_os boolean true" | sudo debconf-set-selections
+# echo "grub-pc grub-pc/install_devices multiselect /dev/sda" | sudo debconf-set-selections
+# echo "grub-pc grub-pc/install_devices_disks_changed boolean true" | sudo debconf-set-selections
+# echo "grub-pc grub-pc/install_devices_empty boolean false" | sudo debconf-set-selections
+# echo "grub-pc grub-pc/overwrite_other_os boolean true" | sudo debconf-set-selections
+
+# Para evitar interacciones durante instalación (por ejemplo, grub-pc)
+# export DEBIAN_FRONTEND=noninteractive
+# ==============================
 
 # Actualizar e instalar sin interacción
 sudo apt-get -q update -y && \
@@ -46,5 +49,8 @@ sudo apt -q install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugi
 # Add vagrant user to docker group
 sudo usermod -aG docker vagrant
 
+# ==============================
+# Solución para evitar prompts durante la instalación de paquetes
 # Activar nuevamente la actualización de los paquetes desactivados
-sudo apt-mark unhold openssh-server
+# sudo apt-mark unhold openssh-server
+# ==============================

@@ -1,0 +1,61 @@
+name: picudo-rojo-project
+
+services:
+  mis-palmeras-frontend:
+    build:
+      context: ./frontend/angular-frontend
+      dockerfile: Dockerfile
+      args:
+        - BUILD_ENV=${BUILD_ENV:-development}
+    container_name: mis-palmeras-frontend
+    # volumes:
+      # - ./frontend/angular-frontend/nginx.conf:/etc/nginx/nginx.conf:ro
+    restart: unless-stopped
+    ports:
+      - 4200:8080
+    depends_on:
+      - mis-palmeras-backend
+    networks:
+      - main
+
+  mis-palmeras-backend:
+    build:
+      context: ./backend/fastapi-backend
+      dockerfile: Dockerfile
+    environment:
+      CORS_ALLOW_CREDENTIALS: ${CORS_ALLOW_CREDENTIALS:-True}
+      CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-["*"]}
+      KEYCLOAK_URL: ${KEYCLOAK_URL:-http://localhost:7000}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-mis-palmeras-app}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-prediction-app-backend}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-null}
+    container_name: mis-palmeras-backend
+    restart: unless-stopped
+    ports:
+      - 8000:8000
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    networks:
+      - main
+
+  mis-palmeras-backend-restarter:
+    image: docker:26.1.4-cli
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: |
+      sh -c "
+      echo '0 3 */3 * * docker restart mis-palmeras-backend' > /etc/crontabs/root &&
+      crond -f -l 2"
+    depends_on:
+      - mis-palmeras-backend
+    networks:
+      - main
+
+networks:
+  main:

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Mis palmeras</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/png" href="/images/favicon.png">
+    <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .responsive-image {
+            max-width: 100%;
+            max-height: 95%;
+            height: auto;
+            object-fit: contain;
+        }
+
+        /* Para pantallas muy anchas (desktops) */
+        /* @media (min-aspect-ratio: 16/9) {
+            .responsive-image {
+                max-height: 95vh;
+            }
+        } */
+
+        /* Para pantallas muy altas (móviles en portrait) */
+        /* @media (max-aspect-ratio: 9/16) {
+            .responsive-image {
+                max-height: 70vh;
+            }
+        } */
+
+        /* Para tablets y pantallas medianas */
+        /* @media (min-width: 768px) and (max-width: 1024px) {
+            .responsive-image {
+                max-height: 85vh;
+            }
+        } */
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <img class="responsive-image" src="/images/pagina-en-mantenimiento.png" alt="Página en mantenimiento">
+    </div>
+</body>
+
+</html>

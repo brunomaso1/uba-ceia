@@ -1,0 +1,22 @@
+- .vagrant
+- *.env
+- .env.dev
+- .venv/
+- .vscode/
+- tests/
+- node_modules/
+
+- modulo-calidad-datos/notebooks
+- modulo-IA/
+- modulo-informacion-georreferenciada/
+- modulo-reportes/
+- modulo-utilidades/
+
+- modulo-repositorio-objetos/minio/minio-data/
+- modulo-respaldo/backup-*/
+- modulo-seguridad/keycloak/postgres_data/
+- modulo-seguridad/ldap-test/
+- modulo-seguridad/lldap/lldap_data/
+- modulo-seguridad/ngrok/
+- modulo-mis-palmeras/certificates-test/
+- modulo-mis-palmeras/simple-gpu-test-app/

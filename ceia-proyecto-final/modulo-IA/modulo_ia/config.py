@@ -1,17 +1,18 @@
 # Dependencias del sistema
 from pathlib import Path
-import json, os
+import json
+
+# Dependencias locales
+from modulo_ia.core_config import core_settings
 
 # Dependencias de terceros
 from loguru import logger as LOGGER
 from pydantic import BaseModel, Field, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Configuraciones.
-PROJECT_DIR = Path(__file__).parent.parent.resolve()
-ROOT_DIR = PROJECT_DIR / "modulo_ia"
-OPENCV_IO_MAX_IMAGE_PIXELS = 50000 * 50000  # Para imágenes grandes, ej: barrio3Ombues_20180801_dji_pc_3cm.jpg
-os.environ["OPENCV_IO_MAX_IMAGE_PIXELS"] = str(OPENCV_IO_MAX_IMAGE_PIXELS)
+LOGGER.debug("Loading modulo-ia config...")
+
+PROJECT_DIR = core_settings.folders.project_dir
 
 # Env resolution.
 env_file_path = PROJECT_DIR / ".env"
@@ -20,7 +21,6 @@ if env_file_path.exists():
     LOGGER.warning(f"Using .env file at {env_file_path.resolve()} for configuration.")
 
 class FoldersConfig(BaseModel):
-    root_dir: Path = ROOT_DIR
     data_folder: Path = PROJECT_DIR / "data"
     models_folder: Path = PROJECT_DIR / "models"
     palm_detection_yolov11_folder: Path = PROJECT_DIR / "notebooks" / "deteccion_palmeras" / "yolov11"
@@ -94,7 +94,7 @@ class Settings(BaseSettings):
         env_nested_delimiter="_",
         env_nested_max_split=1,
         env_file_encoding="utf-8",
-        extra="ignore",
+        extra="allow",
     )
 
     environment: str = "dev"
@@ -110,5 +110,5 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-LOGGER.debug(f"Settings loaded: {json.dumps(settings.model_dump(), indent=2, default=str)}")
+LOGGER.debug(f"Settings (modulo-ia) loaded: {json.dumps(settings.model_dump(), indent=2, default=str)}")
 

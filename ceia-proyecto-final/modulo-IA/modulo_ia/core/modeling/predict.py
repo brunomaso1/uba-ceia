@@ -3,9 +3,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional, Literal
 
-# Dependencias locales
-from modulo_ia.config import settings as CONFIG  # noqa: F401
-
 # Dependencias propias
 from modulo_utilidades.core.labeling.procesador_anotaciones_coco_dataset_core import (
     create_coco_annotations_from_detections,
@@ -18,7 +15,6 @@ import pandas as pd
 from ultralytics import YOLO
 from ultralytics.engine.results import Results
 from supervision import Detections, InferenceSlicer, OverlapFilter, BoxAnnotator, LabelAnnotator
-
 
 @dataclass
 class PredictionResult:
@@ -239,7 +235,6 @@ class DetectionModelPredictor:
             callback=self._slicer_callback,
             slice_wh=(self.target_img_size_wh[0], self.target_img_size_wh[1]),
             overlap_wh=self.overlap_wh,
-            overlap_ratio_wh=None,
             overlap_filter=self.overlap_filter,
             iou_threshold=self.iou_threshold,
         )

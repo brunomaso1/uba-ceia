@@ -12,7 +12,7 @@ import { Observable } from 'rxjs';
 
 export function initAuth(authService: AuthService): () => Observable<void> {
   console.log("InitAuth: Starting authentication initialization...");
-  return () => authService.initializeAuth();
+  return () => authService.initializeAuth$();
 }
 
 

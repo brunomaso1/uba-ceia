@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Configuración
 DATE_FORMAT="%Y%m%d%H%M%S"
-SERVICE_BASE_DIR="/vagrant/modulo-repositorio-objetos/minio"
+SERVICE_BASE_DIR="../modulo-repositorio-objetos/minio"
 
 log() {
     echo "[$(date +"$DATE_FORMAT")] $*"
@@ -57,13 +57,14 @@ restore() {
 
     # Limpiar y restaurar
     log "[Paso 2/4] Eliminando datos actuales..."
-    rm -rf "${SERVICE_BASE_DIR}/minio-data"
+    sudo rm -rf "${SERVICE_BASE_DIR}/minio-data"
 
     log "[Paso 3/4] Restaurando backup..."
-    tar xzvf "$backup_file" -C "$SERVICE_BASE_DIR"
+    tar xzvf "$backup_file" -C "$SERVICE_BASE_DIR" --no-same-owner
+    
 
     log "[Paso 5/5] Aplicando permisos y reiniciando..."
-    chmod -R 777 "${SERVICE_BASE_DIR}/minio-data" # MinIO requiere permisos amplios
+    sudo chown -R 10001:10001 "${SERVICE_BASE_DIR}/minio-data"
     (cd "$SERVICE_BASE_DIR" && docker compose $compose_args up -d minio mc)
 
     log "=== Restauración completada ==="

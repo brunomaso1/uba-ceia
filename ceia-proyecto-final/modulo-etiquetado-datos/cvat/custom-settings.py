@@ -6,6 +6,9 @@ import ldap
 from django_auth_ldap.config import LDAPSearch, GroupOfUniqueNamesType
 
 SMOKESCREEN_ENABLED = False
+# USE_X_FORWARDED_HOST = True
+# USE_X_FORWARDED_PORT = True
+# SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 if os.environ.get("CSRF_TRUSTED_ORIGINS"):
     CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",")
@@ -25,9 +28,7 @@ except KeyError:
 IAM_TYPE = "LDAP"
 
 # Talking to the LDAP server
-AUTH_LDAP_SERVER_URI = os.environ.get(
-    "AUTH_LDAP_SERVER_URI", "ldap://lldap:3890"
-)  # IP Addresses also work
+AUTH_LDAP_SERVER_URI = os.environ.get("AUTH_LDAP_SERVER_URI", "ldap://lldap:3890")  # IP Addresses also work
 ldap.set_option(ldap.OPT_REFERRALS, 0)
 
 
@@ -44,9 +45,7 @@ AUTH_LDAP_BIND_PASSWORD = CVAT_LDAP_PASSWORD
 
 AUTH_LDAP_USER_SEARCH = LDAPSearch(_BASE_DN, ldap.SCOPE_SUBTREE, "(uid=%(user)s)")
 
-AUTH_LDAP_GROUP_SEARCH = LDAPSearch(
-    _GROUP_DN, ldap.SCOPE_SUBTREE, "(objectClass=groupOfUniqueNames)"
-)
+AUTH_LDAP_GROUP_SEARCH = LDAPSearch(_GROUP_DN, ldap.SCOPE_SUBTREE, "(objectClass=groupOfUniqueNames)")
 
 # Mapping Django field names to FreeIPA attributes
 AUTH_LDAP_USER_ATTR_MAP = {

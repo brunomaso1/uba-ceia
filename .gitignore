@@ -286,12 +286,12 @@ ceia-proyecto-final/modulo-calidad-datos/fiftyone/data
 # Modulo-seguridad
 # LLDAP
 lldap_data/
-
 # LDAP-Self-Service-Password
 ssp.conf.php
-
 # PostgreSQL (Keyclack)
 postgres_data/
+# Certificados TLS/SSL
+ceia-proyecto-final/modulo-seguridad/entrypoint/certs/
 
 # Modulo-respaldo
 ceia-proyecto-final/modulo-respaldo/backup*
@@ -299,8 +299,6 @@ ceia-proyecto-final/modulo-respaldo/backup*
 # Modulo-mis-palmeras
 mock-data/
 mock_data/
-
-
 
 # Modulo-IA
 ceia-proyecto-final/modulo-IA/plots
@@ -316,3 +314,4 @@ runs/*
 # Vagrant
 # General
 .vagrant/
+

@@ -8,22 +8,18 @@ export const routes: Routes = [
     {
         path: '',
         component: HomePage,
-        title: 'Home page',
     },
     {
         path: 'prediction',
         component: PredictionPage,
-        title: 'Prediction page',
     },
     {
         path: 'viewPrediction',
         component: ViewPredictionPage,
-        title: 'View Prediction page',
     },
     {
         path: 'unauthorized',
         component: UnauthorizedPage,
-        title: 'Unauthorized page',
     },
     {
         path: '**',

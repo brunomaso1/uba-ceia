@@ -57,7 +57,13 @@ services:
 
   cvat_ui: *default_networks_anchor
 
-  traefik: *default_networks_anchor
+  traefik:
+    environment:
+      TRAEFIK_ENTRYPOINTS_web_FORWARDEDHEADERS_INSECURE: true 
+    networks: !override
+      main:
+        aliases:
+          - traefik
 
   cvat_opa:
     networks: !override

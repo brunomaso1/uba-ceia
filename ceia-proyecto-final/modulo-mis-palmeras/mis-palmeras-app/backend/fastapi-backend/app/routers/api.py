@@ -27,4 +27,15 @@ router.include_router(zip_api.router)
 )
 async def health_check() -> HealthCheckResponse:
     """Health check endpoint to verify the API is running."""
-    return HealthCheckResponse(status="Ok")
+    gpu_available = False
+    try:
+        import modulo_utilidades
+        import modulo_ia
+        import torch
+
+        gpu_available = torch.cuda.is_available()
+    except AssertionError as e:
+        return HealthCheckResponse(status=f"GPU Error: {e}")
+    except ImportError:
+        return HealthCheckResponse(status="Dependencies missing")
+    return HealthCheckResponse(status="All ok | GPU available: " + str(gpu_available))

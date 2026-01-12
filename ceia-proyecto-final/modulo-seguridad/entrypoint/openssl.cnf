@@ -1,0 +1,21 @@
+[ req ]
+default_bits       = 4096
+prompt             = no
+default_md         = sha256
+req_extensions     = req_ext
+distinguished_name = dn
+
+[ dn ]
+C=UY
+ST=Montevideo
+L=Montevideo
+O=Picudo Rojo Dev
+OU=Development
+CN=picudo-rojo-desarrollo.org
+
+[ req_ext ]
+subjectAltName = @alt_names
+
+[ alt_names ]
+DNS.1 = picudo-rojo-desarrollo.org
+DNS.2 = *.picudo-rojo-desarrollo.org

@@ -1,56 +1,58 @@
 name: picudo-rojo-project
 
 services:
-  keycloak_web:
-    image: quay.io/keycloak/keycloak:${KEYCLOAK_VERSION:-26.3}
-    container_name: keycloak_web
-    environment:
-      KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://keycloakdb:5432/keycloak
-      # KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN}
-      # KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
-      KC_DB_USERNAME: ${KC_DB_USERNAME}
-      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
-
-      KC_HOSTNAME: ${KC_HOSTNAME:-localhost}
-      KC_HOSTNAME_PORT: 8080
-      KC_HOSTNAME_STRICT: false
-      KC_HOSTNAME_STRICT_HTTPS: false
-
-      KC_LOG_LEVEL: info
-      KC_METRICS_ENABLED: true
-      KC_HEALTH_ENABLED: true
-      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
-      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
-
-      # Eventos de auditoría
-      # KC_EVENTS_LISTENERS: jpa,jboss-logging
-
-      # # Guardara eventos de administración
-      # KC_EVENTS_ENABLED: true
-      # KC_EVENTS_STORE_ENABLED: true
-
-      KC_HTTP_ENABLED: true # Enable HTTP (not recommended for production)
-    command:
-      - start-dev
-    # command: start
-    depends_on:
-      - keycloakdb
-    ports:
-      - 7000:8080
-    networks:
-      - main
-
   keycloakdb:
     image: postgres:${POSTGRES_VERSION:-17.5}
     container_name: keycloakdb
     restart: unless-stopped
     volumes:
-      - ./postgres_data:/var/lib/postgresql/data
+      - "${POSTGRES_DATA:-postgres_data}:/var/lib/postgresql/data" # Use named volume by default. If using Vagrant, one should copy the volume to destination folder specified in .env.dev to avoid issues with Hyper-V shared folders.
     environment:
       POSTGRES_DB: keycloak
       POSTGRES_USER: ${KC_DB_USERNAME}
       POSTGRES_PASSWORD: ${KC_DB_PASSWORD}
+    networks:
+      - main
+
+  keycloak_web:
+    image: quay.io/keycloak/keycloak:${KEYCLOAK_VERSION:-26.3}
+    container_name: keycloak_web
+    environment:
+      # DATABASE CONFIGURATION
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloakdb:5432/keycloak
+      KC_DB_USERNAME: ${KC_DB_USERNAME}
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
+
+      # SERVER CONFIGURATION
+      KC_HOSTNAME: ${KC_HOSTNAME:-localhost}
+      KC_HOSTNAME_PORT: 8080
+
+      # SECURITY CONFIGURATION
+      KC_HOSTNAME_STRICT: ${KC_HOSTNAME_STRICT:-false} # Disable strict hostname checking
+      KC_HOSTNAME_STRICT_HTTPS: ${KC_HOSTNAME_STRICT_HTTPS:-false} # Disable strict HTTPS checking
+      KC_HTTP_ENABLED: ${KC_HTTP_ENABLED:-true} # Enable HTTP
+      KC_PROXY_HEADERS: ${KC_PROXY_HEADERS:-null} # No proxy headers by default
+
+      # BOOTSTRAP ADMIN USER
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-unsecurepassword}
+
+      # LOGGING AND METRICS
+      KC_LOG_LEVEL: info
+      KC_METRICS_ENABLED: true
+      KC_HEALTH_ENABLED: true
+
+      # AUDITORIA
+      # KC_EVENTS_LISTENERS: jpa,jboss-logging
+      # # Guardara eventos de administración
+      # KC_EVENTS_ENABLED: true
+      # KC_EVENTS_STORE_ENABLED: true
+    command: "${KEYCLOAK_START_COMMAND:-start-dev}"
+    depends_on:
+      - keycloakdb
+    ports:
+      - 7000:8080
     networks:
       - main
 

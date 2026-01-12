@@ -7,7 +7,7 @@ Wants=network-online.target docker.service
 Type=oneshot
 User=maso
 WorkingDirectory=/opt/ceia-proyecto-final
-ExecStart=/opt/ceia-proyecto-final/vagrant-scripts/04-start-prod-ubuntu-services.sh
+ExecStart=/opt/ceia-proyecto-final/vagrant-scripts/04-start-prod-services.sh
 RemainAfterExit=yes
 
 [Install]

@@ -1,42 +1,108 @@
+tls:
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /certs/prod.pem
+        keyFile: /certs/prod.key
+
 http:
+  middlewares:
+    redirect-to-https:
+      redirectScheme:
+        scheme: https
+
   routers:
+    # CVAT ROUTERS
+    # HTTP to HTTPS redirection router for CVAT
+    cvat-router-http:
+      rule: "Host(`cvat.picudo-rojo.org`)"
+      entryPoints:
+        - web
+      service: noop-service
+      middlewares:
+        - redirect-to-https
+    # HTTPS router for CVAT
+    cvat-router-https:
+      rule: "Host(`cvat.picudo-rojo.org`)"
+      entryPoints:
+        - websecure
+      tls: {} # Habilita TLS
+      service: cvat-service
+
+    # KEYCLOAK ROUTERS
+    keycloak-router-http:
+      rule: "Host(`auth.picudo-rojo.org`)"
+      entryPoints:
+        - web
+      service: noop-service
+      middlewares:
+        - redirect-to-https
+    keycloak-router-https:
+      rule: "Host(`auth.picudo-rojo.org`)"
+      entryPoints:
+        - websecure
+      tls: {}
+      service: keycloak-service
+
+    # LDAP SSP ROUTER
     ldap-ssp-router:
       rule: "Host(`password.picudo-rojo.org`)"
       service: ldap-ssp-service
-    
-    cvat-router:
-      rule: "Host(`cvat.picudo-rojo.org`)"
-      service: cvat-service
 
-    # fiftyone-router:
-    #   rule: "Host(`fiftyone.picudo-rojo.org`)"
-    #   service: fiftyone-service
+    # MIS PALMERAS ROUTERS
+    app-mis-palmeras-router-http:
+      rule: "Host(`app.picudo-rojo.org`)"
+      entryPoints:
+        - web
+      service: noop-service
+      middlewares:
+        - redirect-to-https
+    app-mis-palmeras-router-https:
+      rule: "Host(`app.picudo-rojo.org`)"
+      entryPoints:
+        - websecure
+      tls: {}
+      service: mis-palmeras-frontend-service
+    api-mis-palmeras-router-http:
+      rule: "Host(`api.picudo-rojo.org`)"
+      entryPoints:
+        - web
+      service: noop-service
+      middlewares:
+        - redirect-to-https
+    api-mis-palmeras-router-https:
+      rule: "Host(`api.picudo-rojo.org`)"
+      entryPoints:
+        - websecure
+      tls: {}
+      service: mis-palmeras-backend-service
 
-    landing-page-router:
-      rule: "Host(`picudo-rojo.org`) || Host(`192.168.0.3`)"
-      service: landing-page-service
+    # LANDING PAGE ROUTER
+    # LANDING PAGE ROUTER
+    landing-page-router-http:
+      rule: "Host(`picudo-rojo.org`)"
+      entryPoints:
+        - web
+      service: noop-service
+      middlewares:
+        - redirect-to-https
+    landing-page-router-https:
+      rule: "Host(`picudo-rojo.org`)"
+      entryPoints:
+        - websecure
+      tls: {}
+      service: mis-palmeras-maintenance-service
 
-    # Testing router:
-    # landing-page-router:
-    #   rule: "PathPrefix(`/`)"
-    #   service: landing-page-service
 
   services:
     cvat-service:
       loadBalancer:
         servers:
-          # - url: "http://host.docker.internal:8080" # Windows
           - url: "http://traefik:8080"
-
-    # fiftyone-service:
-    #   loadBalancer:
-    #     servers:
-    #       - url: "http://host.docker.internal:5151" # Windows
 
     landing-page-service:
       loadBalancer:
         servers:
-          # - url: "http://host.docker.internal:9100" # Windows
           - url: "http://landing-page:80" # Linux
 
     ldap-ssp-service:
@@ -44,3 +110,31 @@ http:
         servers:
           # - url: "http://host.docker.internal:17171" # Windows
           - url: "http://ldap-ssp:80" # Linux
+
+    keycloak-service:
+      loadBalancer:
+        servers:
+          # - url: "http://host.docker.internal:7000" # Windows
+          - url: "http://keycloak_web:8080" # Linux
+
+    mis-palmeras-frontend-service:
+      loadBalancer:
+        servers:
+          - url: "http://mis-palmeras-frontend:8080" # Linux
+
+    mis-palmeras-backend-service:
+      loadBalancer:
+        servers:
+          - url: "http://mis-palmeras-backend:8000" # Linux
+
+    mis-palmeras-maintenance-service:
+      loadBalancer:
+        servers:
+          # - url: "http://host.docker.internal:9200" # Windows
+          - url: "http://maintenance-page:80" # Linux
+
+    # Servicio ficticio que no hace nada.
+    noop-service:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1"

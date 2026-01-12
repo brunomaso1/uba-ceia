@@ -1,0 +1,20 @@
+name: picudo-rojo-project
+
+services:
+  lldap:
+    image: lldap/lldap:${LLDAP_VERSION:-v0.6.2}
+    ports:
+      - "3890:3890" # Para LDAP, no es necesario si se comunican entre contenedores
+      - "17170:17170" # Web UI
+    volumes:
+      - "${LLDAP_DATA:-lldap_data}:/data" # Use named volume by default. If using Vagrant, one should copy the volume to destination folder specified in .env.dev to avoid issues with Hyper-V shared folders.
+    environment:
+      - LLDAP_JWT_SECRET=${LLDAP_JWT_SECRET}
+      - LLDAP_KEY_SEED=${LLDAP_KEY_SEED}
+      - LLDAP_LDAP_BASE_DN=dc=localhost,dc=local # Base DN
+      - LLDAP_LDAP_USER_PASS=${LLDAP_LDAP_USER_PASS}
+    networks:
+      - main
+
+networks:
+  main:

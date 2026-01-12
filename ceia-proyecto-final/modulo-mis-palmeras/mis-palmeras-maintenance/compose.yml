@@ -1,0 +1,14 @@
+name: picudo-rojo-project
+services:
+  maintenance-page:
+    build: . # Usa el Dockerfile en el directorio actual
+    ports:
+      - "9200:80" # Mapea el puerto 80 del contenedor al host
+    volumes:
+      - .:/usr/share/nginx/html # Sincroniza cambios en tiempo real
+    container_name: maintenance-page
+    networks:
+      - main
+
+networks:
+  main:

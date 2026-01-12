@@ -1,18 +1,28 @@
 # Dependencias del sistema
 from pathlib import Path
-import json, os
+import json
 from typing import Any
+
+# Dependencias locales # Patron: re-export
+from modulo_utilidades.core_config import (
+    COCODatasetConfig,
+    CoreSettings,
+    FoldersCoreConfig,
+    GeoreferencingConfig,
+    core_settings,
+    COCOCategory,  # noqa: F401
+    COCOInfo,  # noqa: F401
+    COCOLicense,  # noqa: F401
+)
 
 # Dependencias de terceros
 from loguru import logger as LOGGER
 from pydantic import BaseModel, Field, computed_field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import SettingsConfigDict
 
-# Configuration.
-PROJECT_DIR = Path(__file__).parent.parent.resolve()
-ROOT_DIR = PROJECT_DIR / "modulo_utilidades"
-OPENCV_IO_MAX_IMAGE_PIXELS = 50000 * 50000  # Para imágenes grandes, ej: barrio3Ombues_20180801_dji_pc_3cm.jpg
-os.environ["OPENCV_IO_MAX_IMAGE_PIXELS"] = str(OPENCV_IO_MAX_IMAGE_PIXELS)
+LOGGER.debug("Loading modulo-utilidades config...")
+
+PROJECT_DIR = core_settings.folders.project_dir
 
 # Env resolution.
 env_file_path = PROJECT_DIR / ".env"
@@ -20,10 +30,8 @@ env_file = str(env_file_path)
 if env_file_path.exists():
     LOGGER.warning(f"Using .env file at {env_file_path.resolve()} for configuration.")
 
-class FoldersConfig(BaseModel):
-    root_dir: Path = ROOT_DIR
-    download_folder: Path = PROJECT_DIR / "downloads"
 
+class FoldersConfig(FoldersCoreConfig):
     @computed_field()
     def download_images_folder(self) -> Path:
         return self.download_folder / "images"
@@ -45,16 +53,8 @@ class FoldersConfig(BaseModel):
         return self.download_folder / "tasks"
 
     @computed_field
-    def download_coco_annotations_folder(self) -> Path:
-        return self.download_folder / "coco_annotations"
-
-    @computed_field
     def download_google_maps_folder(self) -> Path:
         return self.download_folder / "google_maps"
-
-    @computed_field
-    def download_kmls_folder(self) -> Path:
-        return self.download_folder / "kmls"
 
     @computed_field
     def download_cutouts_folder(self) -> Path:
@@ -63,10 +63,6 @@ class FoldersConfig(BaseModel):
     @computed_field
     def download_cutouts_metadata_folder(self) -> Path:
         return self.download_folder / "cutouts_metadata"
-
-    @computed_field
-    def download_geojson_folder(self) -> Path:
-        return self.download_folder / "geojson"
 
     @computed_field
     def download_jgw_folder(self) -> Path:
@@ -171,51 +167,6 @@ class PatchesConfig(BaseModel):
     purge_white_images: bool = True
 
 
-class COCOInfo(BaseModel):
-    description: str = "Conjunto de imágenes para la detección del picudo rojo"
-    url: str = "https://picudo-rojo.org"
-    version: str = "1.0"
-    year: int = 2025
-    contributor: str = "Intendencia de Montevideo"
-    date_created: str = "2025/01/01"
-
-
-class COCOLicense(BaseModel):
-    id: int
-    name: str
-    url: str
-
-
-class COCOCategory(BaseModel):
-    id: int
-    name: str
-    supercategory: str = ""
-
-
-class COCODatasetConfig(BaseModel):
-    info: COCOInfo = Field(default_factory=COCOInfo)
-    licenses: list[COCOLicense] = Field(
-        default_factory=lambda: [
-            COCOLicense(id=1, name="CC BY-NC-SA 4.0", url="https://creativecommons.org/licenses/by-nc-sa/4.0/")
-        ]
-    )
-    categories: list[COCOCategory] = Field(
-        default_factory=lambda: [
-            COCOCategory(id=0, name="palmera-sana"),
-            COCOCategory(id=1, name="palmera-infectada"),
-            COCOCategory(id=2, name="palmera-muerta"),
-            COCOCategory(id=3, name="palmera-exterminada"),
-        ]
-    )
-
-    def model_dump(self, **kwargs) -> dict[str, Any]:
-        return {
-            "info": self.info.model_dump(),
-            "licenses": [lic.model_dump() for lic in self.licenses],
-            "categories": [cat.model_dump() for cat in self.categories],
-        }
-
-
 class LayoutParserDrawBox(BaseModel):
     box_width: int = 10
     box_alpha: int = 0
@@ -279,18 +230,12 @@ class GoogleMapsConfig(BaseModel):
     )
 
 
-class GeoreferencingConfig(BaseModel):
-    sistema_referencia: str = "WGS84"
-    proyeccion: str = "UTM 21S"
-    codigo_epsg: str = "EPSG:32721"
-
-
 class BBoxSizeConfig(BaseModel):
     width: int = 10
     height: int = 10
 
 
-class Settings(BaseSettings):
+class Settings(CoreSettings):
     model_config = SettingsConfigDict(
         env_file=env_file,
         env_nested_delimiter="_",
@@ -319,4 +264,4 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-LOGGER.debug(f"Settings loaded: {json.dumps(settings.model_dump(), indent=2, default=str)}")
+LOGGER.debug(f"Settings (modulo-utilidades) loaded: {json.dumps(settings.model_dump(), indent=2, default=str)}")

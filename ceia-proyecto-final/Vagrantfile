@@ -2,37 +2,42 @@
 # vi: set ft=ruby :
 
 Vagrant.configure("2") do |config|
-  config.vm.box = "bento/ubuntu-24.04"
-  config.vm.box_version = "202502.21.0"
-  # config.vm.box = "gutehall/ubuntu24-04"
-  # config.vm.box_version = "2025.02.20"
+  config.vm.box = "boxen/ubuntu-24.04"
+  config.vm.box_version = "2025.08.20.12"
+  # config.vm.box = "sture/ubuntu2404"
+  # config.vm.box_version = "2025.08.06.18"
   config.vm.hostname = "ceia-proyecto-final-develop"
 
   config.vm.boot_timeout = 1200 # Tiempo de espera para el arranque de la VM
+
+  # Automate SMB credentials for synced folder
+  config.vm.synced_folder ".", "/vagrant",
+    smb_username: ENV['USERNAME'],
+    smb_password: ENV['SMB_PASSWORD'] || ''
   
   # Configuración de red bridge (eth1) -> Estática
   config.vm.network "public_network",
     # bridge: "Intel(R) Wi-Fi 6E AX211 160MHz", # Wi-Fi
-    bridge: "Intel(R) Ethernet Controller (3) I225-V", # Ethernet
+    # bridge: "Intel(R) Ethernet Controller (3) I225-V", # Ethernet
+    bridge: "External Bridge", # Usando switch Hyper-V
     use_dhcp_assigned_default_route: true  # Prioriza esta interfaz
 
   config.vm.disk :disk, size: "100GB", primary: true
 
-  config.vm.provider "virtualbox" do |vb|
-    vb.cpus = 6 # Número de CPUs asignadas a la VM
-    vb.memory = "16384" # 16 GB de RAM asignados a la VM
-    vb.name = "ceia-proyecto-final-develop" # Nombre de la VM en VirtualBox
-
-    # Deshabilita la interfaz NAT (eth0) como ruta predeterminada
-    vb.customize ["modifyvm", :id, "--nic1", "nat"]
-    vb.customize ["modifyvm", :id, "--nicpromisc1", "deny"]
+  config.vm.provider "hyperv" do |hv|
+    hv.cpus = 6 # Número de CPUs asignadas a la VM
+    hv.memory = 16384 # 16 GB de RAM asignados a la VM
+    hv.vmname = "ceia-proyecto-final-develop" # Nombre de la VM en Hyper-V
+    hv.enable_virtualization_extensions = true # Habilita extensiones de virtualización (para nested virtualization si es necesario)
+    hv.linked_clone = false # Usa clonación completa en lugar de linked clone
   end
 
-  config.vm.provision "setup-vm-network", type: "shell", path: "vagrant-scripts/01-setup-network.sh"
+  config.vm.provision "resize-disk", type: "shell", path: "vagrant-scripts/00-resize-disk-hyperv.sh"
   config.vm.provision "install-dependencies", type: "shell", path: "vagrant-scripts/02-install-dependencies.sh"
+  # config.vm.provision "install-gpu-dependencies", type: "shell", path: "vagrant-scripts/02.1-install-gpu-dependencies.sh"
   config.vm.provision "setup-firewall", type: "shell", path: "vagrant-scripts/03-configure-firewall.sh"
-  # To run: vagrant up --provision-with start-services
-  # To run: vagrant provision --provision-with start-services
+  # # To run: vagrant up --provision-with start-services
+  # # To run: vagrant provision --provision-with start-services
   environment = ENV['ENVIRONMENT'] || 'dev' # Por defecto, asume 'dev'
 
   if environment == 'prod'

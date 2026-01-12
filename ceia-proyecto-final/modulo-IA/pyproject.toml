@@ -1,52 +1,59 @@
+# NOTA: uv (igual que Poetry, PDM y otros) no propaga grupos:
+# el grupo dev de un paquete remoto no se expande cuando se instala desde otro proyecto.
+# Entonces, si instalamos el modulo-utilidades desde modulo-ia, no se instalan las dependencias del grupo dev de modulo-utilidades
+# Hay una diferencia conceptual entre el "grupo dev" y el "extra development" (o "optional development").
+# El tema es entonces: 
+# 1) Cuando hago uv add "modulo-utilidades[development] @ ..\modulo-utilidades\" --optional development --editable -> Funciona perfecto,
+#  toma el .env de la carpeta del modulo-utilidades. 
+# 2) Cuando hago uv add "modulo-utilidades @ .\wheels\modulo_utilidades-0.1.0-py3-none-any.whl" -> No toma las variables de dicha 
+# carpeta y revienta (esto está bien, porque después en producción se las paso con docker-compose).
+# En conclusión, para desarrollo local es mejor instalar el modulo-utilidades en modo editable desde la carpeta del modulo-utilidades,
+# y manejar la wheel desde el Dockerfile de producción.
 [project]
 name = "modulo-ia"
-version = "0.1.0"
+version = "0.1.2"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
+# requires-python = ">=3.13" # Versión original
+requires-python = ">=3.11" # Versión adaptada GPU NVIDIA RTX 1060
 # uv build # En el modulo utilidades
 # uv add dist/modulo_utilidades-0.1.0-py3-none-any.whl
 # uv add "modulo-utilidades @E:\Documentos\Git Repositories\uba-ceia-proy-final\ceia-proyecto-final\modulo-utilidades\dist\modulo_utilidades-0.1.0-py3-none-any.whl"
 dependencies = [
     "loguru>=0.7.3",
-    "modulo-utilidades",
-    "numpy>=2.3.4",
+    # "numpy>=2.3.4", # Version original
+    "numpy<2.0", # Versión adaptada para compatibilidad con pyTorch y otros paquetes
     "pandas>=2.3.3",
     "pydantic>=2.12.3",
     "pydantic-settings>=2.11.0",
-    "supervision>=0.26.1",
+    "supervision==0.27.0",
     "ultralytics>=8.3.217",
+    "modulo-utilidades~=0.1.0",
 ]
 
 # Formas de instalar el modulo-utilidades:
 # - Como dependencia de desarrollo (ej: para tests, notebooks, scripts de ayuda, que no es necesario en producción)::
 # uv add "modulo-utilidades @ ..\modulo-utilidades\" --dev --no-editable # Instala todo, pero no se puede editar el modulo utilidades sobre la marcha.
-# uv add "modulo-utilidades @ ..\modulo-utilidades\" --dev --editable # No instala dependencias de desarrollo, hay que instalarlas a mano. Te explota si no lo haces.
-# uv add --group dev "modulo-utilidades @ ..\modulo-utilidades\"    # Instalar dependencias de desarrollo (si existe el grupo dev en el modulo utilidades). Permite editar el modulo utilidades sobre la marcha.
-                                                                    # Sin embargo, se instala y la ruta queda por defecto en el .venv del modulo IA, lo que hace fallar las configuraciones que cargan variables 
-                                                                    # de entorno desde el .env del modulo utilidades.
-
-# La mejor forma es definir un grupo dev en el modulo utilidades, y luego instalarlo con:
-# uv add "modulo-utilidades[dev] @ ..\modulo-utilidades\" --dev --editable 
+# uv add "modulo-utilidades @ ..\modulo-utilidades\" --dev --editable # No instala dependencias de desarrollo (no se propaga el grupo dev).
+# La mejor forma es definir un extra dev en el modulo utilidades, y luego instalarlo con:
+# uv add "modulo-utilidades[development] @ ..\modulo-utilidades\" --optional development --editable 
 # O sea, instalar el grupo dev del modulo utilidades en modo editable en el entorno de desarrollo del modulo IA.
 
-# - Como dependencia del código productivo:
-#     - Modo editable (los cambios en el modulo utilidades se reflejan al instante en el modulo IA):
-# uv add "modulo-utilidades @ ..\modulo-utilidades\" --editable
-#     - Modo producción (no se pueden editar los archivos del modulo utilidades sobre la marcha):
+# - Modo producción (no se pueden editar los archivos del modulo utilidades sobre la marcha):
 # uv build # En el modulo-utilidades (crea la Wheel)
-# uv add "modulo-utilidades @E:\Documentos\Git Repositories\uba-ceia-proy-final\ceia-proyecto-final\modulo-utilidades\dist\modulo_utilidades-0.1.0-py3-none-any.whl"
+# uv add "modulo-utilidades @file\modulo_utilidades-0.1.0-py3-none-any.whl"
 
 # No se utiliza la dependencia "dependency-groups" por defecto de uv, sino que se utiliza la sección [project.optional-dependencies]
-# para definir las dependencias de desarrollo.
+# para definir las dependencias de la etapa desarrollo, que no es lo mismo que para el desarrollo de éste modulo IA.
 # [dependency-groups]
 # dev = [
 #     ...
 # ]
 
-# Para agregar dependencias: uv add <dependencia> --optional dev
+# Para agregar dependencias: uv add <dependencia> --optional development
+# Ejemplo modulo utilidades: uv add "modulo-utilidades[development] @ ..\modulo-utilidades\" --optional development --editable
 [project.optional-dependencies]
-dev = [
+development = [
     "tqdm>=4.67.1",
     "scikit-learn>=1.7.0",
     "fiftyone>=1.6.0",
@@ -59,7 +66,7 @@ dev = [
     "python-dotenv>=1.1.1",
     "typer>=0.19.2",
     "gputil-fix>=1.4.1.2",
-    "modulo-utilidades[dev]",
+    "modulo-utilidades[development]",
 ]
 
 [[tool.uv.index]]
@@ -75,7 +82,8 @@ torch = [
 torchvision = [
     { index = "pytorch-cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
 ]
-modulo-utilidades = { path = "../modulo-utilidades", editable = true }
+# modulo-utilidades = { path = "wheels/modulo_utilidades-0.1.0-py3-none-any.whl" }
+modulo-utilidades = { path = "../modulo-utilidades", editable = true } # Modo editable
 
 [build-system]
 requires = ["uv_build>=0.9.4,<0.10.0"]
@@ -90,4 +98,5 @@ source-exclude = [
     "modulo_ia/features.py",
     "modulo_ia/main.py",
     "modulo_ia/visualizations.py",
+    "modulo_ia/config.py"
 ]

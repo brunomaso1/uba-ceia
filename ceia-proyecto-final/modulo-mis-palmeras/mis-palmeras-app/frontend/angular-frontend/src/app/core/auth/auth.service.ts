@@ -30,7 +30,7 @@ export class AuthService {
         });
     }
 
-    initializeAuth(): Observable<void> {
+    initializeAuth$(): Observable<void> {
         return this.oidcSecurityService.checkAuth().pipe(
             take(1),
             switchMap(({ isAuthenticated }) => {

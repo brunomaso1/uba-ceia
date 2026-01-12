@@ -125,17 +125,22 @@ docker stop $(docker ps -aq)
 docker rm $(docker ps -aq)
 ```
 
+- Eliminar volumenes:
+```bash
+docker volume rm $(docker volume ls -q)
+```
+
+- Eliminar imágenes:
+```bash
+docker rmi $(docker images -q)
+```
+
 - Prune:
   - Eliminar imágenes no utilizadas: `docker image prune`
   - Eliminar contenedores no utilizados: `docker container prune`
   - Eliminar volúmenes no utilizados: `docker volume prune`
   - Eliminar redes no utilizadas: `docker network prune`
   - Eliminar todo lo anterior: `docker system prune`
-  
-- Eliminar volumenes:
-```bash
-docker volume rm $(docker volume ls -q)
-```
 
 - Obtener logs de Traefik (parseados a windows - ejecutar dentro de la VM):
 ```bash
@@ -152,6 +157,7 @@ docker exec -it <container_id> sh
 docker network ls
 docker network inspect <network_id> # Te dice cuales los contenedores conectados
 ```
+
 
 ##### Comandos debugging
 
@@ -207,6 +213,37 @@ docker exec traefik ps aux
 docker exec traefik netstat -tlnp 2>/dev/null || docker exec traefik ss -tlnp
 ```
 
+#### Traefik
+
+- Generación de certificados autofirmados (con un archivo de configuración personalizado):
+```bash
+openssl req -x509 -nodes -days 825 -newkey rsa:4096 -keyout dev.key -out dev.pem -config openssl.cnf
+```
+
+Nota archivo openssl.cnf:
+```ini
+[ req ]
+default_bits       = 4096
+prompt             = no
+default_md         = sha256
+req_extensions     = req_ext
+distinguished_name = dn
+
+[ dn ]
+C=UY
+ST=Montevideo
+L=Montevideo
+O=Picudo Rojo Dev
+OU=Development
+CN=picudo-rojo-desarrollo.org
+
+[ req_ext ]
+subjectAltName = @alt_names
+
+[ alt_names ]
+DNS.1 = picudo-rojo-desarrollo.org
+DNS.2 = *.picudo-rojo-desarrollo.org
+```
 
 #### Poetry (deprecado en favor de UV)
 
@@ -339,6 +376,7 @@ df -h
 ```bash
 lsblk
 fdisk -l
+lsblk -o NAME,SIZE,TYPE,MOUNTPOINT
 ```
 
 - Revisar el grupo de volúmenes lógicos (LVM):
@@ -392,6 +430,11 @@ egrep "svm|vmx" /proc/cpuinfo
 sudo lshw -C display
 ```
 
+- Chequear NVIDIA dentro de un contenedor Docker:
+```bash
+docker run --rm --gpus all nvidia/cuda:12.2.0-base-ubuntu24.04 nvidia-smi
+```
+
 - Chequear drivers de NVIDIA:
 <!-- https://documentation.ubuntu.com/server/how-to/graphics/install-nvidia-drivers/ -->
 ```bash
@@ -410,6 +453,120 @@ sudo apt install nvidia-utils-580-server # Instala las utilidades de nvidia
 - Verificar sistema operativo:
 ```bash
 cat /etc/os-release
+```
+
+- Desactivar firewall (ufw):
+```bash
+sudo ufw disable
+```
+
+- Copiar todo el contenido al servidor remoto:
+```bash
+# Estando en uba-ceia-proy-final
+# Hay que ver el tema de los permisos de los archivos copiados. Se puede crear la carpeta en el servidor y hacer sudo chown -R maso:maso /opt/ceia-proyecto-final antes de copiar.
+# O darle permisos directamente con sudo chown -R maso:maso /opt
+scp -r ./ceia-proyecto-final/* maso@192.168.0.3:/opt/ceia-proyecto-final/
+```
+
+- Copiar un módulo al servidor remoto:
+```bash
+scp -r .\modulo-mis-palmeras\mis-palmeras-landing-page\ .\modulo-mis-palmeras\mis-palmeras-maintenance\ maso@192.168.0.3:/opt/ceia-proyecto-final/modulo-mis-palmeras/
+```
+
+- Copiar desde el servidor (mejor rsync) un backup al entorno local:
+```bash
+# Nota instalación: Cuando se instala con choco no funciona directamente en PowerShell porque hay un tema con el .ssh (SSH Hell). Tiene que usarse el de rsync pero utiliza otro.
+# Para solucionar se puede usar: rsync -avz --progress -e "C:\ProgramData\chocolatey\lib\rsync\tools\bin\ssh.exe" maso@192.168.0.3:/opt/ceia-proyecto-final/modulo-respaldo/backup-20251213 ./
+# O setear la variable de entorno: $env:RSYNC_RSH = "C:\ProgramData\chocolatey\lib\rsync\tools\bin\ssh.exe" (o donde esté instalado ssh.exe de rsync)
+$env:RSYNC_RSH = "C:\ProgramData\chocolatey\lib\rsync\tools\bin\ssh.exe"
+rsync -avz --progress maso@192.168.0.3:/opt/ceia-proyecto-final/modulo-respaldo/backup-20251213 ./
+```
+
+- Copiar a producción con rsync (con filtros):
+```bash
+$env:RSYNC_RSH = "C:\ProgramData\chocolatey\lib\rsync\tools\bin\ssh.exe"
+rsync -avz --progress --filter="merge .rsync-filters" ceia-proyecto-final/ maso@192.168.0.3:/ruta/destino/
+```
+
+- Opción mirror (elimina archivos en destino que no estén en origen):
+```bash
+# Estando en la carpeta ceia-proyecto-final
+$env:RSYNC_RSH = "C:\ProgramData\chocolatey\lib\rsync\tools\bin\ssh.exe"
+# ¡EVITAR -a! Usar las opciones rsync que NO PRESERVAN PERMISOS ni DUEÑO (-p, -o, -g), después es un lio con Docker y permisos.
+# --delete: permite "mirror", elimina archivos en destino que no estén en origen.
+rsync -rltDv --progress --delete --filter="merge .rsync-filters" ./ maso@192.168.0.3:/opt/ceia-proyecto-final/
+
+# Finalmente copiar el backup para restaurar los datos:
+$folder = "backup-20251213"   # Cambiar por el nombre del backup a restaurar
+ssh maso@192.168.0.3 "mkdir -p /opt/ceia-proyecto-final/modulo-respaldo/${folder}"
+scp -r ".\modulo-respaldo\$folder" maso@192.168.0.3:/opt/ceia-proyecto-final/modulo-respaldo/
+```
+
+##### Servicios
+
+NOTA: Los servicios personalizados se deben copiar a `/etc/systemd/system/` para luego habilitarlos e iniciarlos.
+En `/lib/systemd/system/` se encuentran los servicios del sistema.
+
+
+- Listar todos los servicios:
+```bash
+sudo systemctl list-unit-files --type=service
+```
+
+- Listar servicios cargados:
+```bash
+sudo systemctl list-units --type=service
+```
+
+- Listar servicios en ejecución:
+```bash
+sudo systemctl list-units --type=service --state=running
+```
+
+- Listar servicios hablitados (en el arranque):
+```bash
+sudo systemctl list-unit-files --type=service --state=enabled
+```
+
+- Listar servicios personalizados:
+```bash
+ls /etc/systemd/system/*.service
+```
+
+- Ver estado de un servicio:
+```bash
+systemctl status ceia-proyecto-final.service
+```
+
+- Recargar systemd:
+```bash
+# Es necesario cuando se modifica un archivo de servicio.
+sudo systemctl daemon-reload
+```
+
+- Reiniciar un servicio:
+```bash
+sudo systemctl restart ceia-proyecto-final.service
+```
+
+- Logs de un servicio:
+```bash
+journalctl -u ceia-docker-start.service -n 50 --no-pager
+```
+
+- Borrar el servicio:
+```bash
+sudo systemctl disable ceia-proyecto-final.service
+sudo rm /etc/systemd/system/ceia-proyecto-final.service
+sudo systemctl daemon-reload
+```
+
+- Crear el servicio:
+```bash
+sudo cp /opt/ceia-proyecto-final/vagrant-scripts/ceia-proyecto-final.service /etc/systemd/system/
+sudo systemctl enable ceia-proyecto-final.service
+sudo systemctl start ceia-proyecto-final.service
+sudo systemctl daemon-reload
 ```
 
 #### MLFlow

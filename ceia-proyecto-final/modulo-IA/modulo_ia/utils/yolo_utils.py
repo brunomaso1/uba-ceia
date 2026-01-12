@@ -5,11 +5,13 @@ from typing import Any
 
 
 # Dependencias de terceros
+import pandas as pd
 from matplotlib import pyplot as plt
 from ultralytics.engine.results import Results
 from ultralytics.data.build import InfiniteDataLoader
 from ultralytics.data import build_dataloader, build_yolo_dataset
 from ultralytics.cfg import get_cfg
+from ultralytics.utils.metrics import DetMetrics
 
 
 def filter_results_by_confidence(
@@ -243,3 +245,41 @@ def plot_yolo_augmentations(dataloader, class_names, color_map=None, max_batches
 
         plt.tight_layout()
         plt.show()
+
+
+def ultralytics_confusion_to_df(metrics: DetMetrics, include_background: bool = True) -> pd.DataFrame:
+    """
+    Convierte la matriz de confusión de un objeto DetMetrics de Ultralytics en un DataFrame de Pandas.
+    Agrega automáticamente la clase 'background' si corresponde.
+
+    Args:
+        metrics (DetMetrics): Resultado del método model.val(), que contiene metrics.confusion_matrix.
+        include_background (bool): Si True, incluye la clase 'background' al final si hay una fila/col extra.
+
+    Returns:
+        pd.DataFrame: Matriz de confusión con índices y columnas nombradas según las clases.
+    """
+    cm = getattr(metrics, "confusion_matrix", None)
+    if cm is None or getattr(cm, "matrix", None) is None:
+        raise ValueError("El objeto metrics no contiene una matriz de confusión válida.")
+
+    matrix = cm.matrix
+    n_rows, n_cols = matrix.shape
+
+    # Obtener nombres de clases del objeto Ultralytics
+    names = list(getattr(cm, "names", {}).values()) if getattr(cm, "names", None) else []
+
+    # Si la matriz incluye fondo (una fila/col extra)
+    if include_background and len(names) + 1 == n_rows == n_cols:
+        names.append("fondo")
+
+    # Validar tamaño
+    if len(names) != n_rows:
+        raise ValueError(
+            f"Cantidad de nombres ({len(names)}) no coincide con la forma de la matriz ({n_rows}, {n_cols})."
+            f" Verificá si el modelo y el dataset tienen la misma cantidad de clases."
+        )
+
+    # Crear DataFrame
+    df_cm = pd.DataFrame(matrix, index=names, columns=names)
+    return df_cm

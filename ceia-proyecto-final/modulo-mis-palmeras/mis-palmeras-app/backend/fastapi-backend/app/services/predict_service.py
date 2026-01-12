@@ -1,6 +1,7 @@
 # Dependencias del sistema
 from dataclasses import dataclass
 import io
+import time
 
 # Dependencias locales
 from ..config import settings
@@ -76,6 +77,8 @@ class PredictionService:
             - El proceso es síncrono y puede tardar varios segundos dependiendo del tamaño
               de la imagen y la complejidad del modelo.
         """
+        # Measure time
+        start_time = time.time()
         store_entry = fetch_store_entry_with_checks(self.store_api, image_id)
         predictions, coco_annotations = self._generate_sync_predictions(store_entry.image, store_entry.name, model_type)
         store_entry.predictions = procesador_geojson_kml_core.create_geojson_from_annotations(
@@ -91,10 +94,15 @@ class PredictionService:
         encoded_image_bytes = encoded_image.tobytes()
         store_entry.encoded_annotated_image_buffer = io.BytesIO(encoded_image_bytes)
         self.store_api.update(store_entry)
+        end_time = time.time()
+        logger.debug(
+            f"Synchronous prediction generated for image ID {image_id} using model {model_type.name} "
+            f"in {end_time - start_time:.2f} seconds."
+        )
 
         return True
 
-    async def generate_async_predictions(self, image_id: int, model_tpye: ModelType = ModelType.PALM_DETECTION) -> str:
+    async def generate_async_predictions(self, image_id: int, model_type: ModelType = ModelType.PALM_DETECTION) -> str:
         """
         Genera predicciones de manera asíncrona para una imagen específica utilizando el modelo especificado.
         Esta función crea un trabajo en segundo plano (background job) de FastAPI para procesar

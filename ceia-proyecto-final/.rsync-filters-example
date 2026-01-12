@@ -1,0 +1,35 @@
+# ===================================================
+# 1. EXCLUSIONES GLOBALES (Tus reglas existentes)
+#    Estas reglas tienen prioridad si se aplican primero.
+# ===================================================
+
+- /.vagrant
+- *.env
+- /modulo-calidad-datos/notebooks/
+
+# ===================================================
+# 2. INCLUSIÓN SELECTIVA (El objetivo principal)
+#    Debemos incluir el camino hacia el objetivo, pero
+#    excluir lo que está al mismo nivel.
+# ===================================================
+
+# 2.1 INCLUIR LA CARPETA QUE QUEREMOS
+# (+) Incluir el paquete 'modulo_ia' y todo su contenido.
++ /modulo-IA/modulo_ia/
+
+# 2.2 INCLUIR LAS CARPETAS PADRE NECESARIAS
+# (+) Incluir la carpeta modulo-IA para que se pueda acceder a modulo_ia
++ /modulo-IA/
+
+# 2.3 EXCLUIR TODOS LOS OTROS ELEMENTOS DENTRO DE modulo-IA
+# (-) Excluir todos los archivos y carpetas que están DENTRO de modulo-IA
+#     y que no fueron incluidos en la línea 2.1 (como data, notebooks, .venv, etc.).
+- /modulo-IA/*
+
+# ===================================================
+# 3. EXCLUSIÓN POR DEFECTO (Regla Final)
+# ===================================================
+
+# (-) Excluir todos los otros módulos y archivos en el nivel raíz 
+#     (modulo-calidad-datos, modulo-reportes, etc.), excepto los que ya fueron incluidos.
+- /*

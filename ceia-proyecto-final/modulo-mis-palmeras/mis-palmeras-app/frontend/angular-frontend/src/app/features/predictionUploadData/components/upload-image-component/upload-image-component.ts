@@ -24,7 +24,7 @@ export class UploadImageComponent implements OnDestroy {
       this.selectedFile = file;
       this.fileName = file.name;
 
-      const MAX_PREVIEW_SIZE_MB = 50;
+      const MAX_PREVIEW_SIZE_MB = 60;
       if (file.size <= MAX_PREVIEW_SIZE_MB * 1024 * 1024) {
         // Show the image preview
         const reader = new FileReader();
