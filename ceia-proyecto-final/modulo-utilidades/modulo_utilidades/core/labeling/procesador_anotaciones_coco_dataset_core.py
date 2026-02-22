@@ -4,15 +4,15 @@ from pathlib import Path
 from typing import Any, Optional
 
 # Dependencias propias.
-from modulo_utilidades.core_config import core_settings as CORE_CONFIG
+from modulo_utilidades.config import settings as CONFIG
 
 # Dependencias de terceros.
 from loguru import logger as LOGGER
 from supervision import Detections
 
 # Configuraciones
-DOWNLOAD_COCO_ANNOTATIONS_FOLDER: Path = CORE_CONFIG.folders.download_coco_annotations_folder
-COCO_DUMP = CORE_CONFIG.coco_dataset.model_dump()
+DOWNLOAD_COCO_ANNOTATIONS_FOLDER: Path = CONFIG.folders.download_coco_annotations_folder
+COCO_DUMP = CONFIG.coco_dataset.model_dump()
 COCO_DATASET_INFO_DICT: dict[str, Any] = COCO_DUMP["info"]
 COCO_DATASET_LICENSES_DICT: list[dict[str, Any]] = COCO_DUMP["licenses"]
 COCO_DATASET_CATEGORIES_DICT: list[dict[str, Any]] = COCO_DUMP["categories"]

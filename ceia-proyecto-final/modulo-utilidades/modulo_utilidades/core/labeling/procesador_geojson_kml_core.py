@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 # Dependencias propias.
-from modulo_utilidades.core_config import core_settings as CORE_CONFIG
+from modulo_utilidades.config import settings as CONFIG
 from .convertor_cordenadas_core import convert_bbox_image_to_world
 from .procesador_anotaciones_coco_dataset_core import get_image_id_from_annotations
 
@@ -15,9 +15,9 @@ from shapely.geometry import Point
 from loguru import logger as LOGGER
 
 # Configuraciones
-DOWNLOAD_KMLS_FOLDER: Path = CORE_CONFIG.folders.download_kmls_folder
-DOWNLOAD_GEOJSON_FOLDER: Path = CORE_CONFIG.folders.download_geojson_folder
-CODIGO_EPSG_DEFAULT: str = CORE_CONFIG.georeferenciacion.codigo_epsg
+DOWNLOAD_KMLS_FOLDER: Path = CONFIG.folders.download_kmls_folder
+DOWNLOAD_GEOJSON_FOLDER: Path = CONFIG.folders.download_geojson_folder
+CODIGO_EPSG_DEFAULT: str = CONFIG.georeferenciacion.codigo_epsg
 
 
 def create_geojson_from_annotations(

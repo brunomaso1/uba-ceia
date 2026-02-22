@@ -73,7 +73,7 @@ class Settings(BaseSettings):
 
     environment: str = "dev"
     api_version: str = "v1"
-    timeout_keep_alive: int = 600
+    timeout_keep_alive: int = 1200 # 20 minutes
     port: int = 8000
 
     target_img_size_wh: tuple[int, int] = (640, 640)

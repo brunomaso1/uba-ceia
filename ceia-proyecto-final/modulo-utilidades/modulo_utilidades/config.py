@@ -1,28 +1,21 @@
 # Dependencias del sistema
+import os, json
 from pathlib import Path
-import json
 from typing import Any
 
 # Dependencias locales # Patron: re-export
-from modulo_utilidades.core_config import (
-    COCODatasetConfig,
-    CoreSettings,
-    FoldersCoreConfig,
-    GeoreferencingConfig,
-    core_settings,
-    COCOCategory,  # noqa: F401
-    COCOInfo,  # noqa: F401
-    COCOLicense,  # noqa: F401
-)
 
 # Dependencias de terceros
 from loguru import logger as LOGGER
 from pydantic import BaseModel, Field, computed_field
-from pydantic_settings import SettingsConfigDict
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 LOGGER.debug("Loading modulo-utilidades config...")
-
-PROJECT_DIR = core_settings.folders.project_dir
+PROJECT_DIR = Path(__file__).parent.parent.resolve()
+LOGGER.debug(f"Project directory resolved at: {PROJECT_DIR}")
+ROOT_DIR = PROJECT_DIR / "modulo_utilidades"
+OPENCV_IO_MAX_IMAGE_PIXELS = 50000 * 50000  # Para imágenes grandes, ej: barrio3Ombues_20180801_dji_pc_3cm.jpg
+os.environ["OPENCV_IO_MAX_IMAGE_PIXELS"] = str(OPENCV_IO_MAX_IMAGE_PIXELS)
 
 # Env resolution.
 env_file_path = PROJECT_DIR / ".env"
@@ -31,7 +24,23 @@ if env_file_path.exists():
     LOGGER.warning(f"Using .env file at {env_file_path.resolve()} for configuration.")
 
 
-class FoldersConfig(FoldersCoreConfig):
+class FoldersConfig(BaseModel):
+    project_dir: Path = PROJECT_DIR
+    root_dir: Path = ROOT_DIR
+    download_folder: Path = PROJECT_DIR / "downloads"
+
+    @computed_field
+    def download_coco_annotations_folder(self) -> Path:
+        return self.download_folder / "coco_annotations"
+
+    @computed_field
+    def download_kmls_folder(self) -> Path:
+        return self.download_folder / "kmls"
+
+    @computed_field
+    def download_geojson_folder(self) -> Path:
+        return self.download_folder / "geojson"
+
     @computed_field()
     def download_images_folder(self) -> Path:
         return self.download_folder / "images"
@@ -77,12 +86,63 @@ class FoldersConfig(FoldersCoreConfig):
         return self.download_folder / "extract"
 
 
+class COCOInfo(BaseModel):
+    description: str = "Conjunto de imágenes para la detección del picudo rojo"
+    url: str = "https://picudo-rojo.org"
+    version: str = "1.0"
+    year: int = 2025
+    contributor: str = "Intendencia de Montevideo"
+    date_created: str = "2025/01/01"
+
+
+class COCOLicense(BaseModel):
+    id: int
+    name: str
+    url: str
+
+
+class COCOCategory(BaseModel):
+    id: int
+    name: str
+    supercategory: str = ""
+
+
+class COCODatasetConfig(BaseModel):
+    info: COCOInfo = Field(default_factory=COCOInfo)
+    licenses: list[COCOLicense] = Field(
+        default_factory=lambda: [
+            COCOLicense(id=1, name="CC BY-NC-SA 4.0", url="https://creativecommons.org/licenses/by-nc-sa/4.0/")
+        ]
+    )
+    categories: list[COCOCategory] = Field(
+        default_factory=lambda: [
+            COCOCategory(id=0, name="palmera-sana"),
+            COCOCategory(id=1, name="palmera-infectada"),
+            COCOCategory(id=2, name="palmera-muerta"),
+            COCOCategory(id=3, name="palmera-exterminada"),
+        ]
+    )
+
+    def model_dump(self, **kwargs) -> dict[str, Any]:
+        return {
+            "info": self.info.model_dump(),
+            "licenses": [lic.model_dump() for lic in self.licenses],
+            "categories": [cat.model_dump() for cat in self.categories],
+        }
+
+
+class GeoreferencingConfig(BaseModel):
+    sistema_referencia: str = "WGS84"
+    proyeccion: str = "UTM 21S"
+    codigo_epsg: str = "EPSG:32721"
+
+
 class MongoDBConfig(BaseModel):
     database: str = "picudo-rojo"
     host: str = "localhost"
     port: int = 27017
-    user: str
-    password: str
+    user: str = ""
+    password: str = ""
 
     @computed_field
     def connection_string(self) -> str:
@@ -93,8 +153,8 @@ class CVATConfig(BaseModel):
     host: str = "localhost"
     port: int = 8080
     scheme: str = "http"
-    user: str
-    password: str
+    user: str = ""
+    password: str = ""
     export_format: str = "COCO 1.0"
     task_export_path: str = "annotations\\instances_default.json"
     job_export_path: str = "annotations\\instances_default.json"
@@ -117,8 +177,8 @@ class MinioConfig(BaseModel):
     host: str = "localhost"
     port: int = 9000
     scheme: str = "http"
-    access_key: str
-    secret_key: str
+    access_key: str = ""
+    secret_key: str = ""
     region: str = "nl-ams"
     paths: MinioPaths = Field(default_factory=MinioPaths)
 
@@ -235,7 +295,7 @@ class BBoxSizeConfig(BaseModel):
     height: int = 10
 
 
-class Settings(CoreSettings):
+class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=env_file,
         env_nested_delimiter="_",
@@ -262,6 +322,8 @@ class Settings(CoreSettings):
     georeferenciacion: GeoreferencingConfig = Field(default_factory=GeoreferencingConfig)
     bbox_size: BBoxSizeConfig = Field(default_factory=BBoxSizeConfig)
 
-
 settings = Settings()
+LOGGER.debug("Environment variables for modulo-utilidades:")
+for key, value in os.environ.items():
+    LOGGER.debug(f"{key}={value}")
 LOGGER.debug(f"Settings (modulo-utilidades) loaded: {json.dumps(settings.model_dump(), indent=2, default=str)}")

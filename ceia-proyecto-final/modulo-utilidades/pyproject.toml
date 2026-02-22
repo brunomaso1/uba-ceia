@@ -1,10 +1,10 @@
 [project]
 name = "modulo-utilidades"
-version = "0.1.2"
-description = "Add your description here"
+version = "0.2.0"
+description = "Modulo utilidades - Agrupa funciones y clases comunes para el proyecto de IA"
 readme = "README.md"
 # requires-python = ">=3.13, <4.0" # Version original
-requires-python = ">=3.11" # Versión adaptada a GPU NVIDIA GTX 1060
+requires-python = ">=3.11, <3.12" # Versión adaptada a GPU NVIDIA GTX 1060
 dependencies = [
     "fastkml>=1.2.0",
     "geopandas>=1.1.1",
@@ -62,6 +62,5 @@ source-exclude = [
     "modulo_utilidades/labeling",
     "modulo_utilidades/s3_comunication",
     "modulo_utilidades/utils",
-    "modulo_utilidades/webscrapping",
-    "modulo_utilidades/config.py",
+    "modulo_utilidades/webscrapping"
 ]

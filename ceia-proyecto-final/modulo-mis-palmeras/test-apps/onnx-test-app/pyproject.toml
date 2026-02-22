@@ -1,0 +1,16 @@
+[project]
+name = "onnx-test-app"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+# Para CUDA 11.8 -> uv add onnxruntime-gpu==1.19.2
+# Para CUDA 12+ -> uv add onnxruntime-gpu (instala la última compatible con CUDA 12)
+dependencies = [
+    "fastapi[standard]>=0.129.1",
+    "loguru>=0.7.3",
+    "numpy>=2.4.2",
+    "onnxruntime-gpu==1.19.2",
+    "opencv-python-headless>=4.13.0.92", # Para leer imágenes sin necesidad de dependencias de GUI
+    "python-multipart>=0.0.22", # Para manejar uploads de archivos en FastAPI
+]

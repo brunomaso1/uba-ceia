@@ -1,10 +1,14 @@
 # Dependencias del sistema
+from torch import device
 import datetime, yaml
 from pathlib import Path
 from typing import Any
 
+# Dependencias locales
+from modulo_ia.config import settings as CONFIG
 
 # Dependencias de terceros
+from loguru import logger as LOGGER
 import pandas as pd
 from matplotlib import pyplot as plt
 from ultralytics.engine.results import Results
@@ -12,6 +16,10 @@ from ultralytics.data.build import InfiniteDataLoader
 from ultralytics.data import build_dataloader, build_yolo_dataset
 from ultralytics.cfg import get_cfg
 from ultralytics.utils.metrics import DetMetrics
+from ultralytics import YOLO
+import typer
+
+app = typer.Typer()
 
 
 def filter_results_by_confidence(
@@ -283,3 +291,60 @@ def ultralytics_confusion_to_df(metrics: DetMetrics, include_background: bool = 
     # Crear DataFrame
     df_cm = pd.DataFrame(matrix, index=names, columns=names)
     return df_cm
+
+
+@app.command()
+def convert_model_to_onnx(model_path):
+    """
+    Convierte un modelo de PyTorch a ONNX y lo guarda en la ruta especificada.
+
+    Args:
+        model_path (str | Path): La ruta del modelo de PyTorch a convertir.
+        output_path (str | Path): La ruta donde se guardará el archivo ONNX resultante.
+
+    Returns:
+        None: Guarda el modelo convertido en la ruta especificada.
+    """
+    model = YOLO(model_path)
+
+    # Originalmente, sin half=True. Esto implica que el modelo ocupe el doble de tamaño que el original, dado que por defecto
+    # se exporta con precisión fp32, o sea: YOLO11x summary: 56,828,179 parameters -> 56.8M params × 4 bytes (fp32) ≈ 227 MB
+    # Al poner half=True, se exporta con precisión fp16, lo que reduce el tamaño a la mitad: 56.8M params × 2 bytes (fp16) ≈ 113 MB, el tamaño original
+    # del modelo. Para que funcione tiene que ser en GPU, o sea, device=0 (o el número del dispositivo CUDA que corresponda).
+    model.export(format="onnx", half=True, device=0)
+
+
+@app.command()
+def test_converted_model(onnx_model_path):
+    """
+    Prueba un modelo ONNX convertido utilizando una imagen de prueba.
+
+    Args:
+        onnx_model_path (str | Path): La ruta del modelo ONNX a probar.
+        test_image_path (str | Path): La ruta de la imagen de prueba.
+
+    Returns:
+        None: Muestra los resultados de la inferencia en la imagen de prueba.
+    """
+    onnx_model = YOLO(onnx_model_path, task="detect")
+    results = onnx_model("https://ultralytics.com/images/bus.jpg")
+    print(results)
+
+
+def convert_and_test_model():
+    LOGGER.info("Iniciando la conversión del modelo YOLO a ONNX...")
+    models_folder = CONFIG.folders.models_folder
+    model_name = "palm_detection_yolo11x_640_a3a50bd4646e4044bed83f02f8bb03f4.pt"
+
+    model_path = models_folder / model_name
+    assert model_path.exists(), f"No se encontró el modelo en la ruta especificada: {model_path}"
+
+    output_path = model_path.with_suffix(".onnx")
+
+    LOGGER.info(f"Convirtiendo el modelo '{model_path.name}' a ONNX...")
+    convert_model_to_onnx(model_path)
+    assert output_path.exists(), f"No se generó el archivo ONNX en la ruta esperada: {output_path}"
+
+    LOGGER.info(f"Modelo convertido exitosamente y guardado en: {output_path}")
+    test_converted_model(output_path)
+    LOGGER.info("Prueba del modelo ONNX completada.")

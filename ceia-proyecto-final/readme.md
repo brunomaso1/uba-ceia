@@ -450,6 +450,14 @@ sudo ubuntu-drivers install --gpgpu nvidia:580-server # Instala el driver recome
 sudo apt install nvidia-utils-580-server # Instala las utilidades de nvidia
 ```
 
+- Chequear versión de CUDA:
+> [!NOTE]  
+> La versión actual de CUDA se puede checkear con `nvcc --version` o `nvidia-smi`. Sin embargo, la versión de CUDA que se muestra en `nvidia-smi` es la versión del driver, no la versión de CUDA instalada. Para verificar la versión de CUDA instalada, es necesario usar `nvcc --version` o revisar el contenido del directorio `/usr/local/cuda/version.txt`.
+> La versión de CUDA que muestra `nvidia-smi` es la máxima versión de CUDA soportada por el driver instalado, pero no necesariamente la versión de CUDA que está instalada en el sistema. Por ejemplo, si el driver soporta hasta CUDA 12.2 pero solo se tiene instalada CUDA 11.8, `nvidia-smi` mostrará que el driver soporta hasta CUDA 12.2, pero `nvcc --version` mostrará que la versión de CUDA instalada es 11.8.
+```bash
+nvcc --version
+```
+
 - Verificar sistema operativo:
 ```bash
 cat /etc/os-release

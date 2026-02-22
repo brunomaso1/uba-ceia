@@ -9,6 +9,7 @@ services:
         - BUILD_ENV=${BUILD_ENV:-development}
     container_name: mis-palmeras-frontend
     # volumes:
+      # nginx.conf is already baked into the image via the Dockerfile; uncomment this bind only if you need to override it at runtime/per-env
       # - ./frontend/angular-frontend/nginx.conf:/etc/nginx/nginx.conf:ro
     restart: unless-stopped
     ports:

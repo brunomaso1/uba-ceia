@@ -246,7 +246,7 @@ def _create_images_fields(
         "id": 1,
         "width": db_image["width"],
         "height": db_image["height"],
-        "file_name": f"{db_image["file_download_id"]}.jpg",
+        "file_name": f"{db_image['file_download_id']}.jpg",
         "date_captured": db_image["date_captured"].strftime("%Y-%m-%d %H:%M:%S"),
     }
 

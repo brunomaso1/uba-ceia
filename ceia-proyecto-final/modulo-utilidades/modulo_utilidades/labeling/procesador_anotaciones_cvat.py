@@ -327,7 +327,7 @@ def convert_patch_annotations_to_cvat_annotations(
                 f"La imagen {image_name['id']} no tiene un group_id asociado. Todas las imágenes deben tener un group_id."
             )
 
-        image["file_name"] = f"{MINIO_PATCHES_PATH}/{group_id}/{image_name['file_download_id']}/{image["file_name"]}"
+        image["file_name"] = f"{MINIO_PATCHES_PATH}/{group_id}/{image_name['file_download_id']}/{image['file_name']}"
 
     return images, annotations
 

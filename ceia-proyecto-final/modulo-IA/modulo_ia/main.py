@@ -3,6 +3,7 @@ from modulo_ia.config import settings as CONFIG
 
 ENVIRONMENT = CONFIG.environment
 
+
 def main():
     if ENVIRONMENT == "dev":
         LOGGER.debug("Modo de desarrollo activado")
@@ -35,6 +36,7 @@ def main():
             LOGGER.error(f"Error al importar un módulo: {e}")
         except Exception as e:
             LOGGER.error(f"Ocurrió un error inesperado: {e}")
+
 
 if __name__ == "__main__":
     main()
