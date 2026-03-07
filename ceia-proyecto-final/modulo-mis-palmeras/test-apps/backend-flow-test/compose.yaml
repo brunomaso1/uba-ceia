@@ -1,0 +1,140 @@
+name: backend-flow-test
+
+services:
+  # --- BROKER: RabbitMQ ---
+  rabbitmq:
+    # La versión con "-management" incluye el panel de administración web, lo cual es útil para monitorear las colas y tareas de Celery.
+    # En poducción existe una imagen más liviana "-management-alpine", pero para pruebas locales la versión completa es más conveniente.
+    image: rabbitmq:${RABBITMQ_VERSION:-4.2.4-management}
+    hostname: rabbitmq
+    container_name: rabbitmq_broker
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER:-guest}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS:-guest}
+      # El vhost es una especie de "espacio de nombres" dentro de RabbitMQ. Celery lo usará para conectarse, así que debe coincidir con la configuración de Celery.
+      # Ejemplo de conexión: protocolo://usuario:contraseña@host:puerto/vhost
+      - RABBITMQ_DEFAULT_VHOST=${RABBITMQ_DEFAULT_VHOST:-ai_vhost}
+      # - RABBITMQ_VM_MEMORY_HIGH_WATERMARK=${RABBITMQ_VM_MEMORY_HIGH_WATERMARK:-1536MB} # Opcional: Limita la memoria que RabbitMQ puede usar antes de empezar a rechazar conexiones. Esto es útil para evitar que el broker consuma demasiados recursos en un entorno de desarrollo o pruebas.
+    ports:
+      - "5672:5672" # Puerto de comunicación de Celery
+      - "15672:15672" # Panel de administración de RabbitMQ: http://localhost:15672 (usuario y contraseña según lo configurado arriba)
+    volumes:
+      - ${RABBITMQ_DATA:-./rabbitmq-server-test/rabbitmq_data}:/var/lib/rabbitmq
+      - ${RABBITMQ_LOGS:-./rabbitmq-server-test/rabbitmq_logs}:/var/log/rabbitmq
+    # Limitación de memoria:
+    # deploy:
+    #   resources:
+    #     limits:
+    #       memory: 2G
+    #     reservations:
+    #       memory: 1G
+    networks:
+      - backend_network
+    healthcheck:
+      # Low-resource check: RabbitMQ tiene un comando de diagnóstico que devuelve "pong" si el broker está listo para aceptar conexiones. Esto es más confiable que simplemente verificar si el puerto está abierto.
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      # Medium-resource check: Para asegurarnos de que el nodo no solo esté "vivo" sino también "funcionando", podemos usar el comando "check_running" que verifica si el nodo está operativo y listo para manejar tareas. Esto es especialmente útil si el nodo está bajo carga de IA y tarda un poco más en estar completamente funcional.
+      # test: ["CMD", "rabbitmq-diagnostics", "-q", "check_running"]
+      # interval: 30s    # El equipo de RabbitMQ sugiere 30s o 60s
+      # timeout: 10s     # Damos margen por si el nodo está bajo carga de IA
+      # retries: 3       # No lo mates al primer fallo, dale 3 oportunidades
+      # start_period: 20s # IMPORTANTE: No lo molestes mientras arranca (warm-up)
+      # High-resource check: Para una verificación aún más exhaustiva, podríamos usar "node_health_check" que realiza una serie de pruebas internas para asegurarse de que el nodo está completamente saludable. Esto es ideal para entornos de producción donde la estabilidad es crítica, pero puede ser demasiado exigente para un entorno de desarrollo o pruebas locales.
+      # test: ["CMD", "rabbitmq-diagnostics", "-q", "node_health_check"]
+      # interval: 30s
+      # timeout: 10s
+      # retries: 3
+      # start_period: 20s
+
+  # --- RESULT BACKEND: Redis ---
+  redis:
+    # image: redis:${REDIS_VERSION:-8.6.11} # Contiene solo el servidor Redis.
+    image: redis/redis-stack:${REDIS_VERSION:-7.4.0-v8} # Contiene Redis + herramientas adicionales (RedisInsight, Redis Commander, etc.) para facilitar el desarrollo y monitoreo.
+    hostname: redis
+    container_name: redis_backend
+    environment:
+      - REDIS_ARGS=--requirepass ${REDIS_PASSWORD:-redispassword} # Configura una contraseña para Redis (opcional pero recomendado, especialmente si usas RedisInsight o lo expones a la red)
+    ports:
+      - "6379:6379"
+      - "8001:8001" # Puerto para RedisInsight (interfaz web de monitoreo de Redis). Accesible en http://localhost:8001 (contraseña según lo configurado arriba)
+    # volumes:
+    #   - ${REDIS_DATA:-./redis-server-test/redis_data}:/data # Redis es principalmente in-memory, pero si quieres persistencia puedes montar un volumen para /data.
+    networks:
+      - backend_network
+    healthcheck:
+      test:
+        ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redispassword}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # # --- WORKER DE PRUEBA SIMPLE ---
+  celery-test-worker:
+    build:
+      context: ./celery-test
+      dockerfile: Dockerfile
+    container_name: celery_test_worker
+    environment:
+      - CELERY_BROKER_URL=pyamqp://${RABBITMQ_DEFAULT_USER:-guest}:${RABBITMQ_DEFAULT_PASS:-guest}@rabbitmq:5672/${RABBITMQ_DEFAULT_VHOST:-ai_vhost}
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-redispassword}@redis:6379/0
+      - CELERY_MAIN_MODULE_NAME=tasks # El nombre del módulo principal de Celery (donde se encuentra la instancia de Celery y las tareas).
+    networks:
+      - backend_network
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    # Para probar hay que entrar al contenedor y ejecutar el comando manualmente, así que no lo pongo en el compose:
+    # docker exec -it celery_test_worker bash
+    # uv run python -m app.execute_task
+
+  # # --- MONITOR: Flower ---
+  celery-flower-test:
+    image: mher/flower:${FLOWER_VERSION:-2.0}
+    container_name: celery_flower_test
+    environment:
+      - CELERY_BROKER_URL=pyamqp://${RABBITMQ_DEFAULT_USER:-guest}:${RABBITMQ_DEFAULT_PASS:-guest}@rabbitmq:5672/${RABBITMQ_DEFAULT_VHOST:-ai_vhost}
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-redispassword}@redis:6379/0
+      - FLOWER_BROKER_API=http://${RABBITMQ_DEFAULT_USER:-guest}:${RABBITMQ_DEFAULT_PASS:-guest}@rabbitmq:15672/api/ # La URL de la API del broker debe ser en el puerto de la UI de RabbitMQ (15672) para que Flower pueda obtener información sobre las colas, tareas, etc. directamente desde el broker, no desde el puerto de comunicación de Celery (5672).
+      - CELERY_MAIN_MODULE_NAME=tasks # El nombre del módulo principal de Celery (donde se encuentra la instancia de Celery y las tareas).
+    command: ["celery", "-A", "app.main", "flower"]
+    ports:
+      - "5555:5555"
+    volumes:
+      - ./celery-test:/data # Se monta el código de la aplicación de Celery para que tome toda la configuración de ahí (broker, backend, etc.) y muestre las tareas correctamente en el panel de Flower.
+    networks:
+      - backend_network
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      celery-test-worker:
+        condition: service_started
+
+  # # --- TU API (FastAPI) ---
+  api:
+    build:
+      context: ./fastapi-test
+      dockerfile: Dockerfile
+    container_name: fastapi_app
+    ports:
+      - "8000:8000"
+    environment:
+      - CELERY_BROKER_URL=pyamqp://${RABBITMQ_DEFAULT_USER:-guest}:${RABBITMQ_DEFAULT_PASS:-guest}@rabbitmq/${RABBITMQ_DEFAULT_VHOST:-ai_vhost}
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-redispassword}@redis:6379/0
+      - CELERY_MAIN_MODULE_NAME=tasks # El nombre del módulo principal de Celery (donde se encuentra la instancia de Celery y las tareas).
+    networks:
+      - backend_network
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+networks:
+  backend_network:

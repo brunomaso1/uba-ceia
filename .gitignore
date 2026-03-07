@@ -299,6 +299,11 @@ ceia-proyecto-final/modulo-respaldo/backup*
 # Modulo-mis-palmeras
 mock-data/
 mock_data/
+# RabbitMQ
+rabbitmq_data/
+rabbitmq_logs/
+# Redis
+redis_data/
 
 # Modulo-IA
 ceia-proyecto-final/modulo-IA/plots
