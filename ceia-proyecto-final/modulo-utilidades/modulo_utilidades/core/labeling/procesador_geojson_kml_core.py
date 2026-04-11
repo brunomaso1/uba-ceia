@@ -60,6 +60,10 @@ def create_geojson_from_annotations(
         - Las geometrías generadas son puntos (centroides) basados en los bounding boxes de las anotaciones.
         - El archivo GeoJSON se guarda en el sistema de archivos si `should_download` es True.
     """
+    if not coco_annotations:
+        LOGGER.warning("No hay anotaciones en el archivo COCO.")
+        return gpd.GeoDataFrame()
+
     # 1 - Configuraciones generales
     category_map = {cat["id"]: cat["name"] for cat in coco_annotations["categories"]}
 
