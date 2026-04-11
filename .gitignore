@@ -304,6 +304,10 @@ rabbitmq_data/
 rabbitmq_logs/
 # Redis
 redis_data/
+# Seaweedfs
+filer_data/
+master_data/
+volume_data/
 
 # Modulo-IA
 ceia-proyecto-final/modulo-IA/plots

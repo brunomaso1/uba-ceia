@@ -117,7 +117,7 @@ services:
         condition: service_started
 
   # # --- TU API (FastAPI) ---
-  api:
+  fastapi:
     build:
       context: ./fastapi-test
       dockerfile: Dockerfile
@@ -128,6 +128,7 @@ services:
       - CELERY_BROKER_URL=pyamqp://${RABBITMQ_DEFAULT_USER:-guest}:${RABBITMQ_DEFAULT_PASS:-guest}@rabbitmq/${RABBITMQ_DEFAULT_VHOST:-ai_vhost}
       - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-redispassword}@redis:6379/0
       - CELERY_MAIN_MODULE_NAME=tasks # El nombre del módulo principal de Celery (donde se encuentra la instancia de Celery y las tareas).
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgrespassword}@postgres/${POSTGRES_DB:-postgresdb}
     networks:
       - backend_network
     depends_on:
@@ -135,6 +136,167 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+
+  postgresql:
+    image: postgres:${POSTGRES_VERSION:-18.3}
+    restart: always
+    hostname: postgres
+    container_name: postgres_db
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgrespassword}
+      - POSTGRES_DB=${POSTGRES_DB:-postgresdb}
+    ports:
+      - "5432:5432"
+    volumes:
+      # PostgreSQL 18+: mount at /var/lib/postgresql
+      # PostgreSQL 17-: mount at /var/lib/postgresql/data
+      - ${POSTGRES_DATA:-./postgres-server-test/postgres_data}:/var/lib/postgresql
+      - ${POSTGRES_SCRIPTS:-./postgres-server-test/postgres_scripts}:/docker-entrypoint-initdb.d # Scripts de ejecución inicial. Nota: Solo se ejecutan la primera vez que se crea el volumen de datos. Si ya existe el volumen, no se vuelven a ejecutar aunque modifiques los scripts. Para probar cambios en los scripts, borra el volumen de datos o monta un volumen diferente.
+    networks:
+      - backend_network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-postgresdb} || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  postgresql-adminer: # UI de Posgresql.
+    image: adminer:${ADMINER_VERSION:-5.4.2}
+    container_name: adminer_ui
+    restart: always
+    ports:
+      - 8081:8080
+    networks:
+      - backend_network
+
+  # --- ALMACENAMIENTO DE ARCHIVOS: SeaweedFS ---
+  # Docker-compose adaptado de: https://raw.githubusercontent.com/chrislusf/seaweedfs/master/docker/seaweedfs-compose.yml
+  # Acceso:
+  # Master UI: http://localhost:9333
+  # Filer UI: http://localhost:8888
+  # S3 API: http://localhost:8333
+
+  seaweedfs-master:
+    image: chrislusf/seaweedfs:${SEAWEEDFS_VERSION:-4.15}
+    container_name: seaweedfs_master
+    hostname: seaweedfs_master
+    ports:
+      - 9333:9333
+      - 19333:19333
+      - 9324:9324
+    volumes:
+      - ${SEAWEEDFS_MASTER_DATA:-./seaweedfs-test/master_data}:/data
+    command: "master -ip=seaweedfs_master -ip.bind=0.0.0.0 -metricsPort=9324 -volumeSizeLimitMB=4096" # -volumeSizeLimitMB: Limita el tamaño máximo de los archivos en cada volumen.
+    networks:
+      - backend_network
+  seaweedfs-volume:
+    image: chrislusf/seaweedfs:${SEAWEEDFS_VERSION:-4.15}
+    container_name: seaweedfs_volume
+    hostname: seaweedfs_volume
+    ports:
+      - 8080:8080
+      - 18080:18080
+      - 9325:9325
+    volumes:
+      - ${SEAWEEDFS_VOLUME_DATA:-./seaweedfs-test/volume_data}:/data
+    command: 'volume -ip=seaweedfs_volume -master="seaweedfs_master:9333" -ip.bind=0.0.0.0 -port=8080 -metricsPort=9325 -max=0' # -max=0: Permite crear volúmenes ilimitados.
+    depends_on:
+      - seaweedfs-master
+    networks:
+      - backend_network
+  seaweedfs-filer:
+    image: chrislusf/seaweedfs:${SEAWEEDFS_VERSION:-4.15} # use a remote image
+    container_name: seaweedfs_filer
+    hostname: seaweedfs_filer
+    ports:
+      - 8888:8888
+      - 18888:18888
+      - 9326:9326
+    volumes:
+      - ${SEAWEEDFS_FILER_DATA:-./seaweedfs-test/filer_data}:/data
+    command: 'filer -ip=seaweedfs_filer -master="seaweedfs_master:9333" -ip.bind=0.0.0.0 -metricsPort=9326'
+    tty: true
+    stdin_open: true
+    networks:
+      - backend_network
+    depends_on:
+      - seaweedfs-master
+      - seaweedfs-volume
+  seaweedfs-s3:
+    image: chrislusf/seaweedfs:${SEAWEEDFS_VERSION:-4.15} # use a remote image
+    container_name: seaweedfs_s3
+    hostname: seaweedfs_s3
+    ports:
+      - 8333:8333
+      - 9327:9327
+    command: 's3 -filer="seaweedfs_filer:8888" -ip.bind=0.0.0.0 -metricsPort=9327'
+    depends_on:
+      - seaweedfs-master
+      - seaweedfs-volume
+      - seaweedfs-filer
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8333/"] # Verifica que el endpoint S3 esté respondiendo.
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - backend_network
+  seaweedfs-webdav:
+    image: chrislusf/seaweedfs:${SEAWEEDFS_VERSION:-4.15} # use a remote image
+    container_name: seaweedfs_webdav
+    hostname: seaweedfs_webdav
+    ports:
+      - 7333:7333
+    command: 'webdav -filer="seaweedfs_filer:8888"'
+    depends_on:
+      - seaweedfs-master
+      - seaweedfs-volume
+      - seaweedfs-filer
+    networks:
+      - backend_network
+
+  seaweedfs-init:
+    image: amazon/aws-cli:${AWS_CLI_VERSION:-2.32.4} # Imagen oficial de AWS CLI para ejecutar comandos de inicialización (crear buckets, configurar permisos, etc.) en el entorno de SeaweedFS S3.
+    container_name: seaweedfs_init
+    environment:
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      '
+      echo "Waiting for Seaweed S3...";
+      until aws --endpoint-url http://seaweedfs_s3:8333 s3api list-buckets >/dev/null 2>&1; do
+        sleep 2;
+      done;
+      aws --endpoint-url http://seaweedfs_s3:8333 s3 mb s3://imagenes || true;
+      echo "Buckets ready";
+      '
+    restart: "no"
+    depends_on:
+      - seaweedfs-s3
+    networks:
+      - backend_network
+
+  # seaweedfs-prometheus:
+  #   image: prom/prometheus:${PROMETHEUS_VERSION:-v2.21.0}
+  #   container_name: seaweedfs_prometheus
+  #   ports:
+  #     - 9000:9090
+  #   volumes:
+  #     - ${SEAWEEDFS_PROMETHEUS_DATA:-./seaweedfs-test/prometheus_data}:/etc/prometheus
+  #   command: "--web.enable-lifecycle --config.file=/etc/prometheus/prometheus.yml"
+  #   depends_on:
+  #     - seaweedfs-s3
+  #   networks:
+  #     - backend_network
 
 networks:
   backend_network:
