@@ -1,6 +1,8 @@
 # Dependencias del sistema
 from dataclasses import dataclass
 from pathlib import Path
+from re import VERBOSE
+from tabnanny import verbose
 from typing import Any, Optional, Literal
 
 # Dependencias propias
@@ -15,6 +17,9 @@ import pandas as pd
 from ultralytics import YOLO
 from ultralytics.engine.results import Results
 from supervision import Detections, InferenceSlicer, OverlapFilter, BoxAnnotator, LabelAnnotator
+
+VERBOSE = False # Cambiar a True para ver el log de cada paso del predictor, o a False para solo ver los resultados finales.
+
 
 @dataclass
 class PredictionResult:
@@ -117,6 +122,26 @@ class PredictionResult:
         return pd.DataFrame(data)
 
     def get_annotated_image(self, image: np.ndarray, include_labels: bool = True) -> np.ndarray:
+        """
+        Genera una imagen anotada con las detecciones realizadas.
+        Toma la imagen original proporcionada y la anota con los resultados de las
+        predicciones almacenadas en self.detections. Se dibujan cuadros delimitadores
+        (bounding boxes) alrededor de los objetos detectados y, opcionalmente, etiquetas
+        con el nombre de la clase y la confianza de la predicción.
+        Args:
+            image (np.ndarray): La imagen original que será anotada con las predicciones.
+                               Debe ser un array de numpy en formato BGR (si es de OpenCV).
+            include_labels (bool, optional): Si True, incluye etiquetas de texto con el nombre
+                                             de la clase y el nivel de confianza de cada detección.
+                                             Por defecto es True.
+        Returns:
+            np.ndarray: La imagen anotada con los cuadros delimitadores y opcionalmente
+                       las etiquetas de las detecciones. Si no hay detecciones, retorna
+                       una copia de la imagen original sin modificaciones.
+        Examples:
+            >>> annotated_image = predictor.get_annotated_image(original_image)
+            >>> annotated_image = predictor.get_annotated_image(original_image, include_labels=False)
+        """
         """Devuelve la imagen anotada con las detecciones."""
         if self.detections.is_empty():
             return image.copy()
@@ -250,7 +275,6 @@ class DetectionModelPredictor:
         return model
 
     def _slicer_callback(self, img_slice: np.ndarray) -> Detections:
-        result = self.model.predict(img_slice)[0]
+        result = self.model.predict(img_slice, verbose=VERBOSE)[0]
         detections = Detections.from_ultralytics(result)
         return detections
-
