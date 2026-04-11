@@ -310,7 +310,8 @@ ceia-proyecto-final/modulo-IA/plots
 ceia-proyecto-final/modulo-IA/models
 ceia-proyecto-final/modulo-IA/data
 train/
-best_model_val_results
+best_model_val_results/
+predictions/
 
 # Modulo-reportes
 mlruns
@@ -319,4 +320,5 @@ runs/*
 # Vagrant
 # General
 .vagrant/
+
 
