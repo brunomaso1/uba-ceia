@@ -88,6 +88,9 @@
             },
             "development": {
               "buildTarget": "angular-frontend:build:development"
+            },
+            "local": {
+              "buildTarget": "angular-frontend:build:local"
             }
           },
           "defaultConfiguration": "development"

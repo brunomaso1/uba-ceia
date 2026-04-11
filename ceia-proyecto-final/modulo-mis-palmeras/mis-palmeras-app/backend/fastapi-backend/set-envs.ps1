@@ -2,7 +2,7 @@
 # (the first dot is important so variables remain in the current environment)
 
 $ScriptDir  = Split-Path -Parent $MyInvocation.MyCommand.Path
-$EnvFile    = Join-Path $ScriptDir ".env.prod"
+$EnvFile    = Join-Path $ScriptDir ".env"
 
 # Verify that it's being executed with dot-sourcing
 if ($MyInvocation.InvocationName -notmatch '^\.') {
