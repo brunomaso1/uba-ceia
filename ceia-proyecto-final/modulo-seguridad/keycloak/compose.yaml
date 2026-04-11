@@ -32,7 +32,7 @@ services:
       KC_HOSTNAME_STRICT: ${KC_HOSTNAME_STRICT:-false} # Disable strict hostname checking
       KC_HOSTNAME_STRICT_HTTPS: ${KC_HOSTNAME_STRICT_HTTPS:-false} # Disable strict HTTPS checking
       KC_HTTP_ENABLED: ${KC_HTTP_ENABLED:-true} # Enable HTTP
-      KC_PROXY_HEADERS: ${KC_PROXY_HEADERS:-null} # No proxy headers by default
+      KC_PROXY_HEADERS: # No proxy headers by default, cuando se pasa la variable sola, se traduce a vacio si no está definida, lo que deshabilita el uso de proxy headers. Si se quiere habilitar, se debe pasar la variable con el valor "X-Forwarded-For,X-Forwarded-Proto,X-Forwarded-Port"
 
       # BOOTSTRAP ADMIN USER
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
